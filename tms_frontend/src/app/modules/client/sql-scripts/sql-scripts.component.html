@@ -1,0 +1,147 @@
+<div class="mt-5 mb-5"></div>
+<div class="card">
+  <div class="grid">
+    <div class="col-12 md:col-5">
+      <div class="p-inputgroup">
+        <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+        <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+      </div>
+    </div>
+
+    <div class="col-12 md:col-7 text-right" *ngIf="write_permission">
+        <button pButton pRipple (click)="openSqlScriptModal('Add')" label="Add New Script" icon="pi pi-plus"></button>
+    </div>
+  </div>
+</div>
+
+<p-panel header="Sql Scripts" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="content">
+        <div class="pt-2">
+            <div class="card">
+                <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+                <p-table [value]="sql_scripts" responsiveLayout="stack" [responsive]="true">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="text-align-center" [ngClass]="sortActive === 'user_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('user_id')">User Name</a>
+                            </th>
+                            <th class="text-align-center" [ngClass]="sortActive === 'content' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('content')">Sql Script</a>
+                            </th>
+                            <th class="text-align-center" [ngClass]="sortActive === 'autorun' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('autorun')">Autorun</a>
+                            </th>
+
+                            <th class="text-align-center" [ngClass]="sortActive === 'created_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('created_at')">Created At</a>
+                            </th>
+                            <th class="text-align-center" [ngClass]="sortActive === 'updated_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('updated_at')">Updated At</a>
+                            </th>
+                            <th class="text-align-center" [ngClass]="sortActive === 'created_by' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('created_by')">Created By</a>
+                            </th>
+                            <th class="text-align-center" [ngClass]="sortActive === 'updated_by' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('updated_by')">Updated By</a>
+                            </th>
+
+                            <th class="text-align-center w-100px" *ngIf="write_permission">Action</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-sql_script>
+                        <tr>
+                            <td class="text-align-center">
+                                <span class="p-column-title">User Name</span>
+                                {{ sql_script.user.username }}
+                            </td>
+                            <td class="text-align-center">
+                                <span class="p-column-title">Sql Script</span>
+                                {{ sql_script.content }}
+                            </td>
+                            <td class="text-align-center">
+                                <span class="p-column-title">Autorun</span>
+                                <ng-container *ngIf="sql_script.autorun">
+                                    <i class="pi pi-check"></i>
+                                </ng-container>
+                                <ng-container *ngIf="!sql_script.autorun">
+                                    <i class="pi pi-times"></i>
+                                </ng-container>
+                            </td>
+
+                            <td class="text-align-center">
+                                <span class="p-column-title">Created At</span>
+                                {{ sql_script.created_at }}
+                            </td>
+                            <td class="text-align-center">
+                                <span class="p-column-title">Updated At</span>
+                                {{ sql_script.updated_at }}
+                            </td>
+                            <td class="text-align-center">
+                                <span class="p-column-title">Created By</span>
+                                {{ sql_script.created.username }}
+                            </td>
+                            <td class="text-align-center">
+                                <span class="p-column-title">Updated By</span>
+                                {{ sql_script.updated.username }}
+                            </td>
+
+                            <td class="text-align-center" *ngIf="write_permission">
+                                <span class="p-buttonset">
+                                    <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, sql_script.id)"></button>
+                                    <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteSqlScript($event, sql_script.id)"></button>
+                                </span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+
+                <div class="flex justify-content-center align-items-center gap-3">
+                    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+                    <div class="p-fluid">
+                      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getSqlScriptsList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+</p-panel>
+
+<p-dialog [header]="modalTitle + ' '" styleClass="c-modal" [(visible)]="flag_openDialog" (onHide)="closeSqlScriptModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '40vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <form #f="ngForm" (ngSubmit)="onSqlScriptSubmit(f.value)" class="pt-2">
+
+        <div class="p-fluid flex-column-container">
+            <span class="p-float-label">
+                <p-dropdown class="field" [options]="sql_users" id="user_id" name="user_id" [(ngModel)]="input_user_id" (onChange)="onChangeUserName()" placeholder="User Name" optionLabel="name" scrollHeight="150px" [filter]="true" filterBy="name"></p-dropdown>
+                <label for="user_id">User Name</label>
+            </span>
+            <p *ngIf="!validUserId" class="p-error">Required!</p>
+            
+            <span class="p-float-label">
+                <textarea class="pt-4" id="content" name="content" [(ngModel)]="input_content" (input)="onInputContent()" rows="5" cols="30" pInputTextarea></textarea>
+                <label for="content">Sql Script</label>
+            </span>
+            <p *ngIf="!validContent" class="p-error">Required!</p>
+
+            <div class="field field-checkbox">
+                <p-checkbox id="autorun" name="autorun" [(ngModel)]="input_autorun" [binary]="true" inputId="binary"></p-checkbox>
+                <label for="autorun">Autorun</label>
+            </div>
+        </div>
+
+        <div *ngIf="modalTitle.toLowerCase()=='add'" class="flex justify-content-end mt-5">
+            <span class="p-buttonset">
+                <button pButton pRipple type="submit" label="Save" icon="pi pi-check" class="p-button-text"></button>
+                <button pButton pRipple type="button" (click)="closeSqlScriptModal()" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </form>
+    <div *ngIf="modalTitle.toLowerCase()=='edit'" class="flex justify-content-end mt-5">
+      <span class="p-buttonset">
+        <button pButton pRipple (click)="editSqlScript()" label="Save" icon="pi pi-pencil" class="p-button-text p-button-warning"></button>
+        <button pButton pRipple (click)="closeSqlScriptModal()" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+      </span>
+    </div>
+</p-dialog>
+
+<!-- <p-confirmDialog [style]="{width: '30vw'}" [baseZIndex]="10000" position="top" rejectButtonStyleClass="p-button-text"></p-confirmDialog> -->
+

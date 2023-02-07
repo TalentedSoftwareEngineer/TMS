@@ -1,0 +1,9 @@
+:host ::ng-deep .p-dialog {
+    &.c-modal {
+        .p-dialog-header {
+            .p-dialog-title {
+                font-size: 1.5rem;
+            }
+        }
+    }
+}

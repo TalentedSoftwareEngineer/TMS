@@ -1,0 +1,76 @@
+
+<!-- The Modal -->
+<div 
+    class="modal" 
+    [ngStyle]="{'display': openModal ? 'block' : 'none'}"
+>
+    <!-- Modal content -->
+    <div class="center-container">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" (click)="closeModal()">&times;</span>
+                <h5>Contact Information</h5>
+            </div>
+            <div class="modal-body">
+                <div class="grid">
+                    <div class="col-12 lg:col-6 p-fluid field">
+                        <span class="p-float-label">
+                            <input 
+                                type="text" 
+                                id="contact_name" 
+                                name="contact_name" 
+                                pInputText 
+                                [(ngModel)]="inputContactName"
+                                (input)="onInputContactName()"
+                                [ngClass]="{'ng-dirty': !validContactName, 'ng-invalid': !validContactName}"
+                            > 
+                            <label for="contact_name">Contact Name *</label>
+                        </span>
+                        <strong *ngIf="!validContactName" class="p-error">Contact name for the TFN that is being reserved.</strong>
+                    </div>
+                    <div class="col-12 lg:col-6 p-fluid field">
+                        <span class="p-float-label">
+                            <input 
+                                type="text" 
+                                id="contact_number" 
+                                name="contact_number" 
+                                pInputText 
+                                [(ngModel)]="inputContactNumber"
+                                (input)="onInputContactNumber()"
+                                [ngClass]="{'ng-dirty': !validContactNumber, 'ng-invalid': !validContactNumber}"
+                            > 
+                            <label for="contact_number">Contact Number *</label>
+                        </span>
+                        <strong *ngIf="!validContactNumber" class="p-error">Contact number for the TFN that is being reserved.</strong>
+                    </div>
+                </div>
+
+                <div class="p-fluid">
+                    <span class="field p-float-label">
+                        <textarea class="pt-4" id="notes" name="notes" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea></textarea>
+                        <label for="notes">Notes</label>
+                    </span>
+                </div>
+
+                <div class="p-fluid">
+                    <label class="" for="changeDefaultContactInformation">
+                        <p-inputSwitch
+                            id="changeDefaultContactInformation" 
+                            name="changeDefaultContactInformation" 
+                            [(ngModel)]="inputChangeDefaultContactInformation"
+                        ></p-inputSwitch>
+                        Change default contact information
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="flex justify-content-end">
+                    <span class="p-buttonset">
+                        <button pButton pRipple (click)="SaveContactInformation()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+                        <button pButton pRipple (click)="closeModal()" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

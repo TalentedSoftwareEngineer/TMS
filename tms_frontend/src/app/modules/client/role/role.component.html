@@ -1,0 +1,165 @@
+<h4 class="page_title">Roles Management</h4>
+<div class="card">
+  <div class="grid">
+    <div class="col-12 md:col-5">
+      <div class="p-inputgroup">
+        <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+        <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+      </div>
+    </div>
+
+    <div class="col-12 md:col-7 text-right" *ngIf="write_permission">
+      <button pButton pRipple label="Add New Role" *ngIf="permission==permissionTypeAll" (click)="openRoleModal('Add')" icon="pi pi-plus"></button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+  <p-table [value]="roles" responsiveLayout="stack" [responsive]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th class="text-align-center" [ngClass]="sortActive === 'name' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('name')">Role Name</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'description' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('description')">Description</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'created_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('created_at')">Created At</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'updated_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('updated_at')">Updated At</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'created_by' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('created_by')">Created By</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'updated_by' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('updated_by')">Updated By</a>
+        </th>
+
+        <th class="text-align-center w-100px" *ngIf="write_permission">Action</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-role>
+      <tr>
+        <td class="text-align-center">
+          <span class="p-column-title">Role Name</span>
+          {{ role.name }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Description</span>
+          {{ role.description }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Created At</span>
+          {{ role.created_at }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Updated At</span>
+          {{ role.updated_at }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Created By</span>
+          {{ role.created?.username }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Updated By</span>
+          {{ role.updated?.username }}
+        </td>
+
+        <td class="text-align-center" *ngIf="write_permission">
+          <span class="p-buttonset">
+            <button pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="onOpenViewModal($event, role.id)"></button>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, role.id)"></button>
+            <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteRole($event, role.id)"></button>
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <div class="flex justify-content-center align-items-center gap-3">
+    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+    <div class="p-fluid">
+      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getRolesList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+    </div>
+  </div>
+</div>
+
+<p-dialog [header]="modalTitle + ' Role'" styleClass="c-modal" [(visible)]="flag_openDialog" (onHide)="closeRoleModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '50vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <form #f="ngForm" (ngSubmit)="onRoleSubmit(f.value)">
+      <p-panel header="Main" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+        <div class="flex-column-container pt-2 p-fluid">  
+          <div class="field">
+            <span class="p-float-label">
+              <input type="text" id="name" name="name" [ngClass]="{'ng-dirty': !validRoleName, 'ng-invalid': !validRoleName}" (input)="validRoleName=input_name!=''" pInputText [(ngModel)]="input_name"> 
+              <label for="name">Role Name</label>
+            </span>
+            <p *ngIf="!validRoleName" class="p-error">Required!</p>
+          </div>
+  
+          <span class="field p-float-label">
+            <input type="text" id="description" name="description" pInputText [(ngModel)]="input_description"> 
+            <label for="description">Description</label>
+          </span>
+        </div>
+      </p-panel>
+
+      <h1></h1>
+      <h1 class="mt-5"></h1>
+      <p-panel header="Admin Privileges" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+        <div class="grid pt-2">
+          <ng-container *ngFor="let item_privilege of privileges">
+            <div *ngIf="item_privilege.is_admin" class="col-6 justify-content-between-container">
+              <p>{{item_privilege.name}}</p>
+              <label class="switch">
+                <input type="checkbox"
+                  [id]="'privilege_'+item_privilege.id" 
+                  [name]="'privilege_'+item_privilege.id" 
+                  [checked]="isCheckedPrivilege(item_privilege.id)" 
+                  (change)="onChangePrivileges($event, item_privilege)" 
+                  [disabled]="isDidabled(item_privilege)"
+                >
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </ng-container>
+        </div>
+      </p-panel>
+
+      <h1></h1>
+      <h1 class="mt-5"></h1>
+      <p-panel header="TFM Privileges" [toggleable]="true" styleClass="panel-forms" class="panel-forms" pStyleClass=".panel-forms" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+        <div class="grid pt-2">
+          <ng-container *ngFor="let item_privilege of privileges">
+            <div *ngIf="!item_privilege.is_admin" class="col-6 justify-content-between-container">
+              <p>{{item_privilege.name}}</p>
+              <label class="switch">
+                <input type="checkbox"
+                  [id]="'privilege_'+item_privilege.id" 
+                  [name]="'privilege_'+item_privilege.id" 
+                  [checked]="isCheckedPrivilege(item_privilege.id)" 
+                  (change)="onChangePrivileges($event, item_privilege)" 
+                >
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </ng-container>
+        </div>
+      </p-panel>
+
+      <div *ngIf="modalTitle.toLowerCase()=='add'" class="flex justify-content-end mt-5">
+        <span class="p-buttonset">
+          <button pButton pRipple (click)="clearInputs()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+          <button pButton pRipple type="submit" label="Save" icon="pi pi-check" class="p-button-text"></button>
+        </span>
+      </div>
+    </form>
+    <div *ngIf="modalTitle.toLowerCase()=='edit'" class="flex justify-content-end mt-5">
+      <span class="p-buttonset">
+        <button pButton pRipple (click)="editRole()" label="Save" icon="pi pi-pencil" class="p-button-text p-button-warning"></button>
+        <button pButton pRipple (click)="closeRoleModal()" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+      </span>
+    </div>
+</p-dialog>

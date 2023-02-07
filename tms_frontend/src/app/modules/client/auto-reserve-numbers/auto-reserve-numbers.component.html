@@ -1,0 +1,306 @@
+<h4 class="page_title">Auto Reserve Numbers</h4>
+
+<p-panel header="Retrieve" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div class="grid">
+            <div class="col-12 lg:col-5">
+                <div class="grid">
+                    <div class="col-8 p-fluid">
+                        <span class="p-float-label">
+                            <p-calendar 
+                                inputId="startDateTime" 
+                                [(ngModel)]="inputStartDateTime" 
+                                dateFormat="mm/dd/yy" 
+                                [minDate]="minStartDateTime"
+                                [showButtonBar]="true" 
+                                [showTime]="true"
+                                hourFormat="12" 
+                                (onSelect)="onTimeFieldFocusOut()"
+                                (onBlur)="onTimeFieldFocusOut()"
+                                [disabled]="inputStartNow"
+                            ></p-calendar>
+                            <label for="startDateTime">Starting Date Time *</label>
+                        </span>
+                        <p *ngIf="invalidStartTime === gConst.INVALID_TIME_PAST && !inputStartNow" class="p-error">Please input future time</p>
+                        <p *ngIf="invalidStartTime === gConst.INVALID_TIME_ORDER && !inputStartNow" class="p-error">Start time must be before than end time</p>
+                    </div>
+                    <div class="col-3 flex align-items-center">
+                        <label class="ml-3" for="startNow">
+                            <p-inputSwitch
+                                id="startNow" 
+                                name="startNow" 
+                                [(ngModel)]="inputStartNow"
+                            ></p-inputSwitch>
+                            Now
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 lg:col-7">
+                <div class="grid">
+                    <div class="md:col-7 col-12 p-fluid">
+                        <span class="p-float-label">
+                            <p-calendar 
+                                inputId="endDateTime" 
+                                [(ngModel)]="inputEndDateTime" 
+                                dateFormat="mm/dd/yy" 
+                                [minDate]="minEndDateTime"
+                                [showButtonBar]="true" 
+                                [showTime]="true"
+                                hourFormat="12" 
+                                (onSelect)="onTimeFieldFocusOut()"
+                                (onBlur)="onTimeFieldFocusOut()"
+                                [disabled]="inputEndNow"
+                            ></p-calendar>
+                            <label for="endDateTime">End Date Time *</label>
+                        </span>
+                        <p *ngIf="invalidEndTime === gConst.INVALID_TIME_PAST && !inputEndNow" class="p-error">Please input future time</p>
+                        <p *ngIf="invalidEndTime === gConst.INVALID_TIME_ORDER && !inputEndNow" class="p-error">End time must be after than start time</p>
+                    </div>
+                    <div class="md:col-5 col-12 flex justify-content-center align-items-center">
+                        <label class="ml-3" for="endNow">
+                            <p-inputSwitch
+                                id="endNow" 
+                                name="endNow" 
+                                [(ngModel)]="inputEndNow"
+                            ></p-inputSwitch>
+                            Now + 
+                        </label>  
+                        <div class="ml-2">
+                            <span class="p-float-label">
+                                <input type="number" id="afterMin" name="afterMin" pInputText [(ngModel)]="inputAfterMin" (input)="onInputAfterMin()" [disabled]="!inputEndNow"> 
+                                <label for="afterMin">Mins</label>
+                            </span>
+                            <p *ngIf="afterMinErr" class="p-error">The value must be greater than 0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid mt-2">
+            <div class="col-12 md:col-6 p-fluid">
+                <span class="p-float-label">
+                    <p-dropdown 
+                        [options]="roIds" 
+                        id="roId" 
+                        name="roId" 
+                        [(ngModel)]="inputRoId" 
+                        optionLabel="name" 
+                        [showClear]="true" 
+                        scrollHeight="150px" 
+                        [filter]="true" 
+                        filterBy="name"
+                        [virtualScroll]="true" 
+                        [itemSize]="40"
+                    ></p-dropdown>
+                    <label for="roId">Ro Id</label>
+                </span>
+            </div>
+            <div class="col-12 md:col-6 p-fluid">
+                <span class="p-float-label">
+                    <input type="number" id="requestsAtATime" name="requestsAtATime" pInputText [(ngModel)]="inputRequestsAtATime" (input)="onInputRequestsAtATime()"> 
+                    <label for="requestsAtATime">Requests at a time *</label>
+                </span>
+                <p *ngIf="!validRequestsAtATime" class="p-error">Must be between 1 and {{gConst.MAX_REQUESTS_AT_A_TIME_LIMIT}}.</p>
+            </div>
+        </div>
+
+        <div class="p-fluid mt-3">
+            <span class="p-float-label">
+                <textarea class="pt-4" id="wildcards" name="wildcards" (input)="onInputWildcards()" [(ngModel)]="inputWildcards" rows="5" cols="30" pInputTextarea></textarea>
+                <label for="wildcards">Wildcards / TFN Numbers *</label>
+            </span>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_AMP" class="p-error">Number cannot contain a single '&'.</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_WILDCARD" class="p-error">Please input wildcard for auto reserving.</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_TOO_MANY" class="p-error">You cannot apply over 500 numbers.</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_EMPTY" class="p-error">Please input wildcard for auto reserving.</strong>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple type="button" (click)="onSubmit()" icon="pi pi-send" label="Submit" class="p-button-text"></button>
+                <button pButton pRipple type="button" (click)="onClear()" icon="pi pi-eraser" label="Clear" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template>
+</p-panel>
+
+<div class="mt-5 mb-5"></div>
+<p-panel header="Auto Reserve Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+
+    <div class="pt-2">
+        <div class="card">
+            <p-table
+                #autoReserveNumbersTable
+                [value]="autoReserveNumbers"
+                [(selection)]="selectedAutoReserveNumbers"
+                dataKey="id"
+                [rowHover]="true"
+                [rows]="10"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10,25,50]"
+                [loading]="autoReserveNumbersLoading"
+                responsiveLayout="stack" 
+                [responsive]="true"
+                [paginator]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [filterDelay]="0" 
+                [globalFilterFields]="['startTime','endTime','submitTime','Wildcard','requestsAtATime','status','roId','requestCount','reservedCount','note']"
+            >
+                <ng-template pTemplate="caption">
+                    <div class="table-header flex justify-content-end">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" (input)="autoReserveNumbersTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                        </span>
+                    </div>
+                </ng-template>
+    
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 3rem">
+                            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                        </th>
+                        <th pSortableColumn="startTime">
+                            <div class="flex justify-content-center align-items-center">
+                                Start Time
+                                <p-sortIcon field="startTime"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="endTime">
+                            <div class="flex justify-content-center align-items-center">
+                                End Time
+                                <p-sortIcon field="endTime"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="submitTime">
+                            <div class="flex justify-content-center align-items-center">
+                                Submit Time
+                                <p-sortIcon field="submitTime"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="Wildcard">
+                            <div class="flex justify-content-center align-items-center">
+                                Wildcard
+                                <p-sortIcon field="Wildcard"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="requestsAtATime">
+                            <div class="flex justify-content-center align-items-center">
+                                Requests at a Time
+                                <p-sortIcon field="requestsAtATime"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="status">
+                            <div class="flex justify-content-center align-items-center">
+                                Status
+                                <p-sortIcon field="status"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="roId">
+                            <div class="flex justify-content-center align-items-center">
+                                Ro Id
+                                <p-sortIcon field="roId"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="requestCount">
+                            <div class="flex justify-content-center align-items-center">
+                                Request Count
+                                <p-sortIcon field="requestCount"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="reservedCount">
+                            <div class="flex justify-content-center align-items-center">
+                                Reserved Count
+                                <p-sortIcon field="reservedCount"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="note">
+                            <div class="flex justify-content-center align-items-center">
+                                Note
+                                <p-sortIcon field="note"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th class="text-align-center w-100px">
+                            Action
+                        </th>
+                    </tr>
+                </ng-template>
+    
+                <ng-template pTemplate="body" let-autoReserveNumber>
+                    <tr class="p-selectable-row text-align-center">
+                        <td>
+                            <p-tableCheckbox [value]="autoReserveNumber"></p-tableCheckbox>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Start Time</span>
+                            {{autoReserveNumber.startTime}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">End Time</span>
+                            {{autoReserveNumber.endTime}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Submit Time</span>
+                            {{autoReserveNumber.submitTime}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Wildcard</span>
+                            {{autoReserveNumber.Wildcard}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Requests at a time</span>
+                            {{autoReserveNumber.requestsAtATime}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Status</span>
+                            {{autoReserveNumber.status}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Ro Id</span>
+                            {{autoReserveNumber.roId}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Request Count</span>
+                            {{autoReserveNumber.requestCount}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Reserved Count</span>
+                            {{autoReserveNumber.reservedCount}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Note</span>
+                            {{autoReserveNumber.note}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Action</span>
+                            <span class="p-buttonset">
+                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined"></button>
+                            </span>
+                        </td>                                                            
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8">No Auto Reserve Number found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple type="button" (click)="onDelete()" icon="pi pi-trash" label="Delete" class="p-button-text p-button-danger" ></button>
+            </span>
+        </div>
+    </ng-template>
+</p-panel>

@@ -1,0 +1,136 @@
+<h4 class="page_title">Trouble Referral Number Query</h4>
+
+<p-panel header="Retrieve" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div class="p-fluid">
+            <span class="field p-float-label">
+                <textarea id="tollFreeNumber" rows="5" cols="30" pInputTextarea [(ngModel)]="inputTollFreeNumber"></textarea>
+                <label for="tollFreeNumber">Toll-Free Number *</label>
+            </span>
+        </div>
+        <div class="flex justify-content-end">
+            <button pButton pRipple type="button" (click)="onRetrieve()" label="Retrieve" icon="pi pi-search" class="p-button-text"></button>
+        </div>
+    </div>
+</p-panel>
+
+<div class="mt-5 mb-5"></div>
+<p-panel header="Result" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div class="card">
+            <p-table
+                #resultTable
+                [value]="results"
+                dataKey="id"
+                [rowHover]="true"
+                [rows]="10"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10,25,50]"
+                [loading]="resultLoading"
+                responsiveLayout="stack" 
+                [responsive]="true"
+                [paginator]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [filterDelay]="0" 
+                [globalFilterFields]="['createdBy','submitDate','total','completed','message','progressStatus']"
+            >
+                <ng-template pTemplate="caption">
+                    <div class="table-header flex justify-content-end">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" (input)="resultTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                        </span>
+                    </div>
+                </ng-template>
+    
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="createdBy">
+                            <div class="flex justify-content-center align-items-center">
+                                Created By
+                                <p-sortIcon field="createdBy"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="submitDate">
+                            <div class="flex justify-content-center align-items-center">
+                                Submit Date
+                                <p-sortIcon field="submitDate"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="total">
+                            <div class="flex justify-content-center align-items-center">
+                                Total
+                                <p-sortIcon field="total"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="completed">
+                            <div class="flex justify-content-center align-items-center">
+                                Completed
+                                <p-sortIcon field="completed"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="message">
+                            <div class="flex justify-content-center align-items-center">
+                                Message
+                                <p-sortIcon field="message"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="progressStatus">
+                            <div class="flex justify-content-center align-items-center">
+                                Progress Status
+                                <p-sortIcon field="progressStatus"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th class="text-align-center w-100px">
+                            Action
+                        </th>
+                    </tr>
+                </ng-template>
+    
+                <ng-template pTemplate="body" let-result>
+                    <tr class="p-selectable-row text-align-center">
+                        <td class="text-align-center">
+                            <span class="p-column-title">Created By</span>
+                            {{result.createdBy}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Submit Date</span>
+                            {{result.submitDate}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Total</span>
+                            <p-badge [value]="result.total" size="large" severity="success" styleClass="mr-2"></p-badge>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Completed</span>
+                            <p-badge [value]="result.completed" size="large" severity="success" styleClass="mr-2"></p-badge>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Message</span>
+                            {{result.message}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Progress Status</span>
+                            <i *ngIf="result.progressStatus" class="pi pi-check"></i>
+                            <i *ngIf="!result.progressStatus" class="pi pi-times"></i>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Action</span>
+                            <span class="p-buttonset">
+                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined"></button>
+                            </span>
+                        </td>                                                            
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8">No Result found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</p-panel>

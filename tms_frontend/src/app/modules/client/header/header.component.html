@@ -1,0 +1,53 @@
+<div class="layout-topbar">
+  <button class="p-link layout-menu-button layout-topbar-button p-trigger" (click)="layoutService.onMenuToggle()">
+    <i class="pi pi-bars"></i>
+  </button>
+
+  <a class="layout-topbar-logo" [routerLink]="['/service/dashboard']">
+    <img [src]="logoImg" [hidden]=" logoImg == '' " alt="">
+    <span>TMS</span>
+  </a>
+
+
+  <button class="p-link layout-topbar-menu-button layout-topbar-button p-trigger" (click)="layoutService.showProfileSidebar()">
+    <i class="pi pi-ellipsis-v"></i>
+  </button>
+
+  <div class="layout-topbar-ro p-fluid">
+    <span class="field p-float-label mb-0">
+      <p-dropdown [options]="ros" id="ro" name="ro" [(ngModel)]="input_ro" (onChange)="onRoChange($event)" optionLabel="name" scrollHeight="150px" ></p-dropdown>
+      <label for="ro">RO</label>
+    </span>
+  </div>
+
+  <div class="layout-topbar-menu" [ngClass]="{'layout-topbar-menu-mobile-active': layoutService.state.profileSidebarVisible}">
+    <!--    <button class="p-link layout-topbar-button layout-topbar-mobile" [routerLink]="['/service/user/edit/', this.userId]">-->
+    <!--      <i class="pi pi-user-edit"></i>-->
+    <!--      <span>Profile</span>-->
+    <!--    </button>-->
+
+    <button class="p-link layout-topbar-button layout-topbar-mobile" [routerLink]="['/service/user/edit/', this.userId]">
+      <i class="pi pi-user-edit"></i>
+      <span>Account</span>
+    </button>
+
+    <button class="p-link layout-topbar-button layout-topbar-mobile" (click)="toggleMode()">
+      <i class="pi pi-send"></i>
+      <span>{{colorScheme=='dark' ? 'Light' : 'Dark'}} Mode</span>
+    </button>
+
+    <button class="p-link layout-topbar-button layout-topbar-mobile" (click)="onSignout()">
+      <i class="pi pi-sign-out"></i>
+      <span>Sign Out</span>
+    </button>
+
+    <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body"></p-menu>
+    <div class="ml-2 p-avatar p-avatar-image p-avatar-circle layout-topbar-desktop" (click)="menu.toggle($event)">
+      <img [src]="avatar" alt="" [hidden]="avatar==''" class="">
+      <div class="p-avatar-text">{{userInfo.name}}<br>{{user?.email}}</div>
+    </div>
+  </div>
+</div>
+
+<p-confirmDialog [style]="{width: '30vw'}" [baseZIndex]="10000" position="top" rejectButtonStyleClass="p-button-text"></p-confirmDialog>
+<contact-information-modal></contact-information-modal>

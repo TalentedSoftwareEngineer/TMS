@@ -1,0 +1,104 @@
+<h4 class="page_title">User Activity</h4>
+<div class="card pb-3">
+    <div class="grid">
+      <div class="col-12">
+        <div class="grid">
+            <div *ngIf="authenticatedUserId==gConst.SUPER_ADMIN_ID" class="lg:col-3 col-6 p-fluid pl-0 pr-0">
+                <span class="p-float-label">
+                    <p-dropdown [options]="users" id="user_search" [(ngModel)]="userIdFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
+                    <label for="user_search">User</label>
+                </span>
+            </div>
+            <div class="lg:col-3 col-6 p-fluid pl-0 pr-0">
+                <span class="p-float-label">
+                    <p-dropdown [options]="status" id="status_search" [(ngModel)]="statusFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
+                    <label for="status_search">Status</label>
+                </span>
+            </div>
+            <div class="lg:col-4 col-12 p-fluid pl-0 pr-0">
+                <div class="p-inputgroup">
+                    <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+                    <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+    <p-table [value]="user_activities" responsiveLayout="stack" [responsive]="true">
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('sub_dt_tm')">Submit Time</a>
+          </th>
+          <th class="text-align-center" [ngClass]="sortActive === 'user_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('user_id')">User Name</a>
+          </th>
+          <th class="text-align-center" [ngClass]="sortActive === 'page' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('page')">Page</a>
+          </th>
+          <th class="text-align-center" [ngClass]="sortActive === 'operation' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('operation')">Operation</a>
+          </th>
+          <th class="text-align-center" [ngClass]="sortActive === 'total' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('total')">Total</a>
+          </th>
+          <th class="text-align-center" [ngClass]="sortActive === 'completed' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('completed')">Completed</a>
+          </th>
+          <th class="text-align-center" [ngClass]="sortActive === 'status' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('status')">Status</a>
+          </th>
+          <th class="text-align-center" [ngClass]="sortActive === 'message' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('message')">Message</a>
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user_activity>
+        <tr>
+          <td class="text-align-center">
+            <span class="p-column-title">Submit Time</span>
+            {{ user_activity.sub_dt_tm }}
+          </td>
+          <td class="text-align-center">
+            <span class="p-column-title">User Name</span>
+            {{ user_activity.user.username }}
+          </td>
+          <td class="text-align-center">
+            <span class="p-column-title">Page</span>
+            {{ user_activity.page }}
+          </td>
+          <td class="text-align-center">
+            <span class="p-column-title">Operation</span>
+            {{ user_activity.operation }}
+          </td>
+          <td class="text-align-center">
+            <span class="p-column-title">Total</span>
+            <p-tag styleClass="mr-2" severity="success" [value]="user_activity.total"></p-tag>
+          </td>
+          <td class="text-align-center">
+            <span class="p-column-title">Completed</span>
+            <p-tag styleClass="mr-2" [severity]="user_activity.total==user_activity.completed?'success':user_activity.completed==0?'danger':'info'" [value]="user_activity.completed"></p-tag>
+          </td>
+          <td class="text-align-center">
+            <span class="p-column-title">Status</span>
+            <p-tag styleClass="mr-2" [severity]="user_activity.status=='SUCCESS'?'success':user_activity.status=='FAILED'?'danger':'info'" [value]="user_activity.status"></p-tag>
+          </td>
+          <td class="text-align-center">
+            <span class="p-column-title">Message</span>
+            {{ user_activity.message }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    
+    <div class="flex justify-content-center align-items-center gap-3">
+      <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+      <div class="p-fluid">
+        <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getUserActivitiesList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,12 @@
+  .flex-column-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  :host ::ng-deep .custom_panel_style {
+    box-shadow: none;
+    border: 1px solid #c8ced3;
+  }
+
+  

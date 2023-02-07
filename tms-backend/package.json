@@ -1,0 +1,77 @@
+{
+  "name": "backend",
+  "version": "0.1.1",
+  "description": "Tollfree-Number Management System Backend",
+  "keywords": [
+    "loopback-application",
+    "loopback"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": "14 || 16 || 17 || 18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rimraf dist *.tsbuildinfo .eslintcache",
+    "pretest": "npm run rebuild",
+    "docker:build": "docker build -t backend .",
+    "docker:run": "docker run -p 3000:3000 -d backend",
+    "migrate": "node ./dist/migrate",
+    "openapi-spec": "node ./dist/openapi-spec",
+    "prestart": "npm run rebuild",
+    "go-dev": "run-script-os",
+    "go-dev:windows": "set NODE_ENV=development && node -r source-map-support/register .",
+    "go-dev:linux": "export NODE_ENV=development && node -r source-map-support/register .",
+    "go-dev:macos": "export NODE_ENV=development && node -r source-map-support/register .",
+    "go-prod": "run-script-os",
+    "go-prod:windows": "set NODE_ENV=production && npm run rebuild && node -r source-map-support/register .",
+    "go-prod:linux": "export NODE_ENV=production && npm run rebuild && node -r source-map-support/register .",
+    "go-prod:macos": "export NODE_ENV=production && npm run rebuild && node -r source-map-support/register .",
+    "start": "npm run go-dev",
+    "start:prod": "npm run go-prod",
+    "prepare": "npm run build",
+    "rebuild": "npm run clean && npm run build"
+  },
+  "repository": {
+    "type": "git"
+  },
+  "author": "L.Jett <l.jett@tfnms.com>",
+  "license": "",
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!*/__tests__"
+  ],
+  "dependencies": {
+    "@loopback/authentication": "^9.0.5",
+    "@loopback/authentication-jwt": "^0.12.5",
+    "@loopback/authorization": "^0.12.5",
+    "@loopback/boot": "^5.0.5",
+    "@loopback/core": "^4.0.5",
+    "@loopback/repository": "^5.1.0",
+    "@loopback/rest": "^12.0.5",
+    "@loopback/rest-explorer": "^5.0.5",
+    "@loopback/security": "^0.8.5",
+    "@loopback/service-proxy": "^5.0.5",
+    "angular-count-to": "^0.0.3",
+    "axios": "^1.2.2",
+    "express": "^4.18.2",
+    "loopback-connector-mysql": "^5.4.4",
+    "redis-smq": "^7.2.0",
+    "redis-smq-common": "^1.0.5",
+    "tslib": "^2.0.0"
+  },
+  "devDependencies": {
+    "@loopback/testlab": "^5.0.5",
+    "@types/jest": "^29.2.4",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^14.18.33",
+    "rimraf": "^3.0.2",
+    "run-script-os": "^1.1.6",
+    "source-map-support": "^0.5.21",
+    "typescript": "~4.8.4"
+  }
+}

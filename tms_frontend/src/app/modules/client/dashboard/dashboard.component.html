@@ -1,0 +1,92 @@
+<div class="grid justify-content-between">
+    <div class="xl:col-10 col-12">
+        <p-card styleClass="c-card dir-col" [style]="{'height':'415px'}">
+            <ng-template pTemplate="title">
+                <div class="flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-align-center">News and Events</h5>
+                    <i class="pi pi-twitter" style="font-size: 25px"></i>
+                </div>
+            </ng-template>
+
+            <ng-container *ngIf="isSuperAdmin && isNewsEventEditing;else unAdmin">
+                <div class="w-full">
+                    <p-editor [(ngModel)]="editNewsEvent" [style]="{'height':'225px'}"></p-editor>
+                </div>
+            </ng-container>
+            <ng-template #unAdmin>
+                <div [innerHTML]="editNewsEvent"></div>
+            </ng-template>
+
+            <div *ngIf="isSuperAdmin" class="w-full flex justify-content-end mt-3" [ngClass]="{'absolute': !isNewsEventEditing, 'b-30px': !isNewsEventEditing}">
+                <button *ngIf="!isNewsEventEditing" pButton pRipple (click)="isNewsEventEditing=true" label="Edit" icon="pi pi-pencil" class="p-button-text p-button-warning"></button>
+                <span class="p-buttonset" *ngIf="isNewsEventEditing">
+                    <button pButton pRipple (click)="onEditNewsEvent()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+                    <button pButton pRipple (click)="isNewsEventEditing=false" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+                </span>
+            </div>
+        </p-card>
+    </div>
+
+    <div class="xl:col-2 lg:col-8 col-12">
+        <div class="grid">
+            <div class="xl:col-12 col-6">
+                <p-card styleClass="c-card" [style]="{'height':'200px'}">
+                    <ng-template pTemplate="title">
+                        <div class="flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-align-center">Customer Record Summary</h5>
+                            <i class="pi pi-slack" style="font-size: 25px"></i>
+                        </div>
+                    </ng-template>
+                    <h4>653</h4>
+                </p-card>
+            </div>
+            <div class="xl:col-12 col-6">
+                <p-card styleClass="c-card" [style]="{'height':'200px'}">
+                    <ng-template pTemplate="title">
+                        <div class="flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-align-center">Reservation Limits</h5>
+                            <i class="pi pi-exclamation-circle" style="font-size: 25px"></i>
+                        </div>
+                    </ng-template>
+                    <h4>653</h4>
+                </p-card>
+            </div>
+        </div>
+    </div>
+
+    <div class="xl:col-2 lg:col-4 col-6">
+        <p-card styleClass="c-card" [style]="{'height':'200px'}">
+            <ng-template pTemplate="title">
+                <div class="flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-align-center">TFNs to be Spared</h5>
+                    <i class="pi pi-wifi" style="font-size: 25px"></i>
+                </div>
+            </ng-template>
+            <h4>653</h4>
+        </p-card>
+    </div>
+
+    <div class="xl:col-2 lg:col-4 col-6">
+        <p-card styleClass="c-card" [style]="{'height':'200px'}">
+            <ng-template pTemplate="title">
+                <div class="flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-align-center">Template Record List</h5>
+                    <i class="pi pi-th-large" style="font-size: 25px"></i>
+                </div>
+            </ng-template>
+            <h4>653</h4>
+        </p-card>
+    </div>
+
+    <div class="xl:col-2 lg:col-4 col-6">
+        <p-card styleClass="c-card" [style]="{'height':'200px'}">
+            <ng-template pTemplate="title">
+                <div class="flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-align-center">Number Admin Summary</h5>
+                    <i class="pi pi-star" style="font-size: 25px"></i>
+                </div>
+            </ng-template>
+            <h4>653</h4>
+        </p-card>
+    </div>
+</div>

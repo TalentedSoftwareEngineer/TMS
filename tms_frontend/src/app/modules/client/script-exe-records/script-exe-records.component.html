@@ -1,0 +1,92 @@
+<h4 class="page_title">Sql Script Execution Records</h4>
+<div class="card pb-3">
+  <div class="grid">
+    <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
+        <span class="p-float-label">
+            <p-dropdown [options]="sql_scripts" id="sql_search" [(ngModel)]="sqlIdFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
+            <label for="sql_search">SQL</label>
+        </span>
+    </div>
+    <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
+        <span class="p-float-label">
+            <p-dropdown [options]="sql_users" id="user_search" [(ngModel)]="userIdFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
+            <label for="user_search">User</label>
+        </span>
+    </div>
+    <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
+        <span class="p-float-label">
+            <p-dropdown [options]="sql_results" id="result_search" [(ngModel)]="resultFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
+            <label for="result_search">Result</label>
+        </span>
+    </div>
+    <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
+        <div class="p-inputgroup">
+            <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+            <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+  <p-table [value]="script_exe_records" responsiveLayout="stack" [responsive]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th class="text-align-center" [ngClass]="sortActive === 'sql_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('sql_id')">Sql Script</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'result' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('result')">Result</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'imported' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('imported')">Imported</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'message' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('message')">Message</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'user_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('user_id')">User Name</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'executed_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('executed_at')">Execution Time</a>
+        </th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-script_exe_record>
+      <tr>
+        <td class="text-align-center">
+          <span class="p-column-title">Sql Script</span>
+          {{ script_exe_record.sql?.content }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Result</span>
+          {{ script_exe_record.result }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Imported</span>
+          {{ script_exe_record.imported }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Message</span>
+          {{ script_exe_record.message }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">User Name</span>
+          {{ script_exe_record.user?.username }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Execution Time</span>
+          {{ script_exe_record.executed_at }}
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <div class="flex justify-content-center align-items-center gap-3">
+    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+    <div class="p-fluid">
+      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getScriptResultsList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+    </div>
+  </div>
+</div>

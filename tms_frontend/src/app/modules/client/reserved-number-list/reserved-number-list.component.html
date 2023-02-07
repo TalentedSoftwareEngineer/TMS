@@ -1,0 +1,283 @@
+<h4 class="page_title">Reserved Number List</h4>
+<p-panel header="Reserved Number List" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons">
+        
+    </ng-template>
+
+    <div class="pt-2">
+        <div class="card">
+            <p-table
+                #reservedNumberListTable
+                [value]="reservedNumbers"
+                [(selection)]="selectedReservedNumbers"
+                dataKey="id"
+                styleClass="p-datatable-customers"
+                [rowHover]="true"
+                [rows]="10"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10,25,50]"
+                [loading]="reservedNumberListLoading"
+                [responsive]="true"
+                responsiveLayout="stack"
+                [paginator]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [filterDelay]="0" 
+                [globalFilterFields]="['tollFreeNumber','auctionedTFN','reservedDate','reservedUntilDate','contactPerson','contactNumber']"
+            >
+                <ng-template pTemplate="caption">
+                    <div class="table-header flex justify-content-end">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" (input)="reservedNumberListTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                        </span>
+                    </div>
+                </ng-template>
+    
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 3rem">
+                            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                        </th>
+                        <th pSortableColumn="tollFreeNumber">
+                            <div class="flex justify-content-center align-items-center">
+                                Toll Free Number
+                                <p-sortIcon field="tollFreeNumber"></p-sortIcon>
+                                <!-- <p-columnFilter type="text" field="tollFreeNumber" display="menu"></p-columnFilter> -->
+                            </div>
+                        </th>
+                        <th pSortableColumn="auctionedTFN">
+                            <div class="flex justify-content-center align-items-center">
+                                Auctioned TFN
+                                <p-sortIcon field="auctionedTFN"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="reservedDate">
+                            <div class="flex justify-content-center align-items-center">
+                                Reserved Date
+                                <p-sortIcon field="reservedDate"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="reservedUntilDate">
+                            <div class="flex justify-content-center align-items-center">
+                                Reserved Until Date
+                                <p-sortIcon field="reservedUntilDate"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="contactPerson">
+                            <div class="flex justify-content-center align-items-center">
+                                Contact Person
+                                <p-sortIcon field="contactPerson"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="contactNumber">
+                            <div class="flex justify-content-center align-items-center">
+                                Contact Number
+                                <p-sortIcon field="contactNumber"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th class="text-align-center w-100px">Action</th>
+                    </tr>
+                </ng-template>
+    
+                <ng-template pTemplate="body" let-reservedNumber>
+                    <tr class="p-selectable-row text-align-center">
+                        <td>
+                            <p-tableCheckbox [value]="reservedNumber"></p-tableCheckbox>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Toll Free Number</span>
+                            {{reservedNumber.tollFreeNumber}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Auctioned TFN</span>
+                            {{reservedNumber.auctionedTFN}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Reserved Date</span>
+                            {{reservedNumber.reservedDate}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Reserved Until Date</span>
+                            {{reservedNumber.reservedUntilDate}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Contact Person</span>
+                            {{reservedNumber.contactPerson}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Contact Number</span>
+                            {{reservedNumber.contactNumber}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Action</span>
+                            <button pButton pRipple type="button" label="TAD" class="p-button-rounded p-button-outlined"></button>
+                        </td>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8">No Reserved Numbers List found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="onSpare()" label="Spare" icon="pi pi-plus-circle" class="p-button-text"></button>
+                <button pButton pRipple (click)="onActivate()" label="Activate" icon="pi pi-check" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template>
+</p-panel>
+
+<div class="mt-5 mb-5"></div>
+<p-panel header="Multi Creating Result" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div class="card">
+            <p-table
+                #multiCreatingResultTable
+                [value]="multiCreatingResults"
+                dataKey="id"
+                [rowHover]="true"
+                [rows]="10"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10,25,50]"
+                [loading]="multiCreatingResultLoading"
+                [responsive]="true"
+                responsiveLayout="stack"
+                [paginator]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [filterDelay]="0" 
+                [globalFilterFields]="['createdBy','submitDate','templateName', 'effectiveTime', 'total', 'completed', 'message', 'progressStatus']"
+            >
+                <ng-template pTemplate="caption">
+                    <div class="table-header flex justify-content-end">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" (input)="multiCreatingResultTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                        </span>
+                    </div>
+                </ng-template>
+    
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 3rem">
+                            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                        </th>
+                        <th pSortableColumn="createdBy">
+                            <div class="flex justify-content-center align-items-center">
+                                Created By
+                                <p-sortIcon field="createdBy"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="submitDate">
+                            <div class="flex justify-content-center align-items-center">
+                                Submit Date
+                                <p-sortIcon field="submitDate"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="templateName">
+                            <div class="flex justify-content-center align-items-center">
+                                Template Name
+                                <p-sortIcon field="templateName"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="effectiveTime">
+                            <div class="flex justify-content-center align-items-center">
+                                Effective Time
+                                <p-sortIcon field="effectiveTime"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="total">
+                            <div class="flex justify-content-center align-items-center">
+                                Total
+                                <p-sortIcon field="total"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="completed">
+                            <div class="flex justify-content-center align-items-center">
+                                Completed
+                                <p-sortIcon field="completed"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="message">
+                            <div class="flex justify-content-center align-items-center">
+                                Message
+                                <p-sortIcon field="message"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="progressStatus">
+                            <div class="flex justify-content-center align-items-center">
+                                Progress Status
+                                <p-sortIcon field="progressStatus"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th class="text-align-center w-100px">
+                            Action
+                        </th>
+                    </tr>
+                </ng-template>
+    
+                <ng-template pTemplate="body" let-multiCreatingResult>
+                    <tr class="p-selectable-row text-align-center">
+                        <td>
+                            <p-tableCheckbox [value]="multiCreatingResult"></p-tableCheckbox>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Created By</span>
+                            {{multiCreatingResult.createdBy}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Submit Date</span>
+                            {{multiCreatingResult.submitDate}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Template Name</span>
+                            {{multiCreatingResult.templateName}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Effective Time</span>
+                            {{multiCreatingResult.effectiveTime}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Total</span>
+                            <p-badge [value]="multiCreatingResult.total" size="large" severity="success" styleClass="mr-2"></p-badge>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Completed</span>
+                            <p-badge [value]="multiCreatingResult.completed" size="large" severity="success" styleClass="mr-2"></p-badge>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Message</span>
+                            {{multiCreatingResult.message}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Progress Status</span>
+                            <i *ngIf="multiCreatingResult.progressStatus" class="pi pi-check"></i>
+                            <i *ngIf="!multiCreatingResult.progressStatus" class="pi pi-times"></i>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Action</span>
+                            <span class="p-buttonset">
+                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined"></button>
+                            </span>
+                        </td>                                                            
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8">No Multi Creating Result found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</p-panel>
+

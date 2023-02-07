@@ -1,0 +1,159 @@
+<h4 class="page_title m-0">Submit Resp Org Change Request</h4>
+<h5 class="m-0">The Resp Org Change will only change the controlling Resp Org of the number, the carrier will not be updated.</h5>
+
+<div class="card mt-5">
+    <div class="flex justify-content-end">
+        <button id="btn_contactInformation"><span>&#9990;</span>Contact Information *</button>
+    </div>
+
+    <div class="grid mt-5">
+        <div class="col p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="requestTypeOptions" 
+                    id="requestType" 
+                    name="requestType" 
+                    (onChange)="onChangeRequestType()"
+                    [(ngModel)]="selectRequestType" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                    [virtualScroll]="true" 
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label for="requestType">Request Type</label>
+            </span>
+        </div>
+        <div *ngIf="selectRequestType=='FUTURE'" class="col p-fluid">
+            <span class="p-float-label">
+                <p-calendar 
+                    inputId="effDate"
+                    [(ngModel)]="inputEffDate" 
+                    dateFormat="mm/dd/yy" 
+                    [showButtonBar]="true" 
+                    [numberOfMonths]="3" 
+                    [showTransitionOptions]="'0ms'" 
+                    [hideTransitionOptions]="'0ms'" 
+                ></p-calendar>
+                <label for="effDate">Date</label>
+            </span>
+        </div>
+    </div>
+
+    <!-- <p-divider></p-divider>
+    <h5>Contact Information</h5>
+    <div>
+        <div class="field-radiobutton">
+            <p-radioButton inputId="myInfo" name="cInfo" value="USE_MY_INFO" [(ngModel)]="radioContactInfo"></p-radioButton>
+            <label for="myInfo">Use my Information</label>
+        </div>
+        <div class="field-radiobutton">
+            <p-radioButton inputId="changeCo" name="cInfo" value="USE_CHANGE_CONTACT_INFO" [(ngModel)]="radioContactInfo" [disabled]="true"></p-radioButton>
+            <label for="changeCo">Use Change Contact Information</label>
+        </div>
+        <i 
+            class="pi pi-info-circle text-lg" 
+            tooltipStyleClass="info-tooltip" 
+            [escape]="false" 
+            pTooltip="<p>There is no Change Contact Information set for your organization</p>" 
+            [hideDelay]="500" 
+            style="margin-left: 1.2px;cursor: pointer;"
+        ></i>
+
+        <div class="grid mt-3">
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="field p-float-label mb-0">
+                    <input type="text" id="contactName" name="contactName" pInputText [(ngModel)]="inputContactName" disabled> 
+                    <label for="contactName">Name</label>
+                </span>
+            </div>
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="field p-float-label mb-0">
+                    <input type="text" id="contactPhone" name="contactPhone" pInputText [(ngModel)]="inputContactNumber" disabled> 
+                    <label for="contactPhone">Phone</label>
+                </span>
+            </div>
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="field p-float-label mb-0">
+                    <input type="text" id="contactEmail" name="contactEmail" pInputText [(ngModel)]="inputContactEmail" disabled> 
+                    <label for="contactEmail">Email Address</label>
+                </span>
+            </div>
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="field p-float-label mb-0">
+                    <input type="text" id="contactCompany" name="contactCompany" pInputText [(ngModel)]="inputContactCompany" disabled> 
+                    <label for="contactCompany">Company Name</label>
+                </span>
+            </div>
+        </div>
+
+        <div class="p-fluid mt-2">
+            <span class="field p-float-label">
+                <textarea class="pt-4" id="notes" name="notes" aria-describedby="notes-help" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea></textarea>
+                <label for="notes">Notes / Alternative Contact Information</label>
+                <small id="notes-help" class="block">You may add additional notes or information for an alternate contact.</small>
+            </span>
+        </div>
+    </div> -->
+
+    <p-divider></p-divider>
+    <div class="grid">
+        <div class="col-3">
+            <p class="mb-2">CSV or XLS file :</p>
+            <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
+            <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
+        </div>
+        <div class="col-9 p-fluid">
+            <span class="field p-float-label mt-5">
+                <textarea class="pt-4" id="tollFreeNumbers" name="tollFreeNumbers" [(ngModel)]="inputTollFreeNumbers" (blur)="onNumFieldFocusOut()" rows="5" cols="30" pInputTextarea></textarea>
+                <label for="tollFreeNumbers">Toll-Free Numbers*</label>
+            </span>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+        </div>
+    </div>
+
+    <p-divider></p-divider>
+    <div>
+        <h5 class="mb-0">LOA Attachment</h5>
+        <small>If the allowed size limit is reached the document(s) will be compressed.</small>
+        <div class="grid mt-3">
+            <div class="col p-fluid">
+                <span class="p-float-label">
+                    <p-dropdown 
+                        [options]="attachmentTypeOptions" 
+                        id="attachmentType" 
+                        name="attachmentType" 
+                        (onChange)="onChangeAttachmentType()"
+                        [(ngModel)]="selectAttachmentType" 
+                        optionLabel="name" 
+                        optionValue="value"
+                        scrollHeight="150px" 
+                        [virtualScroll]="true" 
+                        [itemSize]="40"
+                    ></p-dropdown>
+                    <label for="attachmentType">Attachment Type *</label>
+                </span>
+            </div>
+            <div *ngIf="selectAttachmentType=='LoaA'" class="col">
+                <button pButton pRipple class="p-button-text" icon="pi pi-upload" label="Upload" (click)="attachFileInput.click()"></button>
+                <input #attachFileInput type="file" (change)="onUploadAttachmentFile()" style="display: none" accept=".pdf,.tiff"/>
+            </div>
+            <div *ngIf="selectAttachmentType=='LoaG'" class="col">
+                <button pButton pRipple class="p-button-text" icon="pi pi-" label="Generate" (click)="onClickGenerate()" disabled></button>
+            </div>
+        </div>
+
+        <h5 class="mb-0">Add Related Documents</h5>
+        <div>
+            <button pButton pRipple class="p-button-text" icon="pi pi-upload" label="Upload Documents" (click)="docFileInput.click()"></button>
+            <input #docFileInput type="file" (change)="onUploadDocFile()" style="display: none" accept=".pdf,.tiff"/>
+        </div>
+    </div>
+</div>
+
+<div class="flex justify-content-end mb-3">
+    <span class="p-buttonset">
+        <button pButton pRipple type="button" (click)="onCancel()" icon="pi pi-times" label="Cancel" class="p-button-text p-button-danger"></button>
+        <button pButton pRipple type="button" (click)="onSubmit()" icon="pi pi-send" label="Submit" class="p-button-text"></button>
+    </span>
+</div>

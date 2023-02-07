@@ -1,0 +1,208 @@
+<!-- 
+<div class="grid">
+    <div class="lg:col-6 col-12">
+        <p-panel header="Main Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+
+            <ng-template pTemplate="footer">
+
+            </ng-template>
+        </p-panel>
+
+        <h1></h1>
+        <p-panel header="Change Password" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+
+            <ng-template pTemplate="footer">
+
+            </ng-template>
+        </p-panel>
+
+        <h1></h1>
+        <p-panel header="Somos Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+
+            <ng-template pTemplate="footer">
+
+            </ng-template>
+        </p-panel>
+    </div>
+    <div class="lg:col-6 col-12">
+        <p-panel header="Additional Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+
+            <ng-template pTemplate="footer">
+
+            </ng-template>
+        </p-panel>
+    </div>
+</div> -->
+
+<div class="card">
+    <p-tabView [(activeIndex)]="accountTabIndex">
+        <p-tabPanel header="Main Information">
+            <div class="p-fluid pt-2">  
+                <span class="field p-float-label">
+                    <input type="text" id="username" name="username" pInputText [(ngModel)]="input_username" required> 
+                    <label for="username">Username</label>
+                </span>
+                <span class="field p-float-label">
+                    <p-dropdown [options]="companies" id="company_id" name="company_id" [(ngModel)]="input_company_id" placeholder="Company" optionLabel="name" scrollHeight="150px"  [required]="required"></p-dropdown>
+                    <label for="company_id">Company</label>
+                </span>
+                <span class="field p-float-label">
+                    <p-dropdown [options]="roles" id="role_id" name="role_id" [(ngModel)]="input_role_id" placeholder="Role" optionLabel="name" scrollHeight="150px"  [required]="required" [disabled]="true"></p-dropdown>
+                    <label for="role_id">Role</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="email" name="email" pInputText [(ngModel)]="input_email" required> 
+                    <label for="email">Email</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="first_name" name="first_name" pInputText [(ngModel)]="input_first_name" required> 
+                    <label for="first_name">First Name</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="last_name" name="last_name" pInputText [(ngModel)]="input_last_name" required> 
+                    <label for="last_name">Last Name</label>
+                </span>
+            </div>
+            <span class="p-buttonset flex justify-content-end">
+                <button pButton pRipple (click)="mainReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+                <button pButton pRipple (click)="onMainUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+        </p-tabPanel>
+        <p-tabPanel header="Change Password">
+            <div class="p-fluid pt-2">  
+                <span class="field p-float-label">
+                    <p-password id="old_password" name="old_password" [(ngModel)]="input_old_password" [toggleMask]="true" [feedback]="false"></p-password>
+                    <label for="old_password">Old Password</label>
+                </span>
+                <span class="field p-float-label">
+                    <p-password id="password" name="password" [(ngModel)]="input_password" [toggleMask]="true" [feedback]="false" [required]="required"></p-password>
+                    <label for="password">New Password</label>
+                </span>
+                <span class="field p-float-label">
+                    <p-password id="confirm_password" name="confirm_password" [(ngModel)]="input_confirm_password" [toggleMask]="true" [feedback]="false"></p-password>
+                    <label for="confirm_password">Confirm Password</label>
+                </span>
+            </div>
+            <span class="p-buttonset flex justify-content-end">
+                <button pButton pRipple (click)="passwordReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+                <button pButton pRipple (click)="onPasswordUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+        </p-tabPanel>
+        <p-tabPanel header="Somos Information">
+            <div class="p-fluid pt-2">  
+                <span class="field p-float-label">
+                    <p-dropdown [options]="sms_users" id="somos_id" name="somos_id" [(ngModel)]="input_somos_id" placeholder="Somos User" optionLabel="name" scrollHeight="150px" [required]="required"></p-dropdown>
+                    <label for="somos_id">Somos User</label>
+                </span>
+            </div>
+            <span class="p-buttonset flex justify-content-end">
+                <button pButton pRipple (click)="somosReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+                <button pButton pRipple (click)="onSomosUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+        </p-tabPanel>
+        <p-tabPanel header="Additional Information">
+            <div class="p-fluid pt-2">
+                <span class="field p-float-label">
+                    <input type="text" id="country" name="country" pInputText [(ngModel)]="input_country"> 
+                    <label for="country">Country</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="address" name="address" pInputText [(ngModel)]="input_address"> 
+                    <label for="address">Address</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="province" name="province" pInputText [(ngModel)]="input_province"> 
+                    <label for="province">Province</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="city" name="city" pInputText [(ngModel)]="input_city"> 
+                    <label for="city">City</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="zip_code" name="zip_code" pInputText [(ngModel)]="input_zip_code"> 
+                    <label for="zip_code">Zip Code</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="number" id="tel1" name="tel1" pInputText [(ngModel)]="input_tel1"> 
+                    <label for="tel1">Tel-1</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="number" id="tel2" name="tel2" pInputText [(ngModel)]="input_tel2"> 
+                    <label for="tel2">Tel-2</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="number" id="mobile" name="mobile" pInputText [(ngModel)]="input_mobile"> 
+                    <label for="mobile">Mobile</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="number" id="fax" name="fax" pInputText [(ngModel)]="input_fax"> 
+                    <label for="fax">Fax</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="text" id="contact_name" name="contact_name" pInputText [(ngModel)]="input_contact_name"> 
+                    <label for="contact_name">Contact Name</label>
+                </span>
+                <span class="field p-float-label">
+                    <input type="number" id="contact_number" name="contact_number" pInputText [(ngModel)]="input_contact_number"> 
+                    <label for="contact_number">Contact Number</label>
+                </span>
+            </div>
+            <span class="p-buttonset flex justify-content-end">
+                <button pButton pRipple (click)="AdditionalReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+                <button pButton pRipple (click)="onAdditionalUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+        </p-tabPanel>
+        <p-tabPanel header="UI Settings">
+            <div class="grid mt-5">
+                <div class="col-12 md:col-6">
+                    <h5>Custom Logo Image</h5>
+                    <div class="" style="padding: 10px;">
+                    <img [src]="logoImg" [hidden]="logoImg == ''" height="50" />
+                    </div>
+                    <div class="justify-content-start">
+                    <input #customLogo  (change)="onChangeCustomLogoImg($event)" type="file" id="customLogo" name="customLogo" accept="image/*" style="display: none"/>
+                    <button pButton (click)="customLogo.click()" label="Choose" class="mr-2"></button>
+                    <button pButton [hidden]="logoImg == ''" (click)="onClickRemoveLogo()" label="Remove" class="p-button-danger"></button>
+                    </div>
+                </div>
+                <div class="col-12 md:col-6">
+                    <h5>Custom Avatar</h5>
+                    <div class="" style="padding: 10px;">
+                    <img [src]="avatar" [hidden]="avatar == ''" width="50" height="50" />
+                    </div>
+                    <div class="justify-content-start">
+                    <input #customAvatar (change)="onChangeAvatar($event)" type="file" id="customAvatar" name="customAvatar" accept="image/*" style="display:none;"/>
+                    <button pButton (click)="customAvatar.click()" label="Choose" class="mr-2"></button>
+                    <button pButton [hidden]="avatar == ''" (click)="onClickRemoveAvatar()" label="Remove" class="p-button-danger"></button>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="grid mt-5">
+                <div class="col-12 md:col-6" *ngIf="false">
+                    <h5>Menu Type</h5>
+                    <p-dropdown [options]="menuTypes" [(ngModel)]="selectedMenuType" optionLabel="label"></p-dropdown>
+                    <button pButton label="Preview" [disabled]="isMenuPreview" (click)="applyMenu()" class="p-button-info ml-2 vertical-align-middle"></button>
+                </div>
+                <div class="col-12 md:col-6 align-content-center">
+                    <h5>Dark Theme</h5>
+                    <p-dropdown [options]="darkThemes" [(ngModel)]="selectedDarkTheme" optionLabel="label"></p-dropdown>
+                    <button pButton label="Preview" [disabled]="isThemePreview" (click)="applyTheme('dark')" class="p-button-info ml-2 vertical-align-middle"></button>
+                </div>
+                <div class="col-12 md:col-6 align-content-center">
+                    <h5>Light Theme</h5>
+                    <p-dropdown [options]="lightThemes" [(ngModel)]="selectedLightTheme" optionLabel="label"></p-dropdown>
+                    <button pButton label="Preview" [disabled]="isThemePreview" (click)="applyTheme('light')" class="p-button-info ml-2 vertical-align-middle"></button>
+                </div>
+            </div>
+        
+            <div class="grid mt-5">
+                <div class="col-6">
+                </div>
+                <div class="col-6 text-right">
+                  <button pButton pRipple label="Apply" (click)="applySettings()"></button>
+                </div>
+            </div>
+        </p-tabPanel>
+    </p-tabView>
+</div>

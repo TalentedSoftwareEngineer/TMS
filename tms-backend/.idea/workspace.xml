@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="362a8693-4707-4c03-b32b-6df0474c9f50" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/configuration.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/controllers/configuration.controller.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="2IVDBarETM6i9bJyv2VAcPdftUU" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/models" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="web.server" />
+    <property name="ts.external.directory.path" value="F:\DIPVTEL\Source\TMS\tms-backend\node_modules\typescript\lib" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\repositories" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\models" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\models\users" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\repositories\somos" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\repositories\scripts" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\models" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\controllers" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\constants" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend\src\utils" />
+      <recent name="F:\DIPVTEL\Source\TMS\tms-backend" />
+    </key>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="362a8693-4707-4c03-b32b-6df0474c9f50" name="Default Changelist" comment="" />
+      <created>1670257722609</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1670257722609</updated>
+      <workItem from="1670257736619" duration="4075000" />
+      <workItem from="1670326871075" duration="1684000" />
+      <workItem from="1670416586195" duration="6542000" />
+      <workItem from="1670495163167" duration="16740000" />
+      <workItem from="1670530584170" duration="34874000" />
+      <workItem from="1670711486505" duration="6262000" />
+      <workItem from="1670822857641" duration="5117000" />
+      <workItem from="1670848155443" duration="551000" />
+      <workItem from="1670849227650" duration="72000" />
+      <workItem from="1671625942679" duration="291000" />
+      <workItem from="1671626253152" duration="11674000" />
+      <workItem from="1671642010218" duration="3637000" />
+      <workItem from="1671670847214" duration="5090000" />
+      <workItem from="1671718069217" duration="3866000" />
+      <workItem from="1672011003571" duration="14646000" />
+      <workItem from="1672036350647" duration="233000" />
+      <workItem from="1672036885437" duration="1263000" />
+      <workItem from="1672040521062" duration="4451000" />
+      <workItem from="1672119083057" duration="17395000" />
+      <workItem from="1672240149907" duration="2330000" />
+      <workItem from="1672244676135" duration="524000" />
+      <workItem from="1672246842188" duration="5398000" />
+      <workItem from="1672363663324" duration="1758000" />
+      <workItem from="1672384996979" duration="146000" />
+      <workItem from="1672401747601" duration="5755000" />
+      <workItem from="1672754634319" duration="1767000" />
+      <workItem from="1672791491499" duration="8000" />
+      <workItem from="1672838608114" duration="4568000" />
+      <workItem from="1672865525581" duration="623000" />
+      <workItem from="1672920724241" duration="33990000" />
+      <workItem from="1673005237036" duration="21672000" />
+      <workItem from="1673047887425" duration="2607000" />
+      <workItem from="1673199975696" duration="10610000" />
+      <workItem from="1673254490931" duration="22115000" />
+      <workItem from="1673299243404" duration="243000" />
+      <workItem from="1673301273684" duration="808000" />
+      <workItem from="1673302139718" duration="2059000" />
+      <workItem from="1673311276053" duration="201000" />
+      <workItem from="1673311636148" duration="1016000" />
+      <workItem from="1673383969902" duration="9880000" />
+      <workItem from="1673469141833" duration="12587000" />
+      <workItem from="1673530875095" duration="11446000" />
+      <workItem from="1673554358965" duration="15000" />
+      <workItem from="1673561006499" duration="7404000" />
+      <workItem from="1673615883382" duration="5172000" />
+      <workItem from="1673636057746" duration="2195000" />
+      <workItem from="1673640775097" duration="9884000" />
+      <workItem from="1673711397819" duration="17503000" />
+      <workItem from="1673871336996" duration="10055000" />
+      <workItem from="1673932525850" duration="38000" />
+      <workItem from="1674007063484" duration="10561000" />
+      <workItem from="1674044610635" duration="61000" />
+      <workItem from="1674067125294" duration="844000" />
+      <workItem from="1674073457050" duration="28000" />
+      <workItem from="1674086264929" duration="5507000" />
+      <workItem from="1674158601089" duration="4173000" />
+      <workItem from="1674164652568" duration="5532000" />
+      <workItem from="1674200125277" duration="479000" />
+      <workItem from="1674449428066" duration="22012000" />
+      <workItem from="1674570025703" duration="1887000" />
+      <workItem from="1674587705888" duration="761000" />
+      <workItem from="1674593465933" duration="9788000" />
+      <workItem from="1674650696707" duration="1515000" />
+      <workItem from="1674652743170" duration="118000" />
+      <workItem from="1674763914733" duration="2012000" />
+      <workItem from="1674820003552" duration="3543000" />
+      <workItem from="1674827266825" duration="749000" />
+      <workItem from="1674837294628" duration="1479000" />
+      <workItem from="1674847376470" duration="858000" />
+      <workItem from="1674979258853" duration="4543000" />
+      <workItem from="1675053768184" duration="11085000" />
+      <workItem from="1675142788525" duration="5204000" />
+      <workItem from="1675209283451" duration="10227000" />
+      <workItem from="1675311659456" duration="2419000" />
+      <workItem from="1675314708767" duration="1561000" />
+      <workItem from="1675452387275" duration="95000" />
+    </task>
+    <task id="LOCAL-00117" summary="change activity'result's api url.">
+      <created>1674044655169</created>
+      <option name="number" value="00117" />
+      <option name="presentableId" value="LOCAL-00117" />
+      <option name="project" value="LOCAL" />
+      <updated>1674044655169</updated>
+    </task>
+    <task id="LOCAL-00118" summary="fix event stream server issue.">
+      <created>1674067729389</created>
+      <option name="number" value="00118" />
+      <option name="presentableId" value="LOCAL-00118" />
+      <option name="project" value="LOCAL" />
+      <updated>1674067729389</updated>
+    </task>
+    <task id="LOCAL-00119" summary="upgrade for db changes.(nsr-req, result)">
+      <created>1674087436438</created>
+      <option name="number" value="00119" />
+      <option name="presentableId" value="LOCAL-00119" />
+      <option name="project" value="LOCAL" />
+      <updated>1674087436438</updated>
+    </task>
+    <task id="LOCAL-00120" summary="add SyncTimeout api to NQU part.">
+      <created>1674088325196</created>
+      <option name="number" value="00120" />
+      <option name="presentableId" value="LOCAL-00120" />
+      <option name="project" value="LOCAL" />
+      <updated>1674088325196</updated>
+    </task>
+    <task id="LOCAL-00121" summary="add delete api on NSR part.">
+      <created>1674089392616</created>
+      <option name="number" value="00121" />
+      <option name="presentableId" value="LOCAL-00121" />
+      <option name="project" value="LOCAL" />
+      <updated>1674089392616</updated>
+    </task>
+    <task id="LOCAL-00122" summary="add TfnRegistryContact model and repository for Contact Information.">
+      <created>1674161901110</created>
+      <option name="number" value="00122" />
+      <option name="presentableId" value="LOCAL-00122" />
+      <option name="project" value="LOCAL" />
+      <updated>1674161901110</updated>
+    </task>
+    <task id="LOCAL-00123" summary="add api for TfnRegistryContact Information.">
+      <created>1674165688184</created>
+      <option name="number" value="00123" />
+      <option name="presentableId" value="LOCAL-00123" />
+      <option name="project" value="LOCAL" />
+      <updated>1674165688184</updated>
+    </task>
+    <task id="LOCAL-00124" summary="merge query and update api into one.">
+      <created>1674173599026</created>
+      <option name="number" value="00124" />
+      <option name="presentableId" value="LOCAL-00124" />
+      <option name="project" value="LOCAL" />
+      <updated>1674173599026</updated>
+    </task>
+    <task id="LOCAL-00125" summary="update bulk process for SPECIFIC number search &amp; reserve.">
+      <created>1674175456918</created>
+      <option name="number" value="00125" />
+      <option name="presentableId" value="LOCAL-00125" />
+      <option name="project" value="LOCAL" />
+      <updated>1674175456918</updated>
+    </task>
+    <task id="LOCAL-00126" summary="add trnq controller. (initial)">
+      <created>1674175835225</created>
+      <option name="number" value="00126" />
+      <option name="presentableId" value="LOCAL-00126" />
+      <option name="project" value="LOCAL" />
+      <updated>1674175835225</updated>
+    </task>
+    <task id="LOCAL-00127" summary="add suggested number when reserve.">
+      <created>1674454386915</created>
+      <option name="number" value="00127" />
+      <option name="presentableId" value="LOCAL-00127" />
+      <option name="project" value="LOCAL" />
+      <updated>1674454386915</updated>
+    </task>
+    <task id="LOCAL-00128" summary="update number query&amp;update api to accept single number.">
+      <created>1674478363183</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1674478363183</updated>
+    </task>
+    <task id="LOCAL-00129" summary="prevent same error message">
+      <created>1674504282865</created>
+      <option name="number" value="00129" />
+      <option name="presentableId" value="LOCAL-00129" />
+      <option name="project" value="LOCAL" />
+      <updated>1674504282865</updated>
+    </task>
+    <task id="LOCAL-00130" summary="upgrade nsr api according to db changes.">
+      <created>1674527608091</created>
+      <option name="number" value="00130" />
+      <option name="presentableId" value="LOCAL-00130" />
+      <option name="project" value="LOCAL" />
+      <updated>1674527608091</updated>
+    </task>
+    <task id="LOCAL-00131" summary="save result after getting result from NQU api.">
+      <created>1674529178738</created>
+      <option name="number" value="00131" />
+      <option name="presentableId" value="LOCAL-00131" />
+      <option name="project" value="LOCAL" />
+      <updated>1674529178738</updated>
+    </task>
+    <task id="LOCAL-00132" summary="add trq req and result model.">
+      <created>1674533373650</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1674533373650</updated>
+    </task>
+    <task id="LOCAL-00133" summary="add trq req and result repository and relation.">
+      <created>1674533535167</created>
+      <option name="number" value="00133" />
+      <option name="presentableId" value="LOCAL-00133" />
+      <option name="project" value="LOCAL" />
+      <updated>1674533535167</updated>
+    </task>
+    <task id="LOCAL-00134" summary="add trq query api.">
+      <created>1674536476024</created>
+      <option name="number" value="00134" />
+      <option name="presentableId" value="LOCAL-00134" />
+      <option name="project" value="LOCAL" />
+      <updated>1674536476024</updated>
+    </task>
+    <task id="LOCAL-00135" summary="apply permission to trq part.">
+      <created>1674536684712</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1674536684712</updated>
+    </task>
+    <task id="LOCAL-00136" summary="fix issue when get access token.(empty response)">
+      <created>1674571020877</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1674571020877</updated>
+    </task>
+    <task id="LOCAL-00137" summary="fix issue when create somos user.">
+      <created>1674571976718</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1674571976718</updated>
+    </task>
+    <task id="LOCAL-00138" summary="fix issue when save contact information.">
+      <created>1674587879743</created>
+      <option name="number" value="00138" />
+      <option name="presentableId" value="LOCAL-00138" />
+      <option name="project" value="LOCAL" />
+      <updated>1674587879743</updated>
+    </task>
+    <task id="LOCAL-00139" summary="fix error message not saving..">
+      <created>1674602802611</created>
+      <option name="number" value="00139" />
+      <option name="presentableId" value="LOCAL-00139" />
+      <option name="project" value="LOCAL" />
+      <updated>1674602802611</updated>
+    </task>
+    <task id="LOCAL-00140" summary="fix trq api issue.">
+      <created>1674605294258</created>
+      <option name="number" value="00140" />
+      <option name="presentableId" value="LOCAL-00140" />
+      <option name="project" value="LOCAL" />
+      <updated>1674605294258</updated>
+    </task>
+    <task id="LOCAL-00141" summary="add MNQ model and repository.">
+      <created>1674606487255</created>
+      <option name="number" value="00141" />
+      <option name="presentableId" value="LOCAL-00141" />
+      <option name="project" value="LOCAL" />
+      <updated>1674606487255</updated>
+    </task>
+    <task id="LOCAL-00142" summary="add MNQ api.">
+      <created>1674608166186</created>
+      <option name="number" value="00142" />
+      <option name="presentableId" value="LOCAL-00142" />
+      <option name="project" value="LOCAL" />
+      <updated>1674608166187</updated>
+    </task>
+    <task id="LOCAL-00143" summary="remove testing code.">
+      <created>1674650889438</created>
+      <option name="number" value="00143" />
+      <option name="presentableId" value="LOCAL-00143" />
+      <option name="project" value="LOCAL" />
+      <updated>1674650889438</updated>
+    </task>
+    <task id="LOCAL-00144" summary="remove testing code.">
+      <created>1674651418413</created>
+      <option name="number" value="00144" />
+      <option name="presentableId" value="LOCAL-00144" />
+      <option name="project" value="LOCAL" />
+      <updated>1674651418413</updated>
+    </task>
+    <task id="LOCAL-00145" summary="fix issue to save message on activity result.">
+      <created>1674822868328</created>
+      <option name="number" value="00145" />
+      <option name="presentableId" value="LOCAL-00145" />
+      <option name="project" value="LOCAL" />
+      <updated>1674822868328</updated>
+    </task>
+    <task id="LOCAL-00146" summary="add news event.">
+      <created>1674823345987</created>
+      <option name="number" value="00146" />
+      <option name="presentableId" value="LOCAL-00146" />
+      <option name="project" value="LOCAL" />
+      <updated>1674823345987</updated>
+    </task>
+    <task id="LOCAL-00147" summary="add permission to news event.">
+      <created>1674823442275</created>
+      <option name="number" value="00147" />
+      <option name="presentableId" value="LOCAL-00147" />
+      <option name="project" value="LOCAL" />
+      <updated>1674823442275</updated>
+    </task>
+    <task id="LOCAL-00148" summary="change somos api into production.">
+      <created>1674984161592</created>
+      <option name="number" value="00148" />
+      <option name="presentableId" value="LOCAL-00148" />
+      <option name="project" value="LOCAL" />
+      <updated>1674984161592</updated>
+    </task>
+    <task id="LOCAL-00149" summary="fix reserve api issue..">
+      <created>1675057113613</created>
+      <option name="number" value="00149" />
+      <option name="presentableId" value="LOCAL-00149" />
+      <option name="project" value="LOCAL" />
+      <updated>1675057113613</updated>
+    </task>
+    <task id="LOCAL-00150" summary="fix nsr api issue..">
+      <created>1675057983220</created>
+      <option name="number" value="00150" />
+      <option name="presentableId" value="LOCAL-00150" />
+      <option name="project" value="LOCAL" />
+      <updated>1675057983220</updated>
+    </task>
+    <task id="LOCAL-00151" summary="add trq api to search, view detail, delete">
+      <created>1675060376913</created>
+      <option name="number" value="00151" />
+      <option name="presentableId" value="LOCAL-00151" />
+      <option name="project" value="LOCAL" />
+      <updated>1675060376913</updated>
+    </task>
+    <task id="LOCAL-00152" summary="add mnd api to search, view detail, delete">
+      <created>1675061529723</created>
+      <option name="number" value="00152" />
+      <option name="presentableId" value="LOCAL-00152" />
+      <option name="project" value="LOCAL" />
+      <updated>1675061529723</updated>
+    </task>
+    <task id="LOCAL-00153" summary="fix model issue to make required ro id.">
+      <created>1675063575627</created>
+      <option name="number" value="00153" />
+      <option name="presentableId" value="LOCAL-00153" />
+      <option name="project" value="LOCAL" />
+      <updated>1675063575627</updated>
+    </task>
+    <task id="LOCAL-00154" summary="re-arrange model name correctly.">
+      <created>1675064268749</created>
+      <option name="number" value="00154" />
+      <option name="presentableId" value="LOCAL-00154" />
+      <option name="project" value="LOCAL" />
+      <updated>1675064268749</updated>
+    </task>
+    <task id="LOCAL-00155" summary="add mnd req and result model.">
+      <created>1675064488479</created>
+      <option name="number" value="00155" />
+      <option name="presentableId" value="LOCAL-00155" />
+      <option name="project" value="LOCAL" />
+      <updated>1675064488479</updated>
+    </task>
+    <task id="LOCAL-00156" summary="add mnd req and result repository.">
+      <created>1675068375962</created>
+      <option name="number" value="00156" />
+      <option name="presentableId" value="LOCAL-00156" />
+      <option name="project" value="LOCAL" />
+      <updated>1675068375962</updated>
+    </task>
+    <task id="LOCAL-00157" summary="add relation to mnq request model.">
+      <created>1675068525497</created>
+      <option name="number" value="00157" />
+      <option name="presentableId" value="LOCAL-00157" />
+      <option name="project" value="LOCAL" />
+      <updated>1675068525497</updated>
+    </task>
+    <task id="LOCAL-00158" summary="add empty controller for MNQ.">
+      <created>1675068691157</created>
+      <option name="number" value="00158" />
+      <option name="presentableId" value="LOCAL-00158" />
+      <option name="project" value="LOCAL" />
+      <updated>1675068691157</updated>
+    </task>
+    <task id="LOCAL-00159" summary="add MND api to integrate with somos">
+      <created>1675149741090</created>
+      <option name="number" value="00159" />
+      <option name="presentableId" value="LOCAL-00159" />
+      <option name="project" value="LOCAL" />
+      <updated>1675149741090</updated>
+    </task>
+    <task id="LOCAL-00160" summary="optimizing number service.">
+      <created>1675155684566</created>
+      <option name="number" value="00160" />
+      <option name="presentableId" value="LOCAL-00160" />
+      <option name="project" value="LOCAL" />
+      <updated>1675155684566</updated>
+    </task>
+    <task id="LOCAL-00161" summary="optimizing number service for saving task.">
+      <created>1675240920193</created>
+      <option name="number" value="00161" />
+      <option name="presentableId" value="LOCAL-00161" />
+      <option name="project" value="LOCAL" />
+      <updated>1675240920193</updated>
+    </task>
+    <task id="LOCAL-00162" summary="adjust task action and type.">
+      <created>1675241086673</created>
+      <option name="number" value="00162" />
+      <option name="presentableId" value="LOCAL-00162" />
+      <option name="project" value="LOCAL" />
+      <updated>1675241086673</updated>
+    </task>
+    <task id="LOCAL-00163" summary="re-arrange for saving number and task for MNQ, MND, NSR, NQU, TRQ.">
+      <created>1675245345554</created>
+      <option name="number" value="00163" />
+      <option name="presentableId" value="LOCAL-00163" />
+      <option name="project" value="LOCAL" />
+      <updated>1675245345554</updated>
+    </task>
+    <task id="LOCAL-00164" summary="make page request model and utilities">
+      <created>1675313704666</created>
+      <option name="number" value="00164" />
+      <option name="presentableId" value="LOCAL-00164" />
+      <option name="project" value="LOCAL" />
+      <updated>1675313704666</updated>
+    </task>
+    <task id="LOCAL-00165" summary="finish mnd api.(get, find, delete)">
+      <created>1675315878760</created>
+      <option name="number" value="00165" />
+      <option name="presentableId" value="LOCAL-00165" />
+      <option name="project" value="LOCAL" />
+      <updated>1675315878760</updated>
+    </task>
+    <option name="localTasksCounter" value="166" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ORDER">
+      <list>
+        <option value="0" />
+        <option value="2" />
+        <option value="3" />
+        <option value="1" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="1">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+        <entry key="2">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:F:/DIPVTEL/Source/TMS/tms-backend/src/models" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="OPEN_TABS">
+      <set>
+        <option value="1" />
+        <option value="2" />
+      </set>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="fix trq api issue." />
+    <MESSAGE value="add MNQ model and repository." />
+    <MESSAGE value="add MNQ api." />
+    <MESSAGE value="remove testing code." />
+    <MESSAGE value="fix issue to save message on activity result." />
+    <MESSAGE value="add news event." />
+    <MESSAGE value="add permission to news event." />
+    <MESSAGE value="change somos api into production." />
+    <MESSAGE value="fix reserve api issue.." />
+    <MESSAGE value="fix nsr api issue.." />
+    <MESSAGE value="add trq api to search, view detail, delete" />
+    <MESSAGE value="add mnd api to search, view detail, delete" />
+    <MESSAGE value="fix model issue to make required ro id." />
+    <MESSAGE value="re-arrange model name correctly." />
+    <MESSAGE value="add mnd req and result model." />
+    <MESSAGE value="add mnd req and result repository." />
+    <MESSAGE value="add relation to mnq request model." />
+    <MESSAGE value="add empty controller for MNQ." />
+    <MESSAGE value="add MND api to integrate with somos" />
+    <MESSAGE value="optimizing number service." />
+    <MESSAGE value="optimizing number service for saving task." />
+    <MESSAGE value="adjust task action and type." />
+    <MESSAGE value="re-arrange for saving number and task for MNQ, MND, NSR, NQU, TRQ." />
+    <MESSAGE value="make page request model and utilities" />
+    <MESSAGE value="finish mnd api.(get, find, delete)" />
+    <option name="LAST_COMMIT_MESSAGE" value="finish mnd api.(get, find, delete)" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="137" y="19" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1672939593871">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="137" y="19" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1672939593871" />
+    <state x="-926" y="100" key="#com.intellij.ide.util.MemberChooser" timestamp="1674595942345">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-926" y="100" key="#com.intellij.ide.util.MemberChooser/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1674595942345" />
+    <state x="488" y="80" key="#com.intellij.ide.util.MemberChooser/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1671629681955" />
+    <state x="-1005" y="136" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1675068572575">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-1005" y="136" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1675068572575" />
+    <state x="413" y="111" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673473743069" />
+    <state x="-887" y="5" width="749" height="860" key="CommitChangelistDialog2" timestamp="1675315877292">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-887" y="5" width="749" height="860" key="CommitChangelistDialog2/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1675315877292" />
+    <state x="308" y="0" key="CommitChangelistDialog2/0.0.1366.728/-1440.5.1440.860@0.0.1366.728" timestamp="1673713957667" />
+    <state x="308" y="0" key="CommitChangelistDialog2/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673475441912" />
+    <state x="92" y="92" width="1182" height="544" key="DiffContextDialog" timestamp="1673474685068">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="92" y="92" width="1182" height="544" key="DiffContextDialog/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673474685068" />
+    <state x="-952" y="146" key="FileChooserDialogImpl" timestamp="1675052907255">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-952" y="146" key="FileChooserDialogImpl/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1675052907255" />
+    <state x="463" y="119" key="FileChooserDialogImpl/0.0.1366.728/-1440.5.1440.860@0.0.1366.728" timestamp="1673728156698" />
+    <state x="463" y="119" key="FileChooserDialogImpl/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673435165478" />
+    <state width="1345" height="179" key="GridCell.Tab.0.bottom" timestamp="1671625965946">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1345" height="179" key="GridCell.Tab.0.bottom/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1671625965946" />
+    <state width="1345" height="179" key="GridCell.Tab.0.center" timestamp="1671625965946">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1345" height="179" key="GridCell.Tab.0.center/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1671625965946" />
+    <state width="1345" height="179" key="GridCell.Tab.0.left" timestamp="1671625965946">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1345" height="179" key="GridCell.Tab.0.left/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1671625965946" />
+    <state width="1345" height="179" key="GridCell.Tab.0.right" timestamp="1671625965946">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1345" height="179" key="GridCell.Tab.0.right/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1671625965946" />
+    <state x="184" y="6" key="SettingsEditor" timestamp="1670258197411">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="184" y="6" key="SettingsEditor/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1670258197411" />
+    <state x="-1014" y="129" width="582" height="620" key="StructurePopup" timestamp="1675057017748">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-1014" y="129" width="582" height="620" key="StructurePopup/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1675057017748" />
+    <state x="404" y="105" width="552" height="524" key="StructurePopup/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673401034917" />
+    <state x="-1348" y="97" width="1256" height="676" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1673874276599">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-1348" y="97" width="1256" height="676" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1673874276599" />
+    <state x="-1040" y="118" width="640" height="634" key="find.popup" timestamp="1674651364579">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-1040" y="118" width="640" height="634" key="find.popup/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1674651364579" />
+    <state x="379" y="96" width="607" height="536" key="find.popup/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673272240559" />
+    <state x="-1083" y="196" width="709" height="800" key="run.anything.popup" timestamp="1674607382417">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-1083" y="196" width="709" height="800" key="run.anything.popup/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1674607382417" />
+    <state x="339" y="162" width="673" height="678" key="run.anything.popup/0.0.1366.728/-1440.5.1440.860@0.0.1366.728" timestamp="1673733689739" />
+    <state x="339" y="162" width="672" height="677" key="run.anything.popup/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673400491921" />
+    <state x="-1075" y="63" width="709" height="801" key="search.everywhere.popup" timestamp="1675315546233">
+      <screen x="-1440" y="5" width="1440" height="860" />
+    </state>
+    <state x="-1075" y="63" width="709" height="801" key="search.everywhere.popup/0.0.1366.728/-1440.5.1440.860@-1440.5.1440.860" timestamp="1675315546233" />
+    <state x="346" y="49" width="672" height="678" key="search.everywhere.popup/0.0.1366.728/1366.0.1440.860@0.0.1366.728" timestamp="1673386698510" />
+  </component>
+</project>

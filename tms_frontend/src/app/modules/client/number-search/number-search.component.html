@@ -1,0 +1,437 @@
+<h4 class="page_title">Number Search And Reserve</h4>
+
+<p-panel header="Search" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons">
+        <button id="btn_contactInformation" (click)="validContactInfo=true"><span>&#9990;</span>Contact Information *</button>
+    </ng-template>
+
+    <div class="pt-2">
+        <div class="grid">
+            <div class="col p-fluid">
+                <span class="p-float-label">
+                    <input type="number" id="quantity" name="quantity" pInputText [(ngModel)]="input_quantity" (input)="onChangeQuantity($event)" [disabled]="numType == gConst.OCA_NUM_TYPE_SPECIFIC"> 
+                    <label for="quantity">Quantity *</label>
+                </span>
+                <p *ngIf="!validQty" class="p-error">Starting Quantity: Must be between 1 and 10.</p>
+            </div>
+
+            <div class="col p-fluid flex align-items-center justify-content-center">
+                <label class="ml-3" for="consecutive">
+                    <p-inputSwitch
+                        id="consecutive" 
+                        name="consecutive" 
+                        [(ngModel)]="input_consecutive"
+                        (onChange)="onNumFieldFocusOut()"
+                        [disabled]="disableCons"
+                    ></p-inputSwitch>
+                    Consecutive
+                </label>
+            </div>
+
+            <div class="col">
+
+            </div>
+        </div>
+
+        <div class="grid mt-5">
+            <div class="col-3">
+                <p class="mb-2">CSV or XLS file :</p>
+                <!-- <p-fileUpload 
+                    #fubauto 
+                    mode="basic" 
+                    url=""
+                    accept=".xls,.xlsx,.csv" 
+                    (onSelect)="onCsvXlUploadAuto($event)" 
+                    chooseLabel="Choose File"
+                ></p-fileUpload> -->
+                <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
+                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
+            </div>
+            <div class="col-9 p-fluid">
+                <span class="field p-float-label mt-5">
+                    <textarea class="pt-4" id="number_maskEntry" name="number_maskEntry" [(ngModel)]="inputNumberMaskEntry" (blur)="onNumFieldFocusOut()" rows="5" cols="30" pInputTextarea></textarea>
+                    <label for="number_maskEntry">Number or Mask Entry</label>
+                </span>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters, '*', '&' and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_CONS" class="p-error">Number or Mask Entry: Last character must equal '*' if consecutive is selected.</strong>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_NPA" class="p-error">Number or Mask Entry: NPA must be an existing 3-digit 8xx Toll-Free NPA code known to the TFN Registry (e.g., 800).</strong>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_AMP" class="p-error">Number or Mask Entry: Number cannot contain a single '&'.</strong>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_WILDCARD" class="p-error">Number or Mask Entry: When performing a wild card search, the Number or Mask Entry field can be either empty or contain at most one number.</strong>
+            </div>
+        </div>
+
+        <p-panel styleClass="child_panel" header="Advanced Search" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+            <div class="pt-4">
+                <div class="grid">
+                    <div class="col p-fluid">
+                        <span class="p-float-label">
+                            <p-dropdown 
+                                [options]="npas" 
+                                id="npa" 
+                                name="npa" 
+                                [(ngModel)]="inputNpa" 
+                                optionLabel="name" 
+                                [showClear]="true" 
+                                scrollHeight="200px" 
+                                [virtualScroll]="true" 
+                                [itemSize]="40"
+                                [disabled]="numType !== gConst.OCA_NUM_TYPE_RANDOM"
+                            ></p-dropdown>
+                            <label for="npa">Toll-Free NPA</label>
+                        </span>
+                    </div>
+
+                    <div class="col p-fluid">
+                        <span class="p-float-label">
+                            <input type="text" id="nxx" name="nxx" pInputText [(ngModel)]="inputNxx" (blur)="onNXXFieldFocusOut()" [disabled]="numType !== gConst.OCA_NUM_TYPE_RANDOM"> 
+                            <label for="nxx">Starting NXX</label>
+                        </span>
+                        <p *ngIf="!validNxx" class="p-error">Starting NXX: Must be three numerics.</p>
+                    </div>
+
+                    <div class="col p-fluid">
+                        <span class="p-float-label">
+                            <input type="text" id="line" name="line" pInputText [(ngModel)]="inputLine" (blur)="onLineFieldFocusOut()" [disabled]="numType !== gConst.OCA_NUM_TYPE_RANDOM"> 
+                            <label for="line">Starting line</label>
+                        </span>
+                        <p *ngIf="!validLine" class="p-error">Starting LINE: Must be four numerics.</p>
+                    </div>
+                </div>
+            </div>
+        </p-panel>
+
+        <!-- <div class="p-fluid mt-5">
+            <span class="field p-float-label">
+                <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="5" cols="30" pInputTextarea disabled></textarea>
+                <label for="message">Message</label>
+            </span>
+        </div> -->
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="performNUS(gConst.NUS_SUBMIT_TYPE_SEARCH)" icon="pi pi-search" label="Search" class="p-button-text" [disabled]="disableSearch"></button>
+                <button pButton pRipple (click)="performNUS(gConst.NUS_SUBMIT_TYPE_SRCHRES)" icon="pi pi-search-plus" label="Search & Reserve" class="p-button-text p-button-help"></button>
+                <button pButton pRipple (click)="onReset()" icon="pi pi-undo" label="Reset" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template>
+</p-panel>
+
+<p-panel [header]="resultsLength==-1?'':('Total '+resultsLength)+' Record'+(resultsLength>1?'s':'')" styleClass="mt-5" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <p-table 
+            [value]="results" 
+            responsiveLayout="stack" 
+            [responsive]="true"
+            dataKey="id"
+            [rowHover]="true"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="text-align-center">
+                        <a>Created By</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <a (click)="onSortChange('sub_dt_tm')">Submit Date</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'type' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <a (click)="onSortChange('type')">Type</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'submit_type' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <a (click)="onSortChange('submit_type')">Submit Type</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'total' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <a (click)="onSortChange('total')">Total</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'completed' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <a (click)="onSortChange('completed')">Completed</a>
+                    </th>
+                    <th class="text-align-center msg-width" [ngClass]="sortActive === 'message' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <a (click)="onSortChange('message')">Message</a>
+                    </th>
+                    <th class="text-align-center status-width" [ngClass]="sortActive === 'status' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <a (click)="onSortChange('status')">Status</a>
+                    </th>
+                    <th class="text-align-center w-100px">
+                        Action
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-result>
+                <tr>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Created By</span>
+                        {{ result.user.username }}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Submit Date</span>
+                        {{ result.sub_dt_tm }}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Type</span>
+                        {{ result.type }}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Submit Type</span>
+                        {{ result.submit_type }}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Total</span>
+                        <p-tag styleClass="mr-2" severity="success" [value]="result.total"></p-tag>
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Completed</span>
+                        <p-tag styleClass="mr-2" [severity]="getCompletedTagColor(result)" [value]="getCompleted(result)"></p-tag>
+                    </td>
+                    <td class="text-align-center msg-width">
+                        <span class="p-column-title">Message</span>
+                        {{ getMessage(result) }}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Status</span>
+                        <div *ngIf="isProgressing(result)">
+                            <!-- <p class="mb-1"><span>{{result.total}}</span> / <span>{{result.failed+result.completed}}</span></p> -->
+                            <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
+                        </div>
+                        <p-tag *ngIf="!isProgressing(result)" styleClass="mr-2" [severity]="getStatusTagColor(result)" [value]="getStatus(result)"></p-tag>
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-buttonset">
+                            <button pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="onOpenViewModal($event, result)"></button>
+                            <button pButton type="button" icon="pi pi-download" class="p-button-rounded p-button-outlined p-button-warning" (click)="onDownloadCsv($event, result)"></button>
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="delete($event, result.id)"></button>
+                        </span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <div class="flex justify-content-center align-items-center gap-3">
+            <p-paginator [rows]="pageSize" [totalRecords]="resultsLength" (onPageChange)="paginate($event)"></p-paginator>
+            <div class="p-fluid">
+                <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getNSRData()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+            </div>
+        </div>
+    </div>
+</p-panel>
+
+<p-dialog header="Search And Reserve Result" styleClass="c-modal pt-2" [(visible)]="flagOpenModal" (onHide)="closeModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <div class="grid pl-5 pr-5">
+        <div class="col-12 lg:col-4 pt-3 pb-0">
+            <div class="p-fluid">
+                <!-- <p class="mb-1">Quantity:</p>
+                <p class="nsr-result">{{resultQuantity}}</p> -->
+                <span class="p-float-label">
+                    <input type="text" pInputText [(ngModel)]="resultQuantity" disabled> 
+                    <label for="nxx">Quantity</label>
+                </span>
+            </div>
+            <div class="mt-3 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" pInputText [(ngModel)]="resultNpa" disabled> 
+                    <label for="nxx">Npa</label>
+                </span>
+            </div>
+        </div>
+        <div class="col-12 lg:col-4 pt-3 pb-0">
+            <div class="p-fluid">
+                <span class="p-float-label">
+                    <input type="text" pInputText [(ngModel)]="resultConsecutive" disabled> 
+                    <label for="nxx">Consecutive</label>
+                </span>
+            </div>
+            <div class="mt-3 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" pInputText [(ngModel)]="resultNxx" disabled> 
+                    <label for="nxx">Nxx</label>
+                </span>
+            </div>
+        </div>
+        <div class="col-12 lg:col-4 pt-3 pb-0">
+            <div class="p-fluid">
+                <span class="p-float-label">
+                    <input type="text" pInputText [(ngModel)]="resultWildCardNum" disabled> 
+                    <label for="nxx">Wild Card Num</label>
+                </span>
+            </div>
+            <div class="mt-3 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" pInputText [(ngModel)]="resultLine" disabled> 
+                    <label for="nxx">Line</label>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card m-5">
+        <div class="flex justify-content-end">
+            <button pButton type="button" (click)="onSearchReserveResultDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
+        </div>
+        <p-table
+            #numbersTable
+            [value]="filterNumberList"
+            [(selection)]="selectedNumbers"
+            dataKey="id"
+            [rowHover]="true"
+            [rows]="10"
+            [showCurrentPageReport]="true"
+            [rowsPerPageOptions]="[10,25,50]"
+            [loading]="numberListLoading"
+            responsiveLayout="stack"
+            [responsive]="true"
+            [paginator]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            [filterDelay]="0" 
+            [globalFilterFields]="['tollFreeNumber','status','suggestions','message']"
+            styleClass="p-datatable-lg"
+        >
+            <ng-template pTemplate="caption">
+                <div class="flex justify-content-between align-items-center">
+                    <p class="mb-0" *ngIf="resultTotal>0">Total <span style="font-size: 16px;">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
+                    <div class="table-header">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
+                        </span>
+                    </div>
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <!-- <th style="width: 3rem">
+                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                    </th> -->
+                    <th pSortableColumn="tollFreeNumber">
+                        <div class="flex justify-content-center align-items-center">
+                            Toll-Free Number
+                            <p-sortIcon field="tollFreeNumber"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="status">
+                        <div class="flex justify-content-center align-items-center">
+                            Status
+                            <p-sortIcon field="status"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="message">
+                        <div class="flex justify-content-center align-items-center">
+                            Message
+                            <p-sortIcon field="message"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="suggestions">
+                        <div class="flex justify-content-center align-items-center">
+                            Suggestions
+                            <p-sortIcon field="suggestions"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th class="text-align-center w-100px">
+                        Action
+                    </th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-number>
+                <tr class="p-selectable-row text-align-center">
+                    <!-- <td>
+                        <p-tableCheckbox [value]="number"></p-tableCheckbox>
+                    </td> -->
+                    <td class="text-align-center">
+                        <span class="p-column-title">Toll-Free Number</span>
+                        {{number.tollFreeNumber | phoneFormat}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Status</span>
+                        {{number.status}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Message</span>
+                        {{number.message}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Suggestions</span>
+                        {{number.suggestions}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Action</span>
+                        <button pButton type="button" (click)="openNumberModal(number.tollFreeNumber)" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help"></button>
+                    </td>                                                            
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8">No Number List found.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="closeModal()" label="Close" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template> -->
+</p-dialog>
+
+<p-dialog header="Toll-Free Number Information" styleClass="c-modal pb-5" [(visible)]="flagNumberOpenModal" (onHide)="closeNumberModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '50vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+
+    <div>
+        <div class="grid pl-5 pr-5">
+            <div class="col-12 lg:col-6 pt-3 pb-0">
+                <div class="p-fluid">
+                    <!-- <p class="mb-1">Number:</p>
+                    <p class="nsr-result">{{numModalNum | phoneFormat}}</p> -->
+                    <span class="p-float-label">
+                        <input type="text" pInputText [(ngModel)]="numModalNum" disabled> 
+                        <label for="nxx">Number</label>
+                    </span>
+                </div>
+                <div class="mt-3 p-fluid">
+                    <span class="p-float-label">
+                        <input type="text" pInputText [(ngModel)]="numModalStatus" disabled> 
+                        <label for="nxx">Status</label>
+                    </span>
+                </div>
+                <div class="mt-3 p-fluid">
+                    <span class="p-float-label">
+                        <input type="text" pInputText [(ngModel)]="numModalReservedUntil" disabled> 
+                        <label for="nxx">Reserved Until</label>
+                    </span>
+                </div>
+            </div>
+            <div class="col-12 lg:col-6 pt-3 pb-0">
+                <div class="p-fluid">
+                    <span class="p-float-label">
+                        <input type="text" pInputText [(ngModel)]="numModalRespOrg" disabled> 
+                        <label for="nxx">Resp Org</label>
+                    </span>
+                </div>
+                <div class="mt-3 p-fluid">
+                    <span class="p-float-label">
+                        <input type="text" pInputText [(ngModel)]="numModalEffDate" disabled> 
+                        <label for="nxx">Effective Date</label>
+                    </span>
+                </div>
+                <div class="mt-3 p-fluid">
+                    <span class="p-float-label">
+                        <input type="text" pInputText [(ngModel)]="numModalLastActive" disabled> 
+                        <label for="nxx">Last Active</label>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="closeNumberModal()" label="Close" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template> -->
+</p-dialog>

@@ -1,0 +1,333 @@
+<h4 class="page_title">Pointer Record Admin Data</h4>
+
+<p-panel [header]="retrieveCardTitle" [toggleable]="!bRetrieveCardIconHidden" [collapsed]="bExpRetrieve" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons">
+        <span style="flex: 1;"></span>
+    </ng-template>    
+    <div class="grid pt-2">
+        <div class="lg:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" id="searchNum" name="searchNum" pInputText (keyup.enter)="onKeyDownToRetrieve()" (input)="handleUppercase($event)" [(ngModel)]="inputSearchNum"> 
+                <label for="searchNum">Toll-Free Number *</label>
+            </span>
+        </div>
+        <div class="lg:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-calendar 
+                    inputId="searchEffDtTm" 
+                    [(ngModel)]="inputSearchEffDtTm" 
+                    dateFormat="mm/dd/yy" 
+                    [showButtonBar]="true" 
+                    [showTime]="true"
+                    hourFormat="12" 
+                ></p-calendar>
+                <label for="searchEffDtTm">Effective Date Time</label>
+            </span>
+        </div>
+    </div>
+    <div class="flex justify-content-end">
+        <button pButton pRipple (click)="onSearchNumber()" icon="pi pi-search" label="Retrieve" class="p-button-text" [disabled]="bRetrieveEnable"></button>
+    </div>
+</p-panel>
+
+<p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="true" [collapsed]="bExpResult" iconPos="left" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <ng-template pTemplate="icons">
+            <span style="flex: 1;">
+                <p-dropdown 
+                    *ngIf="!bEffDtTmListHidden"
+                    [options]="getEffDtTmStatusOptions(effDtTmStatList)" 
+                    [(ngModel)]="selectEffDtTmStat" 
+                    id="effDtTmStat" 
+                    name="effDtTmStat" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    [showClear]="true" 
+                    scrollHeight="150px" 
+                    [filter]="true" 
+                    filterBy="name"
+                    [disabled]="bEffDtTmDisable"
+                    (onChange)="onEffDtTmSelChange()"
+                ></p-dropdown>
+            </span>
+        </ng-template>
+
+        <!-- This is the row that includes the effective date time, now -->
+        <div *ngIf="action == gConst.ACTION_CREATE" class="grid">
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <p-calendar 
+                        inputId="effDateTime" 
+                        [(ngModel)]="inputCreateEffDtTm" 
+                        dateFormat="mm/dd/yy" 
+                        [minDate]="minEffDateTime"
+                        [showButtonBar]="true" 
+                        [showTime]="true"
+                        hourFormat="12" 
+                    ></p-calendar>
+                    <label for="effDateTime">Effective Date Time</label>
+                </span>
+                <p *ngIf="inputCreateEffDtTm==null" class="p-error">Effective Date field is required</p>
+            </div>
+            <div class="lg:col-6 col-12 flex align-items-center">
+                <label class="ml-3" for="createNow">
+                    <p-inputSwitch
+                        id="createNow" 
+                        name="createNow" 
+                        [(ngModel)]="inputCreateNow"
+                        (onChange)="bContentModified=true"
+                    ></p-inputSwitch>
+                    Now
+                </label>
+            </div>
+        </div>
+
+        <!-- This is the row that includes the resp org, customer id, high priority -->
+        <div class="grid">
+            <div class="lg:col-4 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="respOrg" name="respOrg" pInputText (input)="bContentModified=true" [(ngModel)]="inputRespOrg" [disabled]="action !== gConst.ACTION_CREATE && !(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)"> 
+                    <label for="respOrg">Resp Org</label>
+                </span>
+            </div>
+            <div class="lg:col-4 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="customerId" name="customerId" pInputText (input)="bContentModified=true" [(ngModel)]="inputCustomerId" [disabled]="disable"> 
+                    <label for="customerId">Customer Id</label>
+                </span>
+            </div>
+            <div class="lg:col-4 col-12 flex align-items-center">
+                <label class="ml-3" for="createNow">
+                    <p-inputSwitch
+                        id="priority" 
+                        name="priority" 
+                        [(ngModel)]="inputPriority"
+                        (onChange)="bContentModified=true"
+                        [disabled]="disable"
+                    ></p-inputSwitch>
+                    High Priority
+                </label>
+            </div>
+        </div>
+
+        <!-- This is the row that includes the agent, telco, hold -->
+        <div class="grid">
+            <div class="lg:col-4 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="agent" name="agent" pInputText (input)="bContentModified=true" [(ngModel)]="inputAgent" [disabled]="disable"> 
+                    <label for="agent">Agent</label>
+                </span>
+            </div>
+            <div class="lg:col-4 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="telco" name="telco" pInputText (input)="bContentModified=true" [(ngModel)]="inputTelco" [disabled]="disable"> 
+                    <label for="telco">Telco</label>
+                </span>
+            </div>
+            <div class="lg:col-4 col-12 p-fluid">
+                <span class="p-float-label">
+                    <p-dropdown 
+                        [options]="holdOptions" 
+                        id="hold" 
+                        name="hold" 
+                        (onChange)="bContentModified=true"
+                        [(ngModel)]="selectHold" 
+                        optionLabel="name" 
+                        optionValue="value"
+                        scrollHeight="100px" 
+                        [disabled]="disable"
+                    ></p-dropdown>
+                    <label for="hold">Hold</label>
+                </span>
+            </div>
+        </div>
+
+        <!-- This is the row that includes the End Subscriber Name, End Subscriber Address -->
+        <div class="grid">
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="endSub" name="endSub" pInputText (input)="bContentModified=true" [(ngModel)]="inputEndSub" [disabled]="disable"> 
+                    <label for="endSub">End Subscriber Name</label>
+                </span>
+            </div>
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="endSubAddr" name="endSubAddr" pInputText (input)="bContentModified=true" [(ngModel)]="inputEndSubAddr" [disabled]="disable"> 
+                    <label for="endSubAddr">End Subscriber Address</label>
+                </span>
+            </div>
+        </div>
+
+        <!-- This is the row that includes the Service Order Number, Support Form Number -->
+        <div class="grid">
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="svcOrderNum" name="svcOrderNum" pInputText (input)="bContentModified=true" [(ngModel)]="inputSvcOrderNum" [disabled]="disable"> 
+                    <label for="svcOrderNum">Service Order Number</label>
+                </span>
+            </div>
+            <div class="lg:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="suppFormNum" name="suppFormNum" pInputText (input)="bContentModified=true" [(ngModel)]="inputSuppFormNum" [disabled]="disable"> 
+                    <label for="suppFormNum">Support Form Number</label>
+                </span>
+            </div>
+        </div>
+
+        <!-- This is the row that includes the Approval, Last Updated, Last User, Prev User -->
+        <div *ngIf="!(action === gConst.ACTION_CREATE || (action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW))" class="grid">
+            <div class="col-12 lg:col-3 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="approval" name="approval" pInputText (input)="bContentModified=true" [(ngModel)]="inputApproval" disabled> 
+                    <label for="approval">Approval</label>
+                </span>
+            </div>
+            <div class="col-12 lg:col-3 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="lastUpDt" name="lastUpDt" pInputText (input)="bContentModified=true" [(ngModel)]="inputLastUpDt" disabled> 
+                    <label for="lastUpDt">Last Updated</label>
+                </span>
+            </div>
+            <div class="col-12 lg:col-3 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="lastUser" name="lastUser" pInputText (input)="bContentModified=true" [(ngModel)]="inputLastUser" disabled> 
+                    <label for="lastUser">Last User</label>
+                </span>
+            </div>
+            <div class="col-12 lg:col-3 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" id="prevUser" name="prevUser" pInputText (input)="bContentModified=true" [(ngModel)]="inputPrevUser" disabled> 
+                    <label for="prevUser">Prev User</label>
+                </span>
+            </div>
+        </div>
+
+        <div class="grid mt-3">
+            <div class="lg:col-6 col-12">
+                <!-- Template Pane -->
+                <p-panel header="Template" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                    <div class="pt-2">
+                        <ng-container *ngIf="disable;else refTmplName">
+                            <div class="flex justify-content-end">
+                                <button pButton pRipple (click)="gotoTADPage(inputTmplName)" icon="pi pi-reply" [label]="inputTmplName" class="p-button-text"></button>
+                            </div>
+                        </ng-container>
+                        <ng-template #refTmplName>
+                            <div class="p-fluid">
+                                <span class="field p-float-label">
+                                    <input type="text" id="tmplName" name="tmplName" pInputText (input)="bContentModified=true" [(ngModel)]="inputTmplName"> 
+                                    <label for="tmplName">Template Name</label>
+                                </span>
+                            </div>
+                        </ng-template>
+                    </div>
+                </p-panel>
+
+                <!-- Destination Pane -->
+                <p-panel header="Destination" styleClass="panel-icons-right" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                    <div class="pt-2">
+                        <table class="table-bordered">
+                            <thead>
+                                <tr>
+                                    <th class="text-align-center">Number</th>
+                                    <th class="text-align-center">#Lines</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-align-center p-fluid">
+                                        <input type="text" id="destNum" name="destNum" pInputText (input)="bContentModified=true" [(ngModel)]="inputDestNum" [disabled]="disable"> 
+                                    </td>
+                                    <td class="text-align-center p-fluid">
+                                        <input type="text" id="numTermLine" name="numTermLine" pInputText (input)="bContentModified=true" [(ngModel)]="inputNumTermLine" [disabled]="disable"> 
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </p-panel>
+            </div>
+            <div class="lg:col-6 col-12">
+                <!-- Contact Information Pane -->
+                <p-panel header="Contact Information" styleClass="panel-icons-right" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                    <div class="pt-2 p-fluid">
+                        <span class="field p-float-label">
+                            <input type="text" id="contactName" name="contactName" pInputText (input)="bContentModified=true" [(ngModel)]="inputContactName" [disabled]="disable"> 
+                            <label for="contactName">Contact Person</label>
+                        </span>
+                        <span class="field p-float-label">
+                            <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="bContentModified=true" [(ngModel)]="inputContactNumber" [disabled]="disable"> 
+                            <label for="contactNumber">Contact Number</label>
+                        </span>
+                        <span class="field p-float-label">
+                            <textarea class="pt-4" id="notes" name="notes" (input)="bContentModified=true" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea [disabled]="disable"></textarea>
+                            <label for="notes">Notes</label>
+                        </span>
+                    </div>
+                </p-panel>
+            </div>
+        </div>
+
+        <!-- Disconnect info Pane -->
+        <div *ngIf="!(status === gConst.STAT_OLD || status === gConst.STAT_ACTIVE || action === gConst.ACTION_CREATE || (disable && (inputEndIntDtTm == ''||inputEndIntDtTm == null) && selectReferral == ''))" class="grid">
+            <div class="col-12 md:col-6 p-fluid">
+                <span class="p-float-label">
+                    <p-calendar 
+                        inputId="endIntDtTm" 
+                        [(ngModel)]="inputEndIntDtTm" 
+                        (onSelect)="bContentModified=true"
+                        dateFormat="mm/dd/yy" 
+                        [minDate]="minEffDateTime"
+                        [showButtonBar]="true" 
+                        [showTime]="true"
+                        hourFormat="12" 
+                        [disabled]="disable"
+                    ></p-calendar>
+                    <label for="searchEffDtTm">End Intercept</label>
+                </span>
+            </div>
+            <div class="col-12 md:col-6 p-fluid">
+                <span class="p-float-label">
+                    <p-dropdown 
+                        [options]="referralOptions" 
+                        id="referral" 
+                        name="referral" 
+                        (onChange)="bContentModified=true"
+                        [(ngModel)]="selectReferral" 
+                        optionLabel="name" 
+                        optionValue="value"
+                        scrollHeight="150px" 
+                        [disabled]="disable"
+                    ></p-dropdown>
+                    <label for="referral">Referral</label>
+                </span>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <div class="p-fluid">
+                <span class="p-float-label">
+                    <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="7" cols="30" pInputTextarea disabled></textarea>
+                    <label for="message">Message</label>
+                </span>
+            </div>
+
+            <div class="grid">
+                <div class="lg:col-7 col-12 p-buttonset text-align-center">
+                    <button pButton pRipple (click)="onEdit()" icon="pi pi-pencil" label="Edit" class="p-button-text" [disabled]="!bEditEnable"></button>
+                    <button pButton pRipple (click)="onCopy()" icon="pi pi-copy" label="Copy" class="p-button-text" [disabled]="!bCopyEnable"></button>
+                    <button pButton pRipple (click)="onTransfer()" icon="pi pi-arrows-h" label="Transfer" class="p-button-text" [disabled]="!bTransferEnable"></button>
+                    <button pButton pRipple (click)="toggleDelete()" icon="pi pi-trash" label="Delete" class="p-button-text" [disabled]="!bDeleteEnable"></button>
+                    <button pButton pRipple (click)="onConvert()" icon="pi pi-arrow-right-arrow-left" label="Convert" class="p-button-text" [disabled]="!bCopyEnable"></button>
+                </div>
+
+                <div class="lg:col-5 col-12 p-buttonset text-align-center">
+                    <button pButton pRipple (click)="onSubmit()" icon="pi pi-send" label="Submit" class="p-button-text" [disabled]="(disable || !bContentModified) && !bSubmitEnable"></button>
+                    <button pButton pRipple (click)="onSave()" icon="pi pi-save" label="Save" class="p-button-text" [disabled]="(disable || !bContentModified) && !bSaveEnable"></button>
+                    <button pButton pRipple (click)="onRevert()" icon="pi pi-refresh" label="Revert" class="p-button-text" [disabled]="(disable || !bContentModified) && !bRevertEnable"></button>
+                    <button pButton pRipple (click)="toggleCancel()" icon="pi pi-times" label="Cancel" class="p-button-text"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</p-panel>

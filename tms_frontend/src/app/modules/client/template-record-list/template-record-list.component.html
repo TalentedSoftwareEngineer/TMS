@@ -1,0 +1,151 @@
+<h4 class="page_title">Template Record List</h4>
+
+<p-panel header="Retrieve" [toggleable]="true" [collapsed]="bExpRetrieve" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="grid pt-2">
+        <div class="lg:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="getSelectOptions(entityList)" 
+                    id="entity" 
+                    name="entity" 
+                    [(ngModel)]="selectEntity" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                    [filter]="true" 
+                    filterBy="name"
+                ></p-dropdown>
+                <label for="entity">Entity</label>
+            </span>
+        </div>
+        <div class="lg:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" id="template" name="template" pInputText (input)="handleUppercase()" [(ngModel)]="inputTemplate"> 
+                <label for="template">Starting Template Name</label>
+            </span>
+            <p *ngIf="!validTemplate" class="p-error">Template Name: Must start with '*', then a valid 2 character Entity ID, followed by 1-12 alphanumerics. Must be 4-15 characters wide. Dashes are optional in the 4th-15th character positions.</p>
+        </div>
+    </div>
+    <div class="flex justify-content-end">
+        <button pButton pRipple (click)="retrieveTemplates()" icon="pi pi-search" label="Retrieve" class="p-button-text"></button>
+    </div>
+</p-panel>
+
+<p-panel header="Result" styleClass="mt-5" [toggleable]="true" [collapsed]="bExpResult" iconPos="left" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div class="card">
+            <p-table [value]="retrieveResults" responsiveLayout="stack" [responsive]="true">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th class="text-align-center" [ngClass]="sortActive === 'tmplName' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                      <a (click)="onSortChange('tmplName')">Template Name</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'description' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                      <a (click)="onSortChange('description')">Template Description</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'effDtTm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                      <a (click)="onSortChange('effDtTm')">Effective Date Time</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'custRecStat' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                      <a (click)="onSortChange('custRecStat')">CR Status</a>
+                    </th>
+                    <th class="text-align-center" [ngClass]="sortActive === 'amount' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                      <a (click)="onSortChange('amount')">Total Amount of Numbers</a>
+                    </th>
+                    <th class="text-align-center w-100px">Action</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-result>
+                  <tr>
+                    <td class="text-align-center">
+                      <span class="p-column-title">Template Name</span>
+                      {{ result.tmplName }}
+                    </td>
+                    <td class="text-align-center">
+                      <span class="p-column-title">Template Description</span>
+                      {{ result.description }}
+                    </td>
+                    <td class="text-align-center">
+                      <span class="p-column-title">Effective Date Time</span>
+                      {{ result.effDtTm }}
+                    </td>
+                    <td class="text-align-center">
+                      <span class="p-column-title">CR Status</span>
+                      {{ result.custRecStat }}
+                    </td>
+                    <td class="text-align-center">
+                      <span class="p-column-title">Total Amount of Numbers</span>
+                      {{ result.amount }}
+                    </td>
+                    <td class="text-align-center">
+                      <span class="p-buttonset">
+                        <button pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="viewResult($event, result)"></button>
+                      </span>
+                    </td>
+                  </tr>
+                </ng-template>
+            </p-table>
+            
+            <div class="flex justify-content-center align-items-center gap-3">
+            <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+                <div class="p-fluid">
+                    <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getRetrieveResultsList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+                </div>
+            </div>
+        </div>
+    </div>
+</p-panel>
+
+<p-dialog header="Template Record Selection" styleClass="c-modal pb-5" [(visible)]="bSelectionOpenModal" (onHide)="closeSelectionModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <h5>Template Name: {{selTmplName}}</h5>
+
+    <div class="card">
+        <p-table [value]="selTmplList" [(selection)]="selectedTmpRecord" dataKey="code" responsiveLayout="stack" [responsive]="true">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="text-align-center"></th>
+                    <th class="text-align-center">Eff.Date</th>
+                    <th class="text-align-center">Time</th>
+                    <th class="text-align-center">CR Status</th>
+                    <th class="text-align-center">Approval</th>
+                    <th class="text-align-center">Components</th>
+                    <th class="text-align-center">Action</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-template>
+                <tr>
+                    <td class="text-align-center">
+                        <p-tableRadioButton [value]="template"></p-tableRadioButton>
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Eff.Date</span>
+                        {{template.effDate}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Time</span>
+                        {{template.effTime}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">CR Status</span>
+                        {{template.status}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Approval</span>
+                        {{template.approval}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Components</span>
+                        {{template.compPart}}
+                    </td>
+                    <td class="text-align-center">
+                        <button pButton type="button" icon="pi pi-save" label="Save To DB" class="p-button-rounded p-button-outlined p-button-help" (click)="saveToDatabase($event, selTmplName, selectedTmpRecord)"></button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <div class="flex justify-content-end">
+        <button pButton type="button" label="TAD" class="p-button-text" (click)="tad()"></button>
+    </div>
+</p-dialog>

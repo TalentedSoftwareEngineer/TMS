@@ -1,0 +1,294 @@
+<h4 class="page_title">User Management</h4>
+<div class="card pb-3">
+  <div class="grid">
+    <div class="col-12 lg:col-9">
+      <div class="grid">
+        <div class="lg:col-3 col-6 p-fluid pl-0 pr-0">
+          <span class="p-float-label">
+            <p-dropdown [options]="filter_status" id="status_search" [(ngModel)]="statusFilterValue" optionLabel="name" scrollHeight="150px"></p-dropdown>
+            <label for="status_search">Status</label>
+          </span>
+        </div>
+        <div class="lg:col-3 col-6 p-fluid pl-0 pr-0">
+          <span class="p-float-label">
+            <p-dropdown [options]="filter_roles" id="role_search" [(ngModel)]="roleFilterValue" optionLabel="name" [filter]="true" filterBy="name" scrollHeight="150px"></p-dropdown>
+            <label for="role_search">Role</label>
+          </span>
+        </div>
+        <div class="lg:col-4 col-12 p-fluid pl-0 pr-0">
+          <div class="p-inputgroup">
+            <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+            <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 lg:col-3 text-right" *ngIf="write_permission">
+		  <button pButton pRipple label="Add New User" *ngIf="permission==permissionTypeAll" (click)="openUserModal('Add')" icon="pi pi-plus"></button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+  <p-table [value]="users" responsiveLayout="stack" [responsive]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th class="text-align-center" [ngClass]="sortActive === 'username' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('username')">Username</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'role_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('role_id')">Role</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'first_name' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('first_name')">First Name</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'last_name' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('last_name')">Last Name</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'email' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('email')">Email</a>
+        </th>
+        <th class="text-align-center">
+          <a>Status</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'created_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('created_at')">Created At</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'updated_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('updated_at')">Updated At</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'created_by' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('created_by')">Created By</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'updated_by' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('updated_by')">Updated By</a>
+        </th>
+        <!-- <th>Users</th> -->
+        <th class="text-align-center w-100px" *ngIf="write_permission">Action</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td class="text-align-center">
+          <span class="p-column-title">Username</span>
+          {{ user.username }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Role</span>
+          {{ user.role.name }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">First Name</span>
+          {{ user.first_name }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Last Name</span>
+          {{ user.last_name }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Email</span>
+          {{ user.email }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Status</span>
+          <ng-container *ngIf="user.status">
+            <i class="pi pi-check"></i>
+          </ng-container>
+          <ng-container *ngIf="!user.status">
+            <i class="pi pi-times"></i>
+          </ng-container>
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Created At</span>
+          {{ user.created_at }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Updated At</span>
+          {{ user.updated_at }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Created By</span>
+          {{ user.created_by }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Updated By</span>
+          {{ user.updated_by }}
+        </td>
+        <td class="text-align-center" *ngIf="write_permission">
+          <span class="p-buttonset">
+            <button *ngIf="!user.status" pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)"></button>
+            <button *ngIf="user.status" pButton type="button" icon="pi pi-eye-slash" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)"></button>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, user.id)"></button>
+            <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteUser($event, user.id)"></button>
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <div class="flex justify-content-center align-items-center gap-3">
+    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+    <div class="p-fluid">
+      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getUsersList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+    </div>
+  </div>
+</div>
+
+<p-dialog [header]="modalTitle + ' User'" styleClass="c-modal" [(visible)]="flag_openDialog" (onHide)="closeUserModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <div>
+      <div class="grid">
+        <div class="col-12 lg:col-6">
+          <p-panel header="Main Information">
+            <div class="p-fluid pt-2">
+              <div class="field">
+                <span class="p-float-label">
+                  <input type="text" id="username" name="username" [ngClass]="{'ng-dirty': !validUsername, 'ng-invalid': !validUsername}" (input)="validUsername=input_username!=''" pInputText [(ngModel)]="input_username"> 
+                  <label for="username">Username</label>
+                </span>
+                <p *ngIf="!validUsername" class="p-error">Required!</p>
+              </div>
+              <span class="field p-float-label">
+                <p-dropdown [options]="companies" id="company_id" name="company_id" [(ngModel)]="input_company_id" optionLabel="name" scrollHeight="150px" styleClass="w-100"></p-dropdown>
+                <label for="company_id">Company</label>
+              </span>
+              <span class="field p-float-label">
+                <p-dropdown [options]="roles" id="role_id" name="role_id" [(ngModel)]="input_role_id" optionLabel="name" scrollHeight="150px" styleClass="w-100"></p-dropdown>
+                <label for="role_id">Role</label>
+              </span>
+              <div class="field">
+                <span class="p-float-label">
+                  <input type="text" id="email" name="email" [ngClass]="{'ng-dirty': !validEmail, 'ng-invalid': !validEmail}" (input)="validEmail=input_email!=''" pInputText [(ngModel)]="input_email"> 
+                  <label for="email">Email</label>
+                </span>
+                <p *ngIf="!validEmail" class="p-error">Required!</p>
+              </div>
+              <div class="field">
+                <span class="p-float-label">
+                  <input type="text" id="first_name" name="first_name" [ngClass]="{'ng-dirty': !validFirstName, 'ng-invalid': !validFirstName}" (input)="validFirstName=input_first_name!=''" pInputText [(ngModel)]="input_first_name"> 
+                  <label for="first_name">First Name</label>
+                </span>
+                <p *ngIf="!validFirstName" class="p-error">Required!</p>
+              </div>
+              <div class="field">
+                <span class="p-float-label">
+                  <input type="text" id="last_name" name="last_name" [ngClass]="{'ng-dirty': !validLastName, 'ng-invalid': !validLastName}" (input)="validLastName=input_last_name!=''" pInputText [(ngModel)]="input_last_name"> 
+                  <label for="last_name">Last Name</label>
+                </span>  
+                <p *ngIf="!validLastName" class="p-error">Required!</p>
+              </div>
+            </div>
+
+            <span class="p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
+              <button pButton pRipple (click)="mainReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+              <button pButton pRipple (click)="onMainUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+          </p-panel>
+          <!-- <c-panel panelHeader_title="Main Information">
+            <div ngProjectAs="panelBody_ngContent_select" class="flex-column-container">
+
+            </div>
+          </c-panel> -->
+          <p-panel header="Password" styleClass="mt-5">
+            <div class="p-fluid pt-2">
+              <div class="field">
+                <span class="p-float-label">
+                  <p-password id="password" name="password" [ngClass]="{'ng-dirty': !validPassword, 'ng-invalid': !validPassword}" (input)="validPassword=input_password!=''" [(ngModel)]="input_password" [toggleMask]="true" [feedback]="false"></p-password>
+                  <label for="password">New Password</label>
+                </span>
+                <p *ngIf="!validPassword" class="p-error">Required!</p>
+              </div>
+              <span class="field p-float-label">
+                <p-password id="confirm_password" name="confirm_password" [(ngModel)]="input_confirm_password" [toggleMask]="true" [feedback]="false"></p-password>
+                <label for="confirm_password">Confirm Password</label>
+              </span>
+            </div>
+
+            <span class="p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
+              <button pButton pRipple (click)="passwordReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+              <button pButton pRipple (click)="onPasswordUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+          </p-panel>
+
+          <p-panel header="Somos Information" styleClass="mt-5">
+            <div class="p-fluid pt-2">
+              <span class="field p-float-label">
+                <p-dropdown [options]="sms_users" id="somos_id" name="somos_id" [(ngModel)]="input_somos_id" optionLabel="name" scrollHeight="150px" styleClass="w-100"></p-dropdown>
+                <label for="somos_id">Somos User</label>
+              </span>
+            </div>
+            
+            <span class="p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
+              <button pButton pRipple (click)="somosReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+              <button pButton pRipple (click)="onSomosUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+          </p-panel>
+        </div>
+        <div class="col-12 lg:col-6">
+          <p-panel header="Additional Information">
+            <div class="p-fluid pt-2">
+              <span class="field p-float-label">
+                  <input type="text" id="country" name="country" pInputText [(ngModel)]="input_country">
+                  <label for="country">Country</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="text" id="address" name="address" pInputText [(ngModel)]="input_address"> 
+                  <label for="address">Address</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="text" id="province" name="province" pInputText [(ngModel)]="input_province"> 
+                  <label for="province">Province</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="text" id="city" name="city" pInputText [(ngModel)]="input_city"> 
+                  <label for="city">City</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="text" id="zip_code" name="zip_code" pInputText [(ngModel)]="input_zip_code"> 
+                  <label for="zip_code">Zip Code</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="number" id="tel1" name="tel1" pInputText [(ngModel)]="input_tel1"> 
+                  <label for="tel1">Tel-1</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="number" id="tel2" name="tel2" pInputText [(ngModel)]="input_tel2"> 
+                  <label for="tel2">Tel-2</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="number" id="mobile" name="mobile" pInputText [(ngModel)]="input_mobile"> 
+                  <label for="mobile">Mobile</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="number" id="fax" name="fax" pInputText [(ngModel)]="input_fax"> 
+                  <label for="fax">Fax</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="text" id="contact_name" name="contact_name" pInputText [(ngModel)]="input_contact_name"> 
+                  <label for="contact_name">Contact Name</label>
+              </span>
+              <span class="field p-float-label">
+                  <input type="number" id="contact_number" name="contact_number" pInputText [(ngModel)]="input_contact_number"> 
+                  <label for="contact_number">Contact Number</label>
+              </span>
+            </div>
+
+            <span class="field p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
+              <button pButton pRipple (click)="AdditionalReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+              <button pButton pRipple (click)="onAdditionalUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+            </span>
+          </p-panel>
+        </div>
+      </div>
+
+      <div *ngIf="modalTitle.toLowerCase()=='add'" class="flex justify-content-end mt-5">
+        <span class="p-buttonset">
+          <button pButton pRipple (click)="clearInputs()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+          <button pButton pRipple (click)="onUserSubmit()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+        </span>
+      </div>
+    </div>
+</p-dialog>
+
+<!-- <p-confirmDialog [style]="{width: '30vw'}" [baseZIndex]="10000" position="top" rejectButtonStyleClass="p-button-text"></p-confirmDialog> -->

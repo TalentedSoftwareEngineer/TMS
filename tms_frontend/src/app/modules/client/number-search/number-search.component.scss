@@ -1,0 +1,34 @@
+:host ::ng-deep .custom_panel_style.p-panel {
+    box-shadow: none;
+    border: 1px solid #c8ced3;
+    .p-panel-header {
+        background: var(--surface-ground);
+        border-bottom: 1px solid #c8ced3;
+    }
+
+    .p-panel-footer {
+        background: var(--surface-ground);
+        border-top: 1px solid #c8ced3;
+    }
+}
+
+.panel-content {
+    padding: 20px;
+}
+
+:host ::ng-deep .p-panel.child_panel {
+    .p-panel-header {
+        padding: 12px 15px;
+        background: transparent;
+        border-bottom: 1px solid #c8ced3;
+    }
+}
+
+.nsr-result {
+    height: 38px;
+	background-color: var(--surface-200);
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.25rem;
+	font-size: 16px;
+	border: 1px solid #e4e7ea;
+}

@@ -1,0 +1,15 @@
+<div class="panel">
+    <div class="panel-header">
+        <strong>{{panelHeader_title}}</strong>
+    </div>
+    <div class="panel-body">
+        <!-- Display Panel Body -->
+        <div #display_panel_body></div>
+        <!-- Panel Body(Child) Element from Parent Component Template -->
+        <div style="display: none;">
+            <div #panelBody_ngContent_container>
+                <ng-content select="panelBody_ngContent_select"></ng-content>
+            </div>
+        </div>
+    </div>
+</div>

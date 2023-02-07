@@ -1,0 +1,726 @@
+<h4 class="page_title">Template Admin Data</h4>
+
+<p-panel [header]="retrieveCardTitle" [toggleable]="!bRetrieveCardIconHidden" [collapsed]="bExpRetrieve" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons">
+        <span style="flex: 1;"></span>
+    </ng-template>    
+    <div class="grid pt-2">
+        <div class="lg:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" id="searchTmplName" name="searchTmplName" pInputText (blur)="onSearchTmplNameFieldFocusOut()" (keyup.enter)="onSearchTemplate()" (input)="validTmplName=true" [(ngModel)]="inputSearchTmplName"> 
+                <label for="searchTmplName">Template Name *</label>
+            </span>
+            <p *ngIf="!validTmplName" class="p-error">Template Name: Must start with '*', then a valid 2 character Entity ID, followed by 1-12 alphanumerics. Must be 4-15 characters wide. Dashes are optional in the 4th-15th character positions.</p>
+        </div>
+        <div class="lg:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-calendar 
+                    inputId="searchEffDtTm" 
+                    [(ngModel)]="inputSearchEffDtTm" 
+                    dateFormat="mm/dd/yy" 
+                    [showButtonBar]="true" 
+                    [showTime]="true"
+                    hourFormat="12" 
+                ></p-calendar>
+                <label for="searchEffDtTm">Effective Date Time</label>
+            </span>
+        </div>
+    </div>
+    <div class="flex justify-content-end">
+        <button pButton pRipple (click)="onSearchTemplate()" icon="pi pi-search" label="Retrieve" class="p-button-text" [disabled]="!bRetrieveEnable || inputSearchTmplName=='' || validTmplName == false"></button>
+    </div>
+</p-panel>
+
+<p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="true" [collapsed]="bExpResult" iconPos="left" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons">
+        <span style="flex: 1;">
+            <p-dropdown 
+                *ngIf="!bEffDtTmListHidden"
+                [options]="getEffDtTmStatusOptions(effDtTmStatList)" 
+                [(ngModel)]="selectEffDtTmStat" 
+                id="effDtTmStat" 
+                name="effDtTmStat" 
+                optionLabel="name" 
+                optionValue="value"
+                [showClear]="true" 
+                scrollHeight="150px" 
+                [filter]="true" 
+                filterBy="name"
+                [disabled]="bEffDtTmDisable"
+                (onChange)="onEffDtTmSelChange()"
+            ></p-dropdown>
+        </span>
+    </ng-template>
+
+    <div class="pt-2">
+        <div class="flex justify-content-end mb-3">
+            <button pButton pRipple class="p-button-text" label="Import CPR Report Data" icon="pi pi-file-import" (click)="fileInput.click()" [disabled]="disable"></button>
+            <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
+        </div>
+
+        <div class="card">
+            <p-tabView [(activeIndex)]="activeMainTab">
+                <p-tabPanel header="Basic" tooltip="Basic">
+                    <div class="flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Basic Data</h4>
+                        <button class="p-button-danger" pButton pRipple label="Clear" icon="pi pi-eraser" (click)="onClearBasicData()" [disabled]="disable"></button>
+                    </div>
+
+                    <div class="card mt-4">
+                        <!-- at creating -->
+                        <ng-container *ngIf="this.action === gConst.ACTION_CREATE">
+                            <div class="grid">
+                                <div class="lg:col-4 col-12 p-fluid">
+                                    <span class="field p-float-label">
+                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)"> 
+                                        <label for="respOrg">Resp Org</label>
+                                    </span>
+                                </div>
+                                <div class="lg:col-4 col-12 p-fluid">
+                                    <span class="p-float-label">
+                                        <p-calendar 
+                                            inputId="createEffDtTm" 
+                                            [(ngModel)]="inputCreateEffDtTm" 
+                                            dateFormat="mm/dd/yy" 
+                                            [minDate]="minEffDateTime"
+                                            [showButtonBar]="true" 
+                                            [showTime]="true"
+                                            hourFormat="12" 
+                                            (onSelect)="checkDataExistForCR()"
+                                        ></p-calendar>
+                                        <label for="createEffDtTm">Effective Date Time</label>
+                                    </span>
+                                    <p *ngIf="!getBoolean(inputCreateEffDtTm)" class="p-error">Effective Date field is required</p>
+                                </div>
+                                <div class="lg:col-2 col-6 flex align-items-center">
+                                    <label class="ml-3" for="createNow">
+                                        <p-inputSwitch
+                                            id="createNow" 
+                                            name="createNow" 
+                                            [(ngModel)]="inputCreateNow"
+                                            (onChange)="handleOnCR()"
+                                        ></p-inputSwitch>
+                                        Now
+                                    </label>
+                                </div>
+                                <div class="lg:col-2 col-6 flex align-items-center">
+                                    <label class="ml-3" for="createNow">
+                                        <p-inputSwitch
+                                            id="priority" 
+                                            name="priority" 
+                                            [(ngModel)]="inputPriority"
+                                            (onChange)="handleOnCR()"
+                                        ></p-inputSwitch>
+                                        High Priority
+                                    </label>
+                                </div>
+                            </div>
+                        </ng-container>
+                        <!-- at no creating -->
+                        <ng-container *ngIf="this.action !== gConst.ACTION_CREATE">
+                            <div class="grid">
+                                <div class="lg:col-4 col-12 p-fluid">
+                                    <span class="p-float-label">
+                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)"> 
+                                        <label for="respOrg">Resp Org</label>
+                                    </span>
+                                </div>
+                                <div class="lg:col-4 col-12 flex align-items-center">
+                                    <label class="ml-3" for="priority">
+                                        <p-inputSwitch
+                                            id="priority" 
+                                            name="priority" 
+                                            [(ngModel)]="inputPriority"
+                                            (onChange)="handleOnCR()"
+                                            [disabled]="disable"
+                                        ></p-inputSwitch>
+                                        High Priority
+                                    </label>
+                                </div>
+                                <div class="lg:col-4 col-12 flex align-items-center">
+                                    <label class="ml-3" for="dscInd">
+                                        <p-inputSwitch
+                                            id="dscInd" 
+                                            name="dscInd" 
+                                            [(ngModel)]="inputDscInd"
+                                            (onChange)="onChangeCheckboxDscInd()"
+                                            [disabled]="disable || action === gConst.ACTION_DISCONNECT || copyAction === gConst.COPYACTION_NEW"
+                                        ></p-inputSwitch>
+                                        Disconnect
+                                    </label>
+                                </div>
+                            </div>
+                        </ng-container>
+    
+                        <!-- This is the row that includes the Approval, Last Updated, Last User, Prev User -->
+                        <div *ngIf="!(action === gConst.ACTION_CREATE || (action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW))" class="grid">
+                            <div class="col-12 lg:col-3 p-fluid">
+                                <span class="field p-float-label">
+                                    <input type="text" id="lastUpDt" name="lastUpDt" pInputText [(ngModel)]="inputLastUpDt" disabled> 
+                                    <label for="lastUpDt">Last Changed</label>
+                                </span>
+                            </div>
+                            <div class="col-12 lg:col-3 p-fluid">
+                                <span class="field p-float-label">
+                                    <input type="text" id="approval" name="approval" pInputText [(ngModel)]="inputApproval" disabled> 
+                                    <label for="approval">Approval</label>
+                                </span>
+                            </div>
+                            <div class="col-12 lg:col-3 p-fluid">
+                                <span class="field p-float-label">
+                                    <input type="text" id="lastUser" name="lastUser" pInputText [(ngModel)]="inputLastUser" disabled> 
+                                    <label for="lastUser">Last User</label>
+                                </span>
+                            </div>
+                            <div class="col-12 lg:col-3 p-fluid">
+                                <span class="field p-float-label">
+                                    <input type="text" id="prevUser" name="prevUser" pInputText [(ngModel)]="inputPrevUser" disabled> 
+                                    <label for="prevUser">Prev User</label>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <!-- Template Information & Destination -->
+                        <div class="lg:col-6 col-12">
+                            <p-panel header="Template Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                                <ng-template pTemplate="icons">
+                                    <span style="flex: 1;"></span>
+                                </ng-template>    
+
+                                <div class="pt-2 p-fluid">
+                                    <span class="field p-float-label">
+                                        <input type="text" id="templateId" name="templateId" pInputText [(ngModel)]="inputTemplateId" disabled> 
+                                        <label for="templateId">Template ID</label>
+                                    </span>
+                                    <span class="field p-float-label">
+                                        <input type="text" id="description" name="description" pInputText [(ngModel)]="inputDescription" (input)="handleOnCR()" [disabled]="disable"> 
+                                        <label for="description">Description</label>
+                                    </span>
+                                </div>
+                            </p-panel>
+
+                            <p-panel header="Destination" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                                <ng-template pTemplate="icons">
+                                    <span style="flex: 1;"></span>
+                                </ng-template>    
+
+                                <div class="pt-2 p-fluid">
+                                    <span class="field p-float-label">
+                                        <input type="text" id="line" name="line" pInputText [(ngModel)]="inputLine" (input)="handleOnCR()" [disabled]="disable"> 
+                                        <label for="line">#Line*</label>
+                                    </span>
+                                </div>
+                            </p-panel>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="lg:col-6 col-12">
+                            <p-panel header="Contact Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                                <ng-template pTemplate="icons">
+                                    <span style="flex: 1;"></span>
+                                </ng-template>    
+
+                                <div class="pt-2 p-fluid">
+                                    <span class="field p-float-label">
+                                        <input type="text" id="contactName" name="contactName" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactName" [disabled]="disable"> 
+                                        <label for="contactName">Contact Person</label>
+                                    </span>
+                                    <span class="field p-float-label">
+                                        <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactNumber" [disabled]="disable"> 
+                                        <label for="contactNumber">Contact Number</label>
+                                    </span>
+                                    <span class="field p-float-label">
+                                        <textarea class="pt-4" id="notes" name="notes" (input)="handleOnCR()" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea [disabled]="disable"></textarea>
+                                        <label for="notes">Notes</label>
+                                    </span>
+                                </div>
+                            </p-panel>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <!-- Area Of Service -->
+                        <div class="lg:col-6 col-12">
+                            <p-panel header="Area of Service" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                                <ng-template pTemplate="icons">
+                                    <span style="flex: 1;"></span>
+                                </ng-template>    
+                                
+                                <div class="pt-2">
+                                    <p-tabView [(activeIndex)]="activeAOSTab">
+                                        <p-tabPanel header="Networks" tooltip="Networks">
+                                            <div class="p-fluid">
+                                                <span class="field p-float-label">
+                                                    <input type="text" id="network" name="network" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNetwork" [disabled]="disable"> 
+                                                    <label for="network">Networks</label>
+                                                </span>
+                                            </div>
+                                            <span class="p-buttonset flex justify-content-end">
+                                                <button pButton pRipple (click)="onSelectAosNetwork()" label="Select" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
+                                                <button pButton pRipple (click)="onClearAosNetwork()" label="Clear" icon="pi pi-undo" class="p-button-text p-button-danger" [disabled]="disable||(inputNetwork=='')"></button>
+                                            </span>
+                                        </p-tabPanel>
+                                        <p-tabPanel header="States" tooltip="States">
+                                            <div class="p-fluid">
+                                                <span class="field p-float-label">
+                                                    <input type="text" id="state" name="state" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputState" [disabled]="disable"> 
+                                                    <label for="state">States</label>
+                                                </span>
+                                            </div>
+                                            <span class="p-buttonset flex justify-content-end">
+                                                <button pButton pRipple (click)="onSelectAosState()" label="Select" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
+                                                <button pButton pRipple (click)="onClearAosState()" label="Clear" icon="pi pi-undo" class="p-button-text p-button-danger" [disabled]="disable||(inputState=='')"></button>
+                                            </span>
+                                        </p-tabPanel>
+                                        <p-tabPanel header="NPAs" tooltip="NPAs">
+                                            <div class="p-fluid">
+                                                <span class="field p-float-label">
+                                                    <input type="text" id="npa" name="npa" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNpa" [disabled]="disable"> 
+                                                    <label for="npa">NPAs</label>
+                                                </span>
+                                            </div>
+                                            <span class="p-buttonset flex justify-content-end">
+                                                <button pButton pRipple (click)="onSelectAosNPA()" label="Select" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
+                                                <button pButton pRipple (click)="onClearAosNPA()" label="Clear" icon="pi pi-undo" class="p-button-text p-button-danger" [disabled]="disable||(inputNpa=='')"></button>
+                                            </span>
+                                        </p-tabPanel>
+                                        <p-tabPanel header="LATAs" tooltip="LATAs">
+                                            <div class="p-fluid">
+                                                <span class="field p-float-label">
+                                                    <input type="text" id="lata" name="lata" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLata" [disabled]="disable"> 
+                                                    <label for="lata">LATAs</label>
+                                                </span>
+                                            </div>
+                                            <span class="p-buttonset flex justify-content-end">
+                                                <button pButton pRipple (click)="onSelectAosLATA()" label="Select" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
+                                                <button pButton pRipple (click)="onClearAosLATA()" label="Clear" icon="pi pi-undo" class="p-button-text p-button-danger" [disabled]="disable||(inputLata=='')"></button>
+                                            </span>
+                                        </p-tabPanel>
+                                        <p-tabPanel header="Labels" tooltip="Labels">
+                                            <div class="p-fluid">
+                                                <span class="field p-float-label">
+                                                    <input type="text" id="label" name="label" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLabel" [disabled]="disable"> 
+                                                    <label for="label">Labels</label>
+                                                </span>
+                                            </div>
+                                            <span class="p-buttonset flex justify-content-end">
+                                                <button pButton pRipple (click)="onSelectAosLabel()" label="Select" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
+                                                <button pButton pRipple (click)="onClearAosLabel()" label="Clear" icon="pi pi-undo" class="p-button-text p-button-danger" [disabled]="disable||(inputLabel=='')"></button>
+                                            </span>
+                                        </p-tabPanel>
+                                    </p-tabView>
+                                </div>
+                            </p-panel>
+                        </div>
+
+                        <!-- Carriers -->
+                        <div class="lg:col-6 col-12">
+                            <p-panel header="Carriers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                                <ng-template pTemplate="icons">
+                                    <span style="flex: 1;"></span>
+                                </ng-template>    
+
+                                <div class="pt-2">
+                                    <p-tabView [(activeIndex)]="activeCarrierTab">
+                                        <p-tabPanel header="IntraLATA" tooltip="IntraLATA">
+                                            <div class="p-fluid">
+                                                <span class="field p-float-label">
+                                                    <input type="text" id="intraLATACarrier" name="intraLATACarrier" pInputText (input)="handleCarrier('Intra')" [(ngModel)]="inputIntraLATACarrier" [disabled]="disable"> 
+                                                    <label for="intraLATACarrier">Intra LATA Carrier</label>
+                                                </span>
+                                            </div>
+                                            <div class="flex justify-content-end">
+                                                <span class="p-buttonset flex justify-content-end">
+                                                    <button pButton pRipple (click)="onSelectIntraLATACarrier()" label="Select" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
+                                                    <button pButton pRipple (click)="onClearIntraLATACarrier()" label="Clear" icon="pi pi-undo" class="p-button-text p-button-danger" [disabled]="disable||(inputIntraLATACarrier=='')"></button>
+                                                </span>
+                                            </div>
+                                        </p-tabPanel>
+                                        <p-tabPanel header="InterLATA" tooltip="InterLATA">
+                                            <div class="p-fluid">
+                                                <div class="p-fluid">
+                                                    <span class="field p-float-label">
+                                                        <input type="text" id="interLATACarrier" name="interLATACarrier" pInputText (input)="handleCarrier('Inter')" [(ngModel)]="inputInterLATACarrier" [disabled]="disable"> 
+                                                        <label for="interLATACarrier">Inter LATA Carrier</label>
+                                                    </span>
+                                                </div>
+                                                <div class="flex justify-content-end">
+                                                    <span class="p-buttonset flex justify-content-end">
+                                                        <button pButton pRipple (click)="onSelectInterLATACarrier()" label="Select" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
+                                                        <button pButton pRipple (click)="onClearInterLATACarrier()" label="Clear" icon="pi pi-undo" class="p-button-text p-button-danger" [disabled]="disable||(inputInterLATACarrier=='')"></button>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </p-tabPanel>
+                                    </p-tabView>
+                                </div>
+                            </p-panel>
+                        </div>
+                    </div>
+                </p-tabPanel>
+                <!-- CPR Tab -->
+                <p-tabPanel header="CPR" tooltip="CPR">
+                    <div class="flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Call Processing</h4>
+                        <button class="p-button-danger p-button-text" pButton pRipple icon="pi pi-trash" label="Delete" (click)="cprDeleteModalVisible=true" [disabled]="disable || cprSectNames.length === 0"></button>
+                    </div>
+
+                    <div class="card">
+                        <div class="flex justify-content-end">
+                            <span class="p-buttonset">
+                                <button pButton pRipple (click)="onEditCprSectName()" label="Edit" icon="pi pi-pencil" class="p-button-text p-button-secondary" [disabled]="disable || cprSectNames.length === 0"></button>
+                                <button pButton pRipple (click)="onAddCprSect()" label="Add" icon="pi pi-plus" class="p-button-text" [disabled]="disable"></button>
+                                <button pButton pRipple (click)="onDeleteCprSect()" label="Delete" icon="pi pi-trash" class="p-button-text p-button-danger" [disabled]="disable || cprSectNames.length < 2"></button>
+                            </span>
+                        </div>
+
+                        <div class="card">
+                            <p-tabView [(activeIndex)]="activeCPRTab">
+                                <ng-container *ngFor="let cprSectName of cprSectNames; index as index; first as isFirst">
+                                    <p-tabPanel [header]="cprSectName">
+                                        <table class="table-bordered fixed_header">
+                                            <thead>
+                                                <tr>
+                                                    <ng-container *ngIf="cprGridCategory[index]">
+                                                        <ng-container *ngFor="let value of cprGridCategory[index]; index as key">
+                                                            <th class="text-align-center">
+                                                                <ng-container *ngIf="value;else empty">
+                                                                    {{value}}
+                                                                </ng-container>
+                                                                <ng-template #empty>&lt;select&gt;</ng-template>
+                                                            </th>
+                                                        </ng-container>
+                                                    </ng-container>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <ng-container *ngIf="cprGridCategory[index]">
+                                                        <ng-container *ngFor="let value of cprGridCategory[index]; index as i">
+                                                            <td class="p-fluid">
+                                                                <p-dropdown 
+                                                                    [name]="'type_' + i"
+                                                                    [id]="'type_' + i"
+                                                                    [options]="cprGridCategoryOptions"
+                                                                    [(ngModel)]="cprGridCategory[index][i]"
+                                                                    (onClick)="setCPRActiveIndexes(index, -1, i)"
+                                                                    (onChange)="handleCPRSelectChange($event, index)"
+                                                                    optionLabel="name"
+                                                                    optionValue="value"
+                                                                    [showClear]="true"
+                                                                    scrollHeight="150px"
+                                                                    [filter]="true"
+                                                                    filterBy="name"
+                                                                    [disabled]="disable || cprSectNames.length === 0"
+                                                                ></p-dropdown>
+                                                            </td>
+                                                        </ng-container>
+                                                    </ng-container>
+                                                </tr>
+        
+                                                <ng-container *ngIf="cprGridData[index]">
+                                                    <ng-container *ngFor="let datas of cprGridData[index]; index as k">
+                                                        <tr>
+                                                            <ng-container *ngIf="datas">
+                                                                <ng-container *ngFor="let data of datas; index as g">
+                                                                    <td class="p-fluid">
+                                                                        <input 
+                                                                            type="text" 
+                                                                            [id]="k + '_' + g" 
+                                                                            [name]="k + '_' + g" 
+                                                                            pInputText 
+                                                                            [value]="data"
+                                                                            (blur)="onCPRFieldFocusOut()"
+                                                                            (click)="setCPRActiveIndexes(index, k, g)"
+                                                                            (input)="handleCPRCellChange($event, index)" 
+                                                                            [disabled]="disable || cprSectNames.length === 0 || cprGridCategory[index][g] == null || cprGridCategory[index][g] === ''"
+                                                                        > 
+                                                                    </td>
+                                                                </ng-container>
+                                                            </ng-container>
+                                                        </tr>
+                                                    </ng-container>
+                                                </ng-container>
+                                            </tbody>
+                                        </table>
+        
+                                        <div class="grid mt-4">
+                                            <div class="lg:col-6 col-12">
+                                                <div class="grid">
+                                                    <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                        <button pButton pRipple (click)="onInsertCPRRowAbove()" label="Insert Row Above" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRRowBelow()" label="Insert Row Below" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    </div>
+                                                    <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                        <button pButton pRipple (click)="onInsertCPRRowEnd()" label="Insert Row End" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onDeleteCPRRowEnd()" label="Delete Row" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="lg:col-6 col-12 p-buttonset flex justify-content-between">
+                                                <div class="grid">
+                                                    <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                        <button pButton pRipple (click)="onInsertCPRColumnBefore()" label="Insert Column Before" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRColumnAfter()" label="Insert Column After" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    </div>
+                                                    <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                        <button pButton pRipple (click)="onInsertCPRColumnLast()" label="Insert Column Last" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onDeleteCPRColumn()" label="Delete Column" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p-tabPanel>
+                                </ng-container>
+                            </p-tabView>
+                        </div>
+
+                        <div class="grid">
+                            <div class="col-12 md:col-6 p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown 
+                                        [options]="getPriIntraLTOptions()" 
+                                        id="priIntraLT" 
+                                        name="priIntraLT" 
+                                        (onChange)="handleOnCPR()"
+                                        [(ngModel)]="selectPriIntraLT" 
+                                        optionLabel="name" 
+                                        optionValue="value"
+                                        [showClear]="true" 
+                                        scrollHeight="150px" 
+                                        [filter]="true" 
+                                        filterBy="name"
+                                        [virtualScroll]="true" 
+                                        [itemSize]="40"
+                                        [disabled]="disable || cprSectNames.length === 0"
+                                    ></p-dropdown>
+                                    <label for="priIntraLT">Primary IntraLATA Carrier</label>
+                                </span>
+                            </div>
+    
+                            <div class="col-12 md:col-6 p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown 
+                                        [options]="getPriInterLTOptions()" 
+                                        id="priInterLT" 
+                                        name="priInterLT" 
+                                        (onChange)="handleOnCPR()"
+                                        [(ngModel)]="selectPriInterLT" 
+                                        optionLabel="name" 
+                                        optionValue="value"
+                                        [showClear]="true" 
+                                        scrollHeight="150px" 
+                                        [filter]="true" 
+                                        filterBy="name"
+                                        [virtualScroll]="true" 
+                                        [itemSize]="40"
+                                        [disabled]="disable || cprSectNames.length === 0"
+                                    ></p-dropdown>
+                                    <label for="priInterLT">Primary InterLATA Carrier</label>
+                                </span>
+                            </div>
+    
+                            <div class="col-12 md:col-6 p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown 
+                                        [options]="timezoneOptions" 
+                                        id="timezone" 
+                                        name="timezone" 
+                                        (onChange)="handleOnCPR()"
+                                        [(ngModel)]="selectTimezone" 
+                                        optionLabel="name" 
+                                        optionValue="value"
+                                        scrollHeight="150px" 
+                                        [filter]="true" 
+                                        filterBy="name"
+                                        [virtualScroll]="true" 
+                                        [itemSize]="40"
+                                        [disabled]="disable"
+                                    ></p-dropdown>
+                                    <label for="timezone">Timezone</label>
+                                </span>
+                            </div>
+    
+                            <div class="col-12 md:col-6 flex align-items-center">
+                                <label class="ml-3" for="dayLightSaving">
+                                    <p-inputSwitch
+                                        id="dayLightSaving" 
+                                        name="dayLightSaving" 
+                                        [(ngModel)]="inputDayLightSaving"
+                                        (onChange)="handleOnCPR()"
+                                        [disabled]="disable"
+                                    ></p-inputSwitch>
+                                    Daylight Savings
+                                </label>
+                            </div>
+    
+                            <div class="col-12 p-fluid">
+                                <span class="p-float-label">
+                                    <input type="text" id="npaCntPerCarrier" name="npaCntPerCarrier" pInputText [(ngModel)]="inputNpaCntPerCarrier" disabled> 
+                                    <label for="npaCntPerCarrier">NPANXX count per carrier</label>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabPanel>
+                <!-- LAD Tab -->
+                <p-tabPanel header="LAD" tooltip="LAD">
+                    <div class="flex justify-content-between align-items-center mb-2">
+                        <h4 class="mb-0">Label Definition</h4>
+                        <div class="flex align-items-center gap-3">
+                            <p *ngIf="searchResult.total < 1;else matches" class="mb-0">no matches</p>
+                            <ng-template #matches>
+                                <p>{{searchResult.total}} matches</p>
+                            </ng-template>
+                            <span class="p-float-label">
+                                <input type="text" id="srchLad" name="srchLad" pInputText [(ngModel)]="inputSearchLadVal"> 
+                                <label for="srchLad">Search</label>
+                            </span>
+                            <button pButton pRipple (click)="nextSearch=!nextSearch" label="Find" icon="pi pi-search" class="p-button-text"></button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <p-tabView [(activeIndex)]="activeLADTab">
+                            <ng-container *ngFor="let ladSectName of ladSectNames; index as index; first as isFirst">
+                                <p-tabPanel [header]="ladSectName">
+                                    <table class="table-bordered fixed_header">
+                                        <thead>
+                                            <tr>
+                                                <ng-container *ngIf="ladGridCategory[index]">
+                                                    <ng-container *ngFor="let value of ladGridCategory[index]; index as key">
+                                                        <th class="text-align-center">
+                                                            <ng-container *ngIf="value;else empty">
+                                                                {{value}}
+                                                            </ng-container>
+                                                            <ng-template #empty>&lt;select&gt;</ng-template>
+                                                        </th>
+                                                    </ng-container>
+                                                </ng-container>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <ng-container *ngIf="ladGridData[index]">
+                                                <ng-container *ngFor="let datas of ladGridData[index]; index as k">
+                                                    <tr>
+                                                        <ng-container *ngIf="datas">
+                                                            <ng-container *ngFor="let data of datas; index as g">
+                                                                <td class="p-fluid">
+                                                                    <input 
+                                                                        type="text" 
+                                                                        [id]="'ladCell_' + k + '_' + g" 
+                                                                        [name]="'ladCell_' + k + '_' + g" 
+                                                                        class="cell-input"
+                                                                        [value]="data"
+                                                                        (blur)="handleLADCellChange($event, index, k, g)"
+                                                                        (click)="setLADActiveIndexes(index, k, g)"
+                                                                        [disabled]="disable || ladSectNames.length === 0 || ladGridCategory[index][g] == null || ladGridCategory[index][g] === ''"
+                                                                    > 
+                                                                </td>
+                                                            </ng-container>
+                                                        </ng-container>
+                                                    </tr>
+                                                </ng-container>
+                                            </ng-container>
+                                        </tbody>
+                                    </table>
+    
+                                    <div class="grid mt-4">
+                                        <div class="lg:col-6 col-12">
+                                            <div class="grid">
+                                                <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                    <button pButton pRipple (click)="onInsertLADRowAbove()" label="Insert Row Above" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onInsertLADRowBelow()" label="Insert Row Below" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                </div>
+                                                <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                    <button pButton pRipple (click)="onInsertLADRowEnd()" label="Insert Row End" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onDeleteLADRowEnd()" label="Delete Row" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="lg:col-6 col-12 p-buttonset flex justify-content-between">
+                                            <div class="grid">
+                                                <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                    <button pButton pRipple (click)="onInsertLADColumnBefore()" label="Insert Column Before" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onInsertLADColumnAfter()" label="Insert Column After" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                </div>
+                                                <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
+                                                    <button pButton pRipple (click)="onInsertLADColumnLast()" label="Insert Column Last" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onDeleteLADColumn()" label="Delete Column" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-content-end">
+                                        <button pButton pRipple (click)="onClearGridData(index)" label="Clear Tab Data" class="p-button-text p-button-danger" [disabled]="disable"></button>
+                                    </div>
+                                </p-tabPanel>
+                            </ng-container>
+                        </p-tabView>    
+                    </div>
+                </p-tabPanel>
+                
+                <!-- Number List Tab -->
+                <p-tabPanel header="Number List" tooltip="Number List">
+                    <div class="flex justify-content-between align-items-center mb-2">
+                        <h4 class="mb-0">Number List</h4>
+                        <div class="flex align-items-center gap-3">
+                            <p *ngIf="searchResult.total < 1;else matches" class="mb-0">no matches</p>
+                            <ng-template #matches>
+                                <p>Total {{numberList.length}} Numbers</p>
+                            </ng-template>
+                            <span class="p-float-label">
+                                <input type="text" id="srchLad" name="srchLad" pInputText (input)="handleSrchNumChange()" [(ngModel)]="inputSrchNum"> 
+                                <label for="srchLad">Toll-Free Number Search</label>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <table class="table-bordered fixed_header">
+                            <tbody>
+                                <ng-container *ngIf="numGrid">
+                                    <ng-container *ngFor="let datas of numGrid; index as i">
+                                        <tr style="height: 50px;">
+                                            <ng-container *ngFor="let data of datas; index as j">
+                                                <td>{{numGrid[i][j]}}</td>
+                                            </ng-container>
+                                        </tr>
+                                    </ng-container>
+                                </ng-container>
+                            </tbody>
+                        </table>
+                    </div>
+                </p-tabPanel>
+            </p-tabView>
+        </div>
+
+        <div>
+            <div class="p-fluid">
+                <span class="p-float-label">
+                    <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="7" cols="30" pInputTextarea disabled></textarea>
+                    <label for="message">Message</label>
+                </span>
+            </div>
+
+            <div class="grid">
+                <div class="lg:col-7 col-12 p-buttonset text-align-center">
+                    <button pButton pRipple (click)="onEdit()" icon="pi pi-pencil" label="Edit" class="p-button-text" [disabled]="!bEditEnable"></button>
+                    <button pButton pRipple (click)="onCopy()" icon="pi pi-copy" label="Copy" class="p-button-text" [disabled]="!bCopyEnable"></button>
+                    <button pButton pRipple (click)="onTransfer()" icon="pi pi-arrows-h" label="Transfer" class="p-button-text" [disabled]="!bTransferEnable"></button>
+                    <button pButton pRipple (click)="toggleDelete()" icon="pi pi-trash" label="Delete" class="p-button-text" [disabled]="!bDeleteEnable"></button>
+                    <button pButton pRipple (click)="onConvert()" icon="pi pi-arrow-right-arrow-left" label="Convert" class="p-button-text" [disabled]="!bCopyEnable"></button>
+                </div>
+
+                <div class="lg:col-5 col-12 p-buttonset text-align-center">
+                    <button pButton pRipple (click)="onSubmit()" icon="pi pi-send" label="Submit" class="p-button-text" [disabled]="(disable || !bContentModified) && !bSubmitEnable"></button>
+                    <button pButton pRipple (click)="onSave()" icon="pi pi-save" label="Save" class="p-button-text" [disabled]="(disable || !bContentModified) && !bSaveEnable"></button>
+                    <button pButton pRipple (click)="onRevert()" icon="pi pi-refresh" label="Revert" class="p-button-text" [disabled]="(disable || !bContentModified) && !bRevertEnable"></button>
+                    <button pButton pRipple (click)="toggleCancel()" icon="pi pi-times" label="Cancel" class="p-button-text"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</p-panel>

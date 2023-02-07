@@ -1,0 +1,177 @@
+<h4 class="page_title m-0">Resp Org Change Search Requests</h4>
+
+<p-panel header="Retrieve" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="grid pt-2">
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" id="tollFreeNumber" name="tollFreeNumber" [ngClass]="{'ng-dirty': !validTollFreeNumber, 'ng-invalid': !validTollFreeNumber}" (blur)="onNumFieldFocusOut()" pInputText [(ngModel)]="inputTollFreeNumber"> 
+                <label for="tollFreeNumber">Toll-Free Number</label>
+            </span>
+            <strong *ngIf="!validTollFreeNumber" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'.</strong>
+        </div>
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="statusOptions" 
+                    id="status" 
+                    name="status" 
+                    (onChange)="onChangeStatus()" 
+                    [(ngModel)]="selectStatus" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                    [filter]="true" 
+                    filterBy="name"
+                    [virtualScroll]="true" 
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label for="status">Status</label>
+            </span>
+        </div>
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="submittedOptions" 
+                    id="submitted" 
+                    name="submitted" 
+                    (onChange)="onChangeSubmitted()" 
+                    [(ngModel)]="selectSubmitted" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                    [filter]="true" 
+                    filterBy="name"
+                    [virtualScroll]="true" 
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label for="submitted">Submitted</label>
+            </span>
+        </div>
+        <div *ngIf="selectSubmitted=='0'" class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-calendar 
+                    inputId="submittedDateRange" 
+                    selectionMode="range" 
+                    dateFormat="mm/dd/yy" 
+                    [readonlyInput]="true"
+                    [(ngModel)]="dateRangeSubmitted" 
+                ></p-calendar>
+                <label for="submittedDateRange">Submitted Date Range</label>
+            </span>
+        </div>
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="rejectReasonOptions" 
+                    id="rejectReason" 
+                    name="rejectReason" 
+                    (onChange)="onChangeRejectReason()" 
+                    [(ngModel)]="selectRejectReason" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                    [filter]="true" 
+                    filterBy="name"
+                    [virtualScroll]="true" 
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label for="rejectReason">Reject Reason</label>
+            </span>
+        </div>
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="typeOptions" 
+                    id="type" 
+                    name="type" 
+                    (onChange)="onChangeType()" 
+                    [(ngModel)]="selectType" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                ></p-dropdown>
+                <label for="type">Type</label>
+            </span>
+        </div>
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="progressOptions" 
+                    id="progress" 
+                    name="progress" 
+                    (onChange)="onChangeProgress()" 
+                    [(ngModel)]="selectProgress" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                ></p-dropdown>
+                <label for="progress">Progress</label>
+            </span>
+        </div>
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="respOrgOptions" 
+                    id="respOrg" 
+                    name="respOrg" 
+                    (onChange)="onChangeRespOrg()" 
+                    [(ngModel)]="selectRespOrg" 
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                    [filter]="true" 
+                    filterBy="name"
+                    [virtualScroll]="true" 
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label for="respOrg">Resp Org</label>
+            </span>
+        </div>        
+    </div>
+    
+    <div class="flex justify-content-end mt-5">
+        <span class="p-buttonset">
+          <button pButton pRipple (click)="onClickUpdateResults()" label="Update Results" icon="pi pi-pencil" class="p-button-text p-button-warning"></button>
+          <button pButton pRipple (click)="onClickReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+        </span>
+    </div>
+</p-panel>
+
+<p-panel header="Results" styleClass="mt-5" [toggleable]="true" [collapsed]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="grid">
+        <div class="col-3 flex align-items-center">
+            <label class="" for="expidited">
+                <p-inputSwitch
+                    id="expidited" 
+                    name="expidited" 
+                    [(ngModel)]="switchExpidited"
+                ></p-inputSwitch>
+                Expedited Requests
+            </label>
+        </div>
+        <div class="col-3 flex align-items-center">
+            <label class="" for="checkShow">
+                <p-inputSwitch
+                    id="checkShow" 
+                    name="checkShow" 
+                    [(ngModel)]="switchCheckShow"
+                ></p-inputSwitch>
+                Show Checked Out Requests
+            </label>
+        </div>
+        <div class="col-3 flex align-items-center">
+            <label class="" for="denotesExpedited">
+                <p-inputSwitch
+                    id="denotesExpedited" 
+                    name="denotesExpedited" 
+                    [(ngModel)]="switchDenotesExpedited"
+                    [disabled]="true"
+                ></p-inputSwitch>
+                Denotes an expedited item
+            </label>
+        </div>
+        <div class="col-3 flex justify-content-end  align-items-center">
+            <button pButton pRipple (click)="onClickExportCSV()" label="Export CSV" icon="pi pi-download" class="p-button-text"></button>
+        </div>
+    </div>
+</p-panel>

@@ -1,0 +1,382 @@
+<h4 class="page_title">One Click Activate</h4>
+
+<p-panel header="Search" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons">
+        <button id="btn_contactInformation"><span>&#9990;</span>Contact Information *</button>
+    </ng-template>
+
+    <div class="pt-2">
+        <div class="grid">
+            <div class="col-8 p-fluid">
+                <span class="p-float-label">
+                    <input type="number" id="quantity" name="quantity" pInputText [(ngModel)]="input_quantity" (input)="onChangeQuantity($event)" [disabled]="numType == gConst.OCA_NUM_TYPE_SPECIFIC"> 
+                    <label for="quantity">Quantity *</label>
+                </span>
+                <p *ngIf="!validQty" class="p-error">Starting Quantity: Must be between 1 and 10.</p>
+            </div>
+
+            <div class="col-4 p-fluid flex align-items-center justify-content-center">
+                <label class="ml-3" for="consecutive">
+                    <p-inputSwitch
+                        id="consecutive" 
+                        name="consecutive" 
+                        [(ngModel)]="input_consecutive"
+                        (onChange)="onNumFieldFocusOut()"
+                        [disabled]="disableCons"
+                    ></p-inputSwitch>
+                    Consecutive
+                </label>
+            </div>
+        </div>
+
+        <div class="p-fluid mt-5">
+            <span class="field p-float-label">
+                <textarea class="pt-4" id="number_maskEntry" name="number_maskEntry" [(ngModel)]="inputNumberMaskEntry" (blur)="onNumFieldFocusOut()" rows="5" cols="30" pInputTextarea></textarea>
+                <label for="number_maskEntry">Number or Mask Entry</label>
+            </span>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters, '*', '&' and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_CONS" class="p-error">Number or Mask Entry: Last character must equal '*' if consecutive is selected.</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_NPA" class="p-error">Number or Mask Entry: NPA must be an existing 3-digit 8xx Toll-Free NPA code known to the TFN Registry (e.g., 800).</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_AMP" class="p-error">Number or Mask Entry: Number cannot contain a single '&'.</strong>
+            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_WILDCARD" class="p-error">Number or Mask Entry: When performing a wild card search, the Number or Mask Entry field can be either empty or contain at most one number.</strong>
+        </div>
+
+        <p-panel styleClass="child_panel" header="Advanced Search" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+            <div class="pt-4">
+                <div class="grid">
+                    <div class="lg:col-4 col-12 p-fluid">
+                        <span class="p-float-label">
+                            <p-dropdown 
+                                [options]="npas" 
+                                id="npa" 
+                                name="npa" 
+                                [(ngModel)]="inputNpa" 
+                                optionLabel="name" 
+                                [showClear]="true" 
+                                scrollHeight="150px" 
+                                [filter]="true" 
+                                filterBy="name"
+                                [virtualScroll]="true" 
+                                [itemSize]="40"
+                                [disabled]="numType !== gConst.OCA_NUM_TYPE_RANDOM"
+                            ></p-dropdown>
+                            <label for="npa">Toll-Free NPA</label>
+                        </span>
+                    </div>
+
+                    <div class="lg:col-4 col-12 p-fluid">
+                        <span class="p-float-label">
+                            <input type="text" id="nxx" name="nxx" pInputText [(ngModel)]="inputNxx" (blur)="onNXXFieldFocusOut()" [disabled]="numType !== gConst.OCA_NUM_TYPE_RANDOM"> 
+                            <label for="nxx">Starting NXX</label>
+                        </span>
+                        <p *ngIf="!validNxx" class="p-error">Starting NXX: Must be three numerics.</p>
+                    </div>
+
+                    <div class="lg:col-4 col-12 p-fluid">
+                        <span class="p-float-label">
+                            <input type="text" id="line" name="line" pInputText [(ngModel)]="inputLine" (blur)="onLineFieldFocusOut()" [disabled]="numType !== gConst.OCA_NUM_TYPE_RANDOM"> 
+                            <label for="line">Starting line</label>
+                        </span>
+                        <p *ngIf="!validLine" class="p-error">Starting LINE: Must be four numerics.</p>
+                    </div>
+                </div>
+            </div>
+        </p-panel>
+
+        <p-panel styleClass="child_panel" header="One Click Activate" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+            <div class="pt-4">
+                <div class="grid">
+                    <div class="lg:col-6 col-12">
+                        <div class="grid align-items-center">
+                            <div class="col-11 p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown 
+                                        [options]="templates" 
+                                        id="template" 
+                                        name="template" 
+                                        [(ngModel)]="inputTemplate" 
+                                        optionLabel="name" 
+                                        [showClear]="true" 
+                                        scrollHeight="150px" 
+                                        [filter]="true" 
+                                        filterBy="name"
+                                        [virtualScroll]="true" 
+                                        [itemSize]="40"
+                                    ></p-dropdown>
+                                    <label for="template">Template *</label>
+                                </span>
+                            </div>
+                            <div class="col-1">
+                                <i 
+                                    class="pi pi-info-circle" 
+                                    tooltipStyleClass="info-tooltip" 
+                                    [escape]="false" 
+                                    pTooltip="<p>The selected Template Record must be in an Active status and valid in the Toll-Free Number Registry prior to utilizing this feature. If an Invalid Template Record was found during processing, the first TFN will be in an Invalid status and up to 9 TFNs will be in a Reserved status for a request. Any remaining TFNs in the request will not be processed.</p>" 
+                                    [hideDelay]="500" 
+                                    style="font-size: 2.5rem;cursor: pointer;"
+                                ></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="lg:col-6 col-12 p-fluid">
+                        <span class="field p-float-label">
+                            <input type="text" id="serviceOrderNum" name="serviceOrderNum" pInputText [(ngModel)]="inputServiceOrderNum" (blur)="onSvcOrderFieldFocusOut()"> 
+                            <label for="serviceOrderNum">Service Order *</label>
+                        </span>
+                        <p *ngIf="!validSvcOrdrNum" class="p-error">Must be 4 to 13 alphanumeric characters. The 1st character must be alpha, 2nd to 12th characters must be alphanumeric. The 13th character must be alpha.</p>
+                    </div>
+                    <div class="lg:col-6 col-12 p-fluid">
+                        <span class="p-float-label">
+                            <p-dropdown 
+                                [options]="timeZones" 
+                                id="timeZone" 
+                                name="timeZone" 
+                                [(ngModel)]="inputTimeZone" 
+                                optionLabel="name" 
+                                [showClear]="true" 
+                                scrollHeight="150px" 
+                                [filter]="true" 
+                                filterBy="name"
+                                [virtualScroll]="true" 
+                                [itemSize]="40"
+                            ></p-dropdown>
+                            <label for="timeZone">Time Zone</label>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid flex align-items-center">
+                    <div class="lg:col-6 col-12">
+                        <div class="grid">
+                            <div class="col-8 p-fluid">
+                                <span class="p-float-label">
+                                    <input type="text" id="numTermLine" name="numTermLine" pInputText [(ngModel)]="inputNumTermLine" (blur)="onNumTermLineFieldFocusOut()"> 
+                                    <label for="numTermLine">Number of Lines *</label>
+                                </span>
+                                <p *ngIf="!validNumTermLine" class="p-error">Please input only 4 digits</p>
+                            </div>
+                            <div class="col-4 p-fluid">
+                                <span class="p-float-label">
+                                    <p-calendar 
+                                        inputId="effDate"
+                                        [(ngModel)]="inputEffDate" 
+                                        dateFormat="mm/dd/yy" 
+                                        [minDate]="minEffDate"
+                                        [showButtonBar]="true" 
+                                        [numberOfMonths]="3" 
+                                        [showTransitionOptions]="'0ms'" 
+                                        [hideTransitionOptions]="'0ms'" 
+                                        (onBlur)="onDateFieldFocusOut()"
+                                        (onInput)="validEffDate=true"
+                                        [disabled]="inputNow"
+                                    ></p-calendar>
+                                    <label for="effDate">Effective Date *</label>
+                                </span>
+                                <p *ngIf="!validEffDate" class="p-error">Please input effective date</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-6 col-12">
+                        <div class="grid">
+                            <div class="col-10 p-fluid">
+                                <span class="p-float-label">
+                                    <p-calendar 
+                                        inputId="effTime" 
+                                        [(ngModel)]="inputEffTime" 
+                                        [timeOnly]="true" 
+                                        hourFormat="12" 
+                                        (onBlur)="onTimeFieldFocusOut()"
+                                        [disabled]="inputNow"
+                                    ></p-calendar>
+                                    <label for="effTime">Effective Time</label>
+                                </span>
+                                <p *ngIf="!validEffTime" class="p-error">Time format must be 'HH:MM AM/PM' and minutes part must be in quarter hours (00, 15, 30, 45) E.G. '10:45'</p>
+                            </div>
+                            <div class="col-2 flex align-items-center">
+                                <label class="ml-3" for="now">
+                                    <p-inputSwitch
+                                        id="now" 
+                                        name="now" 
+                                        [(ngModel)]="inputNow"
+                                    ></p-inputSwitch>
+                                    Now
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </p-panel>
+
+        <div class="p-fluid mt-5">
+            <span class="p-float-label">
+                <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="5" cols="30" pInputTextarea disabled></textarea>
+                <label for="message">Message</label>
+            </span>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="onSearchReserveActivate()" label="Search,Reserve & Activate" icon="pi pi-search-plus" class="p-button-text"></button>
+                <button pButton pRipple (click)="onReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template>
+</p-panel>
+
+
+<div class="mt-5 mb-5"></div>
+<p-panel header="Result" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div class="card">
+            <p-table
+                #resultTable
+                [value]="results"
+                dataKey="id"
+                [rowHover]="true"
+                [rows]="10"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10,25,50]"
+                [loading]="resultLoading"
+                responsiveLayout="stack" 
+                [responsive]="true"
+                [paginator]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [filterDelay]="0" 
+                [globalFilterFields]="['createdBy','submitDate','type', 'eff_dt', 'templateName', 'total', 'completed', 'message', 'progressStatus']"
+            >
+                <ng-template pTemplate="caption">
+                    <div class="table-header flex justify-content-end">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" (input)="resultTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                        </span>
+                    </div>
+                </ng-template>
+    
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="createdBy">
+                            <div class="flex justify-content-center align-items-center">
+                                Created By
+                                <p-sortIcon field="createdBy"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="submitDate">
+                            <div class="flex justify-content-center align-items-center">
+                                Submit Date
+                                <p-sortIcon field="submitDate"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="type">
+                            <div class="flex justify-content-center align-items-center">
+                                Type
+                                <p-sortIcon field="type"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="eff_dt">
+                            <div class="flex justify-content-center align-items-center">
+                                Eff. Date Time
+                                <p-sortIcon field="eff_dt"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="templateName">
+                            <div class="flex justify-content-center align-items-center">
+                                Template Name
+                                <p-sortIcon field="templateName"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="total">
+                            <div class="flex justify-content-center align-items-center">
+                                Total
+                                <p-sortIcon field="total"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="completed">
+                            <div class="flex justify-content-center align-items-center">
+                                Completed
+                                <p-sortIcon field="completed"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="message">
+                            <div class="flex justify-content-center align-items-center">
+                                Message
+                                <p-sortIcon field="message"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th pSortableColumn="progressStatus">
+                            <div class="flex justify-content-center align-items-center">
+                                Progress Status
+                                <p-sortIcon field="progressStatus"></p-sortIcon>
+                            </div>
+                        </th>
+                        <th class="text-align-center w-100px">
+                            Action
+                        </th>
+                    </tr>
+                </ng-template>
+    
+                <ng-template pTemplate="body" let-result>
+                    <tr class="p-selectable-row text-align-center">
+                        <td class="text-align-center">
+                            <span class="p-column-title">Created By</span>
+                            {{result.createdBy}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Submit Date</span>
+                            {{result.submitDate}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title"></span>
+                            {{result.type}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title"></span>
+                            {{result.eff_dt}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Template Name</span>
+                            {{result.templateName}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Total</span>
+                            <p-badge [value]="result.total" size="large" severity="success" styleClass="mr-2"></p-badge>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Completed</span>
+                            <p-badge [value]="result.completed" size="large" severity="success" styleClass="mr-2"></p-badge>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Message</span>
+                            {{result.message}}
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Progress Status</span>
+                            <i *ngIf="result.progressStatus" class="pi pi-check"></i>
+                            <i *ngIf="!result.progressStatus" class="pi pi-times"></i>
+                        </td>
+                        <td class="text-align-center">
+                            <span class="p-column-title">Action</span>
+                            <span class="p-buttonset">
+                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined"></button>
+                            </span>
+                        </td>                                                            
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8">No Result found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</p-panel>
