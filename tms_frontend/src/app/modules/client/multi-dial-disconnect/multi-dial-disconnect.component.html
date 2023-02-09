@@ -1,36 +1,9 @@
 <h4 class="page_title">Multi Dial Number Disconnect</h4>
 
-<div class="grid">
-    <div class="col-12 lg:col-6">
-        <p-panel header="Multi Dial Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-            <div class="pt-2">
-                <div class="">
-                    <p class="mb-2">CSV or XLS file :</p>
-                    <p-fileUpload 
-                        #fubauto 
-                        mode="basic" 
-                        name="CSV_XL_File[]" 
-                        url="" 
-                        [multiple]="true" 
-                        accept=".xls,.xlsx,.csv" 
-                        [maxFileSize]="10000000" 
-                        (onSelect)="onCsvXlUploadAuto($event)" 
-                        [auto]="true" 
-                        chooseLabel="Choose File"
-                    ></p-fileUpload>
-                </div>
-                <div class="p-fluid mt-3">
-                    <span class="p-float-label">
-                        <textarea class="pt-4" id="dial_numbers" name="dial_numbers" [(ngModel)]="inputDialNumbers" rows="7" cols="30" pInputTextarea></textarea>
-                        <label for="dial_numbers">Dial Numbers</label>
-                    </span>
-                </div>
-            </div>
-        </p-panel>
-    </div>
-    <div class="col-12 lg:col-6">
-        <p-panel header="Request Information">
-            <div class="p-fluid pt-2">
+<p-panel header="Multi Dial Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div>
+            <div class="p-fluid">
                 <span class="field p-float-label">
                     <input type="text" id="request_name" name="request_name" pInputText [(ngModel)]="inputRequestName"> 
                     <label for="request_name">Request Name</label>
@@ -45,6 +18,7 @@
                             dateFormat="mm/dd/yy" 
                             [minDate]="minEffDateTime"
                             [showButtonBar]="true" 
+                            [numberOfMonths]="3" 
                             [showTime]="true"
                             hourFormat="12" 
                             [disabled]="inputNow"
@@ -88,33 +62,47 @@
                             name="referral" 
                             [(ngModel)]="inputYesNo" 
                             optionLabel="name" 
+                            optionValue="value"
                             scrollHeight="150px" 
                         ></p-dropdown>
                         <label for="referral">Referral</label>
                     </span>
                 </div>
             </div>
-        </p-panel>
+        </div>
 
-        <div class="mt-3"></div>
-        <p-panel styleClass="header-none">
-            <div class="p-fluid pt-2">
-                <span class="p-float-label">
-                    <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="5" cols="30" pInputTextarea disabled></textarea>
-                    <label for="message">Message</label>
-                </span>
+        <div class="grid mt-3">
+            <div class="col-3">
+                <p class="mb-2">CSV or XLS file :</p>
+                <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
+                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
             </div>
-            <ng-template pTemplate="footer">
-                <div class="flex justify-content-end">
-                    <span class="p-buttonset">
-                        <button pButton pRipple (click)="onSubmit()" label="Submit" icon="pi pi-send" class="p-button-text"></button>
-                        <button pButton pRipple (click)="onClear()" label="Clear" icon="pi pi-eraser" class="p-button-text p-button-danger"></button>
-                    </span>
-                </div>
-            </ng-template>
-        </p-panel>
+            <div class="col-9 p-fluid">
+                <span class="p-float-label">
+                    <textarea class="pt-4" id="dial_numbers" name="dial_numbers" [(ngModel)]="inputDialNumbers" rows="7" cols="30" pInputTextarea></textarea>
+                    <label for="dial_numbers">Dial Numbers</label>
+                </span>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+            </div>
+        </div>
+
+        <!-- <div class="p-fluid">
+            <span class="p-float-label">
+                <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="5" cols="30" pInputTextarea disabled></textarea>
+                <label for="message">Message</label>
+            </span>
+        </div> -->
     </div>
-</div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="onSubmit()" label="Submit" icon="pi pi-send" class="p-button-text"></button>
+                <button pButton pRipple (click)="onClear()" label="Clear" icon="pi pi-eraser" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template>
+</p-panel>
 
 <div class="mt-3"></div>
 <p-panel header="Activity Log" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">

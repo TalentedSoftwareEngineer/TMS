@@ -15,6 +15,7 @@ import {
   TFNUM_STATE_TRANSITIONAL,
   TFNUM_STATE_SPARE
  } from '../../constants';
+import moment from 'moment';
 
 @Component({
   selector: 'app-number-query',
@@ -41,12 +42,12 @@ export class NumberQueryComponent implements OnInit {
   inputDescription: string = '';
   validInputDescription: boolean = true;
 
-  disabled = false;
+  disabled = true;
   retreivedStatus: string = '';
   inputRespOrg: string = '';
   validRespOrg: boolean = true;
   statusOptions: any[] = [];
-  selectStatus = {name: this.retreivedStatus, value: this.retreivedStatus};
+  selectStatus = '';
   inputStatus: string = '';
   inputEffDate: string = '';
   inputReservedUntil: string|number|Date|null = null;
@@ -81,6 +82,14 @@ export class NumberQueryComponent implements OnInit {
     this.onCancel();
   }
 
+  onInputContactName = () => {
+    this.validInputContactName = CONTACT_NAME_REG_EXP.test(this.inputContactName==undefined?'':this.inputContactName);
+  }
+
+  onInputContactNumber = () => {
+    this.validInputContactNumber = CONTACT_NUMBER_REG_EXP.test(this.inputContactNumber==undefined?'':this.inputContactNumber);
+  }
+
   onInputDescription = () => {
     this.validInputDescription = /^[\w\d\s`'!@#$%&*()-_+={}\[\]\:;<>,.?/.]{1,60}$/.test(this.inputDescription);
   }
@@ -93,89 +102,43 @@ export class NumberQueryComponent implements OnInit {
     if (!numRegExp.test(this.inputTollFreeNumber)) {
       this.invalidNumType = INVALID_NUM_TYPE_TENDIGIT;
       return false;
-
     } else if (!tfNumRegExp.test(this.inputTollFreeNumber)) {
       this.invalidNumType = INVALID_NUM_TYPE_NPA;
       return false;
-
     } else  {
       this.invalidNumType = INVALID_NUM_TYPE_NONE;
     }
 
     let body = {
       ro: this.store.getCurrentRo(),
-      numList:[
-        this.inputTollFreeNumber.replace(/\-/g, "")
-      ],
-      requestDesc: this.inputDescription
+      num: this.inputTollFreeNumber
     }
 
     this.api.retrieveNumberQuery(body).subscribe(res=>{
-      if (res.ok && res.data && res.data.queryResult) {
-
-        let result = res.data.queryResult[0]
-        let effDate = ""
-        if (result.effDt)
-          effDate = gFunc.fromUTCDateStrToCTDateStr(result.effDt)
-
-        let lastActDt = ""
-        if (result.lastActDt)
-          lastActDt = gFunc.fromUTCDateStrToCTDateStr(result.lastActDt)
-
-        let contactName = ""
-        if (result.conName)
-          contactName = result.conName
-
-        let contactNumber = ""
-        if (result.conPhone)
-          contactNumber = result.conPhone
-
-        let notes = ""
-        if (result.shrtNotes)
-          notes = result.shrtNotes
-
-        let reservedUntil: string|number|Date|null = ""
-        if (result.resUntilDt)
-          reservedUntil = new Date(result.resUntilDt).getTime()
-
-        this.inputRespOrg = result.ctrlRespOrgId;
-        this.retreivedStatus = result.status;
-        this.inputStatus = result.status;
-        this.selectStatus = {name: result.status, value: result.status};
-        this.inputEffDate = effDate;
-        this.inputLastActiveDate = lastActDt;
-        this.inputContactName = contactName;
-        this.inputContactNumber = contactNumber;
-        this.inputNotes = notes;
-        this.inputReservedUntil = reservedUntil;
-        this.recVersionId = result.recVersionId;
-        this.isResult = true;
-
-        if (result.status !== this.gConst.TFNUM_STATE_RESERVED && result.status !== this.gConst.TFNUM_STATE_TRANSITIONAL) {
-          this.disabled = true;
-        } else {
-          // if (this.props.somos.ro.indexOf(result.ctrlRespOrgId) === -1)
-          //   this.setState({disabled: true})
-          // else
-          //   this.setState({disabled: false})
-
-          this.disabled = false;
-        }
-
-      }
+      this.inputRespOrg = res.ctrlRespOrgId;
+      this.selectStatus = res.status;
+      this.inputStatus = res.status;
+      this.inputEffDate = res.effDt;
+      // this.inputReservedUntil = moment(new Date(res.resUntilDt)).format('YYYY/MM/DD');
+      this.inputLastActiveDate = res.lastActDt;
+      this.inputContactName = res.conName;
+      this.inputContactNumber = res.conName;
+      this.inputNotes = res.shrtNotes;
+      this.isResult = true;
     });
   }
 
-  onInputContactName = () => {
-    this.validInputContactName = CONTACT_NAME_REG_EXP.test(this.inputContactName==undefined?'':this.inputContactName);
-  }
-
-  onInputContactNumber = () => {
-    this.validInputContactNumber = CONTACT_NUMBER_REG_EXP.test(this.inputContactNumber==undefined?'':this.inputContactNumber);
-  }
-
   onSave = () => {
-
+    this.api.updateNumberQuery({
+      ro: this.store.getCurrentRo(),
+      num: this.inputTollFreeNumber,
+      status: this.inputStatus,
+      contactName: this.inputContactName,
+      contactNumber: this.inputContactNumber,
+      shortNotes: this.inputNotes,
+    }).subscribe(res=>{
+      console.log('res', res);
+    });
   }
 
   onCancel = () => {

@@ -1,53 +1,29 @@
 <h4 class="page_title">Multi Dial Number Query</h4>
 
-<div class="grid">
-    <div class="col-12 lg:col-6">
-        <p-panel header="Multi Dial Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-            <div class="pt-2">
-                <div class="">
-                    <p class="mb-2">CSV or XLS file :</p>
-                    <p-fileUpload 
-                        #fubauto 
-                        mode="basic" 
-                        name="CSV_XL_File[]" 
-                        url="" 
-                        [multiple]="true" 
-                        accept=".xls,.xlsx,.csv" 
-                        [maxFileSize]="10000000" 
-                        (onSelect)="onCsvXlUploadAuto($event)" 
-                        [auto]="true" 
-                        chooseLabel="Choose File"
-                    ></p-fileUpload>
-                </div>
-                <div class="p-fluid mt-3">
-                    <span class="p-float-label">
-                        <textarea class="pt-4" id="dial_numbers" name="dial_numbers" [(ngModel)]="inputDialNumbers" (blur)="onNumFieldFocusOut()" rows="7" cols="30" pInputTextarea></textarea>
-                        <label for="dial_numbers">Dial Numbers</label>
-                    </span>
-                    <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
-                </div>
+<p-panel header="Multi Dial Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <div class="pt-2">
+        <div class="p-fluid">
+            <span class="p-float-label">
+                <input type="text" id="request_name" name="request_name" pInputText [(ngModel)]="inputRequestName" (input)="validRequestName = true"> 
+                <label for="request_name">Request Name</label>
+            </span>
+            <strong *ngIf="!validRequestName" class="p-error">The string length of the request name must be 1 ~ 60.</strong>
+        </div>
+
+        <div class="grid mt-3">
+            <div class="col-3">
+                <p class="mb-2">CSV or XLS file :</p>
+                <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
+                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
             </div>
-        </p-panel>
-    </div>
-    <div class="col-12 lg:col-6">
-        <p-panel header="Request Information">
-            <div class="p-fluid pt-2">
+            <div class="col-9 p-fluid">
                 <span class="p-float-label">
-                    <input type="text" id="request_name" name="request_name" pInputText [(ngModel)]="inputRequestName"> 
-                    <label for="request_name">Request Name</label>
+                    <textarea class="pt-4" id="dial_numbers" name="dial_numbers" [(ngModel)]="inputDialNumbers" (blur)="onNumFieldFocusOut()" rows="7" cols="30" pInputTextarea></textarea>
+                    <label for="dial_numbers">Dial Numbers</label>
                 </span>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
             </div>
-
-            <ng-template pTemplate="footer">
-                <div class="flex justify-content-end">
-                    <span class="p-buttonset">
-                        <button pButton pRipple (click)="onSubmit()" label="Submit"  icon="pi pi-send" class="p-button-text"></button>
-                        <button pButton pRipple (click)="onClear()" label="Clear"  icon="pi pi-eraser" class="p-button-text p-button-danger"></button>
-                    </span>
-                </div>
-            </ng-template>
-        </p-panel>
-
+        </div>
         <!-- <div class="mt-3"></div>
         <p-panel styleClass="custom_panel_style header-none">
             <div class="p-fluid pt-2">
@@ -58,7 +34,16 @@
             </div>
         </p-panel> -->
     </div>
-</div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="onSubmit()" label="Submit"  icon="pi pi-send" class="p-button-text"></button>
+                <button pButton pRipple (click)="onClear()" label="Clear"  icon="pi pi-eraser" class="p-button-text p-button-danger"></button>
+            </span>
+        </div>
+    </ng-template>    
+</p-panel>
 
 <div class="mt-3"></div>
 <p-panel header="Activity Log" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
@@ -78,7 +63,7 @@
                 [paginator]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
                 [filterDelay]="0" 
-                [globalFilterFields]="['name','createdBy','date','total','completed','message','progressStatus']"
+                [globalFilterFields]="['request_desc','user.username','sub_dt_tm','total','completed','message','status']"
             >
                 <ng-template pTemplate="caption">
                     <div class="table-header flex justify-content-end">
@@ -97,10 +82,10 @@
                                 <p-sortIcon field="name"></p-sortIcon>
                             </div>
                         </th>
-                        <th pSortableColumn="createdBy">
+                        <th pSortableColumn="user.username">
                             <div class="flex justify-content-center align-items-center">
                                 Created By
-                                <p-sortIcon field="createdBy"></p-sortIcon>
+                                <p-sortIcon field="user.username"></p-sortIcon>
                             </div>
                         </th>
                         <th pSortableColumn="date">
@@ -127,10 +112,10 @@
                                 <p-sortIcon field="message"></p-sortIcon>
                             </div>
                         </th>
-                        <th pSortableColumn="progressStatus">
+                        <th pSortableColumn="status">
                             <div class="flex justify-content-center align-items-center">
                                 Progress Status
-                                <p-sortIcon field="progressStatus"></p-sortIcon>
+                                <p-sortIcon field="status"></p-sortIcon>
                             </div>
                         </th>
                         <th class="text-align-center w-100px">
@@ -143,39 +128,41 @@
                     <tr class="p-selectable-row text-align-center">
                         <td class="text-align-center">
                             <span class="p-column-title">Name</span>
-                            {{result.name}}
+                            {{result.request_desc}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Created By</span>
-                            {{result.createdBy}}
+                            {{result.user.username}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Date</span>
-                            {{result.date}}
+                            {{result.sub_dt_tm}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Total</span>
-                            <p-badge [value]="result.total" size="large" severity="success" styleClass="mr-2"></p-badge>
+                            <p-tag styleClass="mr-2" severity="success" [value]="result.total"></p-tag>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Completed</span>
-                            <p-badge [value]="result.completed" size="large" severity="success" styleClass="mr-2"></p-badge>
+                            <p-tag styleClass="mr-2" [severity]="getCompletedTagColor(result)" [value]="getCompleted(result)"></p-tag>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Message</span>
-                            {{result.message}}
+                            {{ getMessage(result) }}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Progress Status</span>
-                            <i *ngIf="result.progressStatus" class="pi pi-check"></i>
-                            <i *ngIf="!result.progressStatus" class="pi pi-times"></i>
+                            <div *ngIf="isProgressing(result)">
+                                <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
+                            </div>
+                            <p-tag *ngIf="!isProgressing(result)" styleClass="mr-2" [severity]="getStatusTagColor(result)" [value]="getStatus(result)"></p-tag>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Action</span>
                             <span class="p-buttonset">
-                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined"></button>
-                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined"></button>
-                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
+                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
+                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
                             </span>
                         </td>                                                            
                     </tr>
@@ -190,3 +177,164 @@
         </div>
     </div>
 </p-panel>
+
+<p-dialog header="View Numbers" styleClass="c-modal pt-2" [(visible)]="flagOpenModal" (onHide)="closeModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <div class="card">
+        <p-table
+            #numbersTable
+            [value]="numberList"
+            dataKey="id"
+            [rows]="10"
+            [showCurrentPageReport]="true"
+            [rowsPerPageOptions]="[10,25,50]"
+            [loading]="numberListLoading"
+            responsiveLayout="scroll"
+            [scrollable]="true"
+            scrollDirection="both"
+            [paginator]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            [filterDelay]="0" 
+            [globalFilterFields]="['num','resp_org_id','eff_dt','status','last_act_dt','res_until_dt','disc_until_dt','con_name','con_phone','message','short_notes']"
+            styleClass="p-datatable-lg"
+        >
+            <ng-template pTemplate="caption">
+                <div class="flex justify-content-between align-items-center">
+                    <p class="mb-0" *ngIf="resultTotal>0">Total <span style="font-size: 16px;">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
+                    <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
+                    <div class="table-header">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
+                        </span>
+                    </div>
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="num">
+                        <div class="flex justify-content-center align-items-center">
+                            Number
+                            <p-sortIcon field="num"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="resp_org_id">
+                        <div class="flex justify-content-center align-items-center">
+                            Resp Org
+                            <p-sortIcon field="resp_org_id"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="status">
+                        <div class="flex justify-content-center align-items-center">
+                            Status
+                            <p-sortIcon field="status"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="eff_dt">
+                        <div class="flex justify-content-center align-items-center">
+                            Effective Date
+                            <p-sortIcon field="eff_dt"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="last_act_dt">
+                        <div class="flex justify-content-center align-items-center">
+                            Last Active
+                            <p-sortIcon field="last_act_dt"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="res_until_dt">
+                        <div class="flex justify-content-center align-items-center">
+                            Reserved Until
+                            <p-sortIcon field="res_until_dt"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="disc_until_dt">
+                        <div class="flex justify-content-center align-items-center">
+                            Disconnect Until
+                            <p-sortIcon field="disc_until_dt"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="con_name">
+                        <div class="flex justify-content-center align-items-center">
+                            Contact Person
+                            <p-sortIcon field="con_name"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="con_phone">
+                        <div class="flex justify-content-center align-items-center">
+                            Contact Number
+                            <p-sortIcon field="con_phone"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="message">
+                        <div class="flex justify-content-center align-items-center">
+                            Message
+                            <p-sortIcon field="message"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="short_notes">
+                        <div class="flex justify-content-center align-items-center">
+                            Notes
+                            <p-sortIcon field="short_notes"></p-sortIcon>
+                        </div>
+                    </th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-number>
+                <tr class="p-selectable-row text-align-center">
+                    <td class="text-align-center">
+                        <span class="p-column-title">Number</span>
+                        {{number.num | phoneFormat}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Resp Org</span>
+                        {{number.resp_org_id}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Status</span>
+                        {{number.status}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Effective Date</span>
+                        {{number.eff_dt}}
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Last Active</span>
+                        {{number.last_act_dt}}
+                    </td>  
+                    <td class="text-align-center">
+                        <span class="p-column-title">Reserved Until</span>
+                        {{number.res_until_dt}}
+                    </td>  
+                    <td class="text-align-center">
+                        <span class="p-column-title">Disconnect Until</span>
+                        {{number.disc_until_dt}}
+                    </td>  
+                    <td class="text-align-center">
+                        <span class="p-column-title">Contact Person</span>
+                        {{number.con_name}}
+                    </td>  
+                    <td class="text-align-center">
+                        <span class="p-column-title">Contact Number</span>
+                        {{number.con_phone}}
+                    </td>  
+                    <td class="text-align-center">
+                        <span class="p-column-title">Message</span>
+                        {{number.message}}
+                    </td>  
+                    <td class="text-align-center">
+                        <span class="p-column-title">Notes</span>
+                        {{number.short_notes}}
+                    </td>                                                        
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="12">No Number List found.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</p-dialog>

@@ -27,6 +27,9 @@
 
 <div class="mt-5 mb-5"></div>
 <p-panel header="Result" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <!-- <ng-template pTemplate="icons">
+        <button id="btn_contactInformation"><span>&#9990;</span>Contact Information *</button>
+    </ng-template> -->
     <ng-container *ngIf="isResult">
         <div class="grid pt-2">
             <div class="col-6 p-fluid">
@@ -44,6 +47,7 @@
                         name="status" 
                         [(ngModel)]="selectStatus" 
                         optionLabel="name" 
+                        optionValue="value"
                         [showClear]="true" 
                         scrollHeight="150px" 
                         [filter]="true" 
@@ -86,7 +90,8 @@
             </div>
         </div>
 
-        <p-panel header="Contact Information" styleClass="custom_panel_style" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+        <p-panel header="Contact Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+            <span style="flex: 1;"></span>
             <div class="grid pt-2">
                 <div class="col">
                     <div class="p-fluid">
@@ -116,12 +121,10 @@
             </div>
         </p-panel>
 
-        <ng-template pTemplate="footer">
-            <div class="p-buttonset flex justify-content-end">
-                <button pButton pRipple type="button" (click)="onSave()" label="Save" class="p-button-text"></button>
-                <button pButton pRipple type="button" (click)="onCancel()" label="Cancel" class="p-button-text p-button-danger"></button>
-            </div>
-        </ng-template>
+        <div class="p-buttonset flex justify-content-end">
+            <button pButton pRipple type="button" (click)="onSave()" label="Save" class="p-button-text"></button>
+            <button pButton pRipple type="button" (click)="onCancel()" label="Cancel" class="p-button-text p-button-danger"></button>
+        </div>
     </ng-container>
 </p-panel>
 

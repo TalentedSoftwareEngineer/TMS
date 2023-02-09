@@ -485,11 +485,91 @@ export class ApiService {
   }
 
   //Number Query and Update
-  // retrieveNumberQuery
   retrieveNumberQuery(data: any): Observable<any> {
     return this.http.patch<any>(`${this.coreApi}/NQU/query`, data);
   }
   updateNumberQuery(data: any): Observable<any> {
     return this.http.patch<any>(`${this.coreApi}/NQU/update`, data);
+  }
+
+  //Multi Dial Number Query
+  submitMNQ(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/MNQ/query`, data);
+  }
+
+  getMNQData(/* active: string, direction: string, size: number, page: number */): Observable<any> {
+    // const filter = getFilter(active, direction, size, page, '', null, null, ['completed']);
+    const filter = 'filter=';
+    
+    const url = `${this.coreApi}/MNQ/data?${filter !== 'filter=' ? filter + '&' : ''}`;
+    return this.http.get<any>(url);
+  }
+
+  getMNQById(id: string): Observable<any> {
+    const url = `${this.coreApi}/MNQ/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  getMNQCount(filterValue: string, customerFilter?: any): Observable<any> {
+    const whereParam = getCountWhere(filterValue, '', '', [], customerFilter);
+    return this.http.get<any>(`${this.coreApi}/MNQ/count?${'where=' + whereParam}`);
+  }
+
+  deleteMNQ(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/MNQ/${id}`);
+  }
+
+  //Multi Dial Number Disconnect
+  submitMND(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/MND/disconnect`, data);
+  }
+
+  getMNDData(/* active: string, direction: string, size: number, page: number */): Observable<any> {
+    // const filter = getFilter(active, direction, size, page, '', null, null, ['completed']);
+    const filter = 'filter=';
+    
+    const url = `${this.coreApi}/MND/data?${filter !== 'filter=' ? filter + '&' : ''}`;
+    return this.http.get<any>(url);
+  }
+
+  getMNDById(id: string): Observable<any> {
+    const url = `${this.coreApi}/MND/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  getMNDCount(filterValue: string, customerFilter?: any): Observable<any> {
+    const whereParam = getCountWhere(filterValue, '', '', [], customerFilter);
+    return this.http.get<any>(`${this.coreApi}/MND/count?${'where=' + whereParam}`);
+  }
+
+  deleteMND(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/MND/${id}`);
+  }
+
+  //Trouble Referral Number Query
+  retrieveTrq(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/TRQ/retrieve`, data);
+  }
+
+  getTrqData(/* active: string, direction: string, size: number, page: number */): Observable<any> {
+    // const filter = getFilter(active, direction, size, page, '', null, null, ['completed']);
+    const filter = 'filter=';
+    
+    const url = `${this.coreApi}/TRQ/data?${filter !== 'filter=' ? filter + '&' : ''}`;
+    return this.http.get<any>(url);
+  }
+
+  getTrqById(id: string): Observable<any> {
+    const url = `${this.coreApi}/TRQ/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  getTrqCount(filterValue: string, customerFilter?: any): Observable<any> {
+    const whereParam = getCountWhere(filterValue, '', '', [], customerFilter);
+    return this.http.get<any>(`${this.coreApi}/TRQ/count?${'where=' + whereParam}`);
+  }
+
+  deleteTrq(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/TRQ/${id}`);
   }
 }
