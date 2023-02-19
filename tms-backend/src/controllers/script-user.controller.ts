@@ -25,6 +25,7 @@ import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
 import AuditionedUtils from "../utils/audition";
+import DataUtils from '../utils/data';
 
 @authenticate('jwt')
 export class ScriptUserController {
@@ -82,13 +83,16 @@ export class ScriptUserController {
   })
   async count(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-      @param.where(ScriptUser) where?: Where<ScriptUser>,
+      @param.query.string('value') value: string
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_SQL_SCRIPT))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.scriptUserRepository.count(where);
+    let fields = ['username','password'];
+    let num_fields = undefined;
+    let custom = undefined;
+    return this.scriptUserRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
   }
 
   @get('/script-users', {
@@ -109,13 +113,20 @@ export class ScriptUserController {
   })
   async find(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-      @param.filter(ScriptUser) filter?: Filter<ScriptUser>,
+      @param.query.number('limit') limit: number,
+      @param.query.number('skip') skip: number,
+      @param.query.string('order') order: string,
+      @param.query.string('value') value: string
   ): Promise<ScriptUser[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_SQL_SCRIPT))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.scriptUserRepository.find(AuditionedUtils.includeAuditionedFilter(filter));
+    let fields = ['username','password'];
+    let num_fields = undefined;
+    let custom = undefined;
+    let include = [{relation: 'created'}, {relation: 'updated'}];
+    return this.scriptUserRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
   }
 
   @get('/script-users/{id}', {

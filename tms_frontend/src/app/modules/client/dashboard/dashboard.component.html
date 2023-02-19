@@ -20,7 +20,7 @@
             <div *ngIf="isSuperAdmin" class="w-full flex justify-content-end mt-3" [ngClass]="{'absolute': !isNewsEventEditing, 'b-30px': !isNewsEventEditing}">
                 <button *ngIf="!isNewsEventEditing" pButton pRipple (click)="isNewsEventEditing=true" label="Edit" icon="pi pi-pencil" class="p-button-text p-button-warning"></button>
                 <span class="p-buttonset" *ngIf="isNewsEventEditing">
-                    <button pButton pRipple (click)="onEditNewsEvent()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+                    <button pButton pRipple (click)="onEditNewsEvent()" label="Save" icon="pi pi-save" class="p-button-text"></button>
                     <button pButton pRipple (click)="isNewsEventEditing=false" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
                 </span>
             </div>

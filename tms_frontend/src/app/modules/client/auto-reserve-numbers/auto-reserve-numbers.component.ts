@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import moment from 'moment';
-import { 
-  INVALID_TIME_NONE, 
-  INVALID_TIME_ORDER, 
-  INVALID_TIME_PAST, 
+import {
+  INVALID_TIME_NONE,
+  INVALID_TIME_ORDER,
+  INVALID_TIME_PAST,
   INVALID_NUM_TYPE_NONE,
   INVALID_NUM_TYPE_EMPTY,
   INVALID_NUM_TYPE_WILDCARD,
@@ -23,9 +23,9 @@ import {
 export class AutoReserveNumbersComponent implements OnInit {
 
   gConst = {
-    INVALID_TIME_NONE, 
-    INVALID_TIME_ORDER, 
-    INVALID_TIME_PAST, 
+    INVALID_TIME_NONE,
+    INVALID_TIME_ORDER,
+    INVALID_TIME_PAST,
     INVALID_NUM_TYPE_NONE,
     INVALID_NUM_TYPE_EMPTY,
     INVALID_NUM_TYPE_WILDCARD,
@@ -110,10 +110,10 @@ export class AutoReserveNumbersComponent implements OnInit {
    */
    setSubmitable() {
     let submitable = true
-    if (this.inputWildcards === '') {
-      this.invalidNumType = this.gConst.INVALID_NUM_TYPE_EMPTY;
-      submitable = false
-    }
+    // if (this.inputWildcards === '') {
+    //   this.invalidNumType = this.gConst.INVALID_NUM_TYPE_EMPTY;
+    //   submitable = false
+    // }
 
     if (submitable && !this.validQty)
       submitable = false
@@ -140,7 +140,6 @@ export class AutoReserveNumbersComponent implements OnInit {
    * this is called when the focus of end time field is lost
    */
    onTimeFieldFocusOut = async () => {
-
     const startNow = this.inputStartNow
     const endNow = this.inputEndNow
     let startTime = this.inputStartDateTime
@@ -168,7 +167,7 @@ export class AutoReserveNumbersComponent implements OnInit {
     if(startTime!=null && endTime!=null) {
       if (startTime >= endTime && invalidStartTime === INVALID_TIME_NONE) {
         invalidStartTime = INVALID_TIME_ORDER
-      } 
+      }
       if (startTime >= endTime && invalidEndTime === INVALID_TIME_NONE) {
         invalidEndTime = INVALID_TIME_ORDER
       }
@@ -184,9 +183,6 @@ export class AutoReserveNumbersComponent implements OnInit {
    * this function is called when the focus of number input field is lost
    */
    checkWildcardsValidation = async (value: string) => {
-
-    console.log('>>> wildcards change: ', value)
-
     let wildcards = value.replaceAll('-', '')
     while (wildcards.includes("  "))
       wildcards = wildcards.replaceAll("  ", ' ')
@@ -196,14 +192,11 @@ export class AutoReserveNumbersComponent implements OnInit {
 
     while (wildcards.includes(",,"))
       wildcards = wildcards.replaceAll(",,", ',')
-    console.log('>>> wildcards after removing space: ', wildcards)
-    
+
     if (wildcards !== "") {
 
       if (wildcards.includes('*') || wildcards.includes('&')) { // to wildcard mode
-        
         const wildcardList = wildcards.split(',')
-        console.log('>>> wildcards list: ', wildcardList)
 
         let invalidNumType = this.gConst.INVALID_NUM_TYPE_NONE
         for (let wildcard of wildcardList) {
@@ -238,7 +231,7 @@ export class AutoReserveNumbersComponent implements OnInit {
 
           }
         }
-      
+
         if (invalidNumType === this.gConst.INVALID_NUM_TYPE_NONE) {
           wildcards = ""
           for (let num of wildcardList) {
@@ -274,8 +267,6 @@ export class AutoReserveNumbersComponent implements OnInit {
             invalidNumType = this.gConst.INVALID_NUM_TYPE_COMMON
           }
         }
-
-        console.log('------ invalid num type: ', invalidNumType)
 
         if (invalidNumType === this.gConst.INVALID_NUM_TYPE_NONE) {
           let numbers = ""
@@ -337,7 +328,6 @@ export class AutoReserveNumbersComponent implements OnInit {
   }
 
   onDelete = () => {
-    console.log(this.selectedAutoReserveNumbers);
   }
 
 }

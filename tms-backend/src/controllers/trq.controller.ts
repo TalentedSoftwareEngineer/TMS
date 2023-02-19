@@ -14,6 +14,7 @@ import {TRQRequest} from "../models/trq.request";
 import {Count, CountSchema, Filter, repository, Where} from "@loopback/repository";
 import {NsrReq, NsrResult, TrqReq, TrqResult} from "../models";
 import {NsrReqRepository, NsrResultRepository, TrqReqRepository, TrqResultRepository} from "../repositories";
+import DataUtils from "../utils/data";
 
 @authenticate('jwt')
 export class TrqController {
@@ -91,13 +92,15 @@ export class TrqController {
         }
     })
     async count(
-        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.where(TrqReq) where?: Where<TrqReq>,
+        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, 
+        @param.query.string('value') value: string,
     ): Promise<Count> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.TROUBLE_REFERRAL_NUMBER_QUERY))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.trqReqRepository.count(where);
+        return this.trqReqRepository.count(DataUtils.getWhere(value,
+            ['sub_dt_tm', 'ro_id', 'message', 'status', 'total', 'completed'], 'num_list', undefined));
     }
 
     @get('/TRQ/data', {
@@ -117,26 +120,27 @@ export class TrqController {
         }
     })
     async find(
-        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.filter(TrqReq) filter?: Filter<TrqReq>,
+        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, 
+        @param.query.number('limit') limit: number,
+        @param.query.number('skip') skip: number,
+        @param.query.string('order') order: string,
+        @param.query.string('value') value: string
     ): Promise<TrqReq[]> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.TROUBLE_REFERRAL_NUMBER_QUERY))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        if (!filter)
-            filter = {}
-
-        if (!filter.include)
-            filter.include = []
-
-        filter.include.push({
-            relation: 'user',
-            scope: {
-                fields: { username: true, email: true, first_name: true, last_name: true }
+        let include = [
+            {
+                relation: 'user',
+                scope: {
+                    fields: { username: true, email: true, first_name: true, last_name: true }
+                }
             }
-        })
+        ];
 
-        return this.trqReqRepository.find(filter);
+        return this.trqReqRepository.find(DataUtils.getFilter(limit, skip, order, value,
+            ['sub_dt_tm', 'ro_id', 'message', 'status', 'total', 'completed'], 'num_list', undefined, include));
     }
 
     @get('/TRQ/{id}', {

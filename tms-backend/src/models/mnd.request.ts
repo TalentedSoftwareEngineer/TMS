@@ -5,7 +5,8 @@ export class MNDRequest {
     requestDesc: string
     startEffDtTm: string
     endInterceptDt?: string
-    referral: string
+    referral: string;
+    offset?: number
 
     constructor() {
     }

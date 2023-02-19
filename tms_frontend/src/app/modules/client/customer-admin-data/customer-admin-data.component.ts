@@ -46,6 +46,9 @@ import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api
 import {closeEventSource, SseClient} from "angular-sse-client";
 import * as gFunc from 'src/app/utils/utils';
 import produce from "immer";
+import { Router } from '@angular/router';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-customer-admin-data',
@@ -93,7 +96,7 @@ export class CustomerAdminDataComponent implements OnInit {
     INIT_CPR_GRID_LENGTH,
     DEFAULT_CARRIERS
   }
-  
+
   retrieveCardTitle: string = 'Retrieve';
   bRetrieveCardIconHidden: boolean = false;
   bExpRetrieve: boolean = false;
@@ -126,7 +129,7 @@ export class CustomerAdminDataComponent implements OnInit {
   noIAC: boolean = true    // there is no intraLATACarrier
   noIEC: boolean = true    // there is no interLATACarrier
   status: string = '';      // customer record status
-  
+
   inputRespOrg: string = '';
   inputCreateEffDtTm: Date|null = null;
   minEffDateTime: Date = new Date();
@@ -261,9 +264,21 @@ export class CustomerAdminDataComponent implements OnInit {
     private sseClient: SseClient,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
+    public router: Router
   ) { }
 
   ngOnInit(): void {
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.CAD)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+    })
+
     this.intraLATACarrierOptions = this.gConst.CARRIER_LIST.map(item=>({name: item, value: item}));
     this.interLATACarrierOptions = this.gConst.CARRIER_LIST.map(item=>({name: item, value: item}));
   }
@@ -411,7 +426,7 @@ export class CustomerAdminDataComponent implements OnInit {
   onClearAosNPA = () => {
     this.inputNpa = '';
     this.bContentModified = true;
-    this.checkDataExistForCR();    
+    this.checkDataExistForCR();
   }
 
   onSelectAosLATA = () => {
@@ -434,7 +449,7 @@ export class CustomerAdminDataComponent implements OnInit {
   }
 
   onSelectAosLabel = () => {
-    
+
   }
 
   onClearAosLabel = () => {
@@ -516,7 +531,6 @@ export class CustomerAdminDataComponent implements OnInit {
   }
 
   handleCPRSelectChange = (event: Event, index: number) => {
-    console.log(this.cprGridCategory);
     this.bContentModified = true;
     // this.checkDataExistForCPR()  // do not call because no need
   }
@@ -535,7 +549,7 @@ export class CustomerAdminDataComponent implements OnInit {
       cprGridData[index] = gFunc.handle_value_cpr(event, this.cprGridData[index])
       this.cprGridData = cprGridData;
     }
-    
+
     this.bContentModified = true;
     //this.checkDataExistForCPR() // do not call because no need
   }
@@ -548,14 +562,9 @@ export class CustomerAdminDataComponent implements OnInit {
     let cprGridData = [...this.cprGridData]
     let cprCurActiveRow = [...this.cprCurActiveRow]
 
-    console.log("index: " + index)
-    console.log("cprGridData[index]: " + cprGridData[index])
-
     let activeRow = cprCurActiveRow[index] != this.gConst.INVALID_ROW ? cprCurActiveRow[index] : 0;
     cprGridData[index].splice(activeRow, 0, Array(cprGridData[index][0].length).fill(""))
     cprCurActiveRow[index] = this.gConst.INVALID_ROW
-
-    console.log("gridData : " + cprGridData)
 
     this.cprGridData = cprGridData;
     this.cprCurActiveRow = cprCurActiveRow;
@@ -704,8 +713,6 @@ export class CustomerAdminDataComponent implements OnInit {
     if(colLength === 1) return false;
 
     // console.log("onDeleteCPRColumn Last state: " + JSON.stringify(this.lastActionState.cprGridData))
-    console.log("CPRGRID: " + JSON.stringify(cprGridData))
-
     for (let i = 0; i < cprGridData[index].length; i++) {
       // for (let j = activeCol; j < colLength - 1; j++) {
       //   cprGridData[index][i][j] = cprGridData[index][i][j + 1] !== null ? cprGridData[index][i][j + 1] : ""
@@ -720,8 +727,6 @@ export class CustomerAdminDataComponent implements OnInit {
     //     cprGridData[index][i].splice(activeCol, 1);
     //   }
     // }
-
-    console.log("CPRGRID: " + JSON.stringify(cprGridData))
 
     cprGridCategory[index].splice(activeCol, 1);
     cprCurActiveCol[index] = this.gConst.INVALID_COL
@@ -740,14 +745,9 @@ export class CustomerAdminDataComponent implements OnInit {
     let ladGridData = [...this.ladGridData]
     let ladCurActiveRow = [...this.ladCurActiveRow]
 
-    console.log("index: " + index)
-    console.log("ladGridData[index]: " + ladGridData[index])
-
     let activeRow = ladCurActiveRow[index] != this.gConst.INVALID_ROW ? ladCurActiveRow[index] : 0;
     ladGridData[index].splice(activeRow, 0, Array(ladGridData[index][0].length).fill(""))
     ladCurActiveRow[index] = this.gConst.INVALID_ROW
-
-    console.log("gridData : " + ladGridData)
 
     this.ladGridData = ladGridData;
     this.ladCurActiveRow = ladCurActiveRow;
@@ -896,7 +896,6 @@ export class CustomerAdminDataComponent implements OnInit {
     if(colLength === 1) return false;
 
     // console.log("onDeleteCPRColumn Last state: " + JSON.stringify(this.lastActionState.ladGridData))
-    console.log("CPRGRID: " + JSON.stringify(ladGridData))
 
     for (let i = 0; i < ladGridData[index].length; i++) {
       // for (let j = activeCol; j < colLength - 1; j++) {
@@ -913,8 +912,6 @@ export class CustomerAdminDataComponent implements OnInit {
     //   }
     // }
 
-    console.log("CPRGRID: " + JSON.stringify(ladGridData))
-
     ladGridCategory[index].splice(activeCol, 1);
     ladCurActiveCol[index] = this.gConst.INVALID_COL
 
@@ -928,7 +925,7 @@ export class CustomerAdminDataComponent implements OnInit {
     let ladGridCategory = Array.from(this.ladGridCategory);
     let ladGridData = Array.from(this.ladGridData);
     ladGridCategory[index] = ['Label', 'Definition', 'Definition', 'Definition', 'Definition', 'Definition', 'Definition', 'Definition'];
-    ladGridData[index] = Array(1).fill(Array(8).fill('')); 
+    ladGridData[index] = Array(1).fill(Array(8).fill(''));
     this.ladGridCategory = ladGridCategory;
     this.ladGridData = ladGridData;
   }
@@ -938,35 +935,35 @@ export class CustomerAdminDataComponent implements OnInit {
   }
 
   onCopy = () => {
-    
+
   }
 
   onTransfer = () => {
-    
+
   }
 
   toggleDelete = () => {
-    
+
   }
 
   onConvert = () => {
-    
+
   }
 
   onSubmit = () => {
-    
+
   }
 
   onSave = () => {
-    
+
   }
 
   onRevert = () => {
-    
+
   }
-  
+
   toggleCancel = () => {
-    
+
   }
 
   /**
@@ -1129,7 +1126,7 @@ export class CustomerAdminDataComponent implements OnInit {
       ladGridData[index] = gFunc.handle_value_lad(event, this.ladGridData[index], row, col)
       this.ladGridData = ladGridData;
     }
-    
+
     this.bContentModified = true;
     //this.checkDataExistForCPR() // do not call because no need
   }
@@ -1145,6 +1142,6 @@ export class CustomerAdminDataComponent implements OnInit {
   };
   showInfo = (msg: string) => {
     this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
-  };  
+  };
 
 }

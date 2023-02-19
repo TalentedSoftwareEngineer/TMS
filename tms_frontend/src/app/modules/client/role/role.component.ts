@@ -9,6 +9,8 @@ import moment from 'moment';
 import { IRole, IPrivilege } from "../../../models/user";
 import { GuiVisibility } from '../../../models/gui';
 import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-role',
@@ -23,14 +25,14 @@ export class RoleComponent implements OnInit {
   permissionTypeReadOnly = PERMISSION_TYPE_READONLY
 
   // roles variables
-  pageSize = 15
+  pageSize = 10
   pageIndex = 1
   roles: any[] = []
   privileges: any[] = []
   filterName = ''
   filterValue = ''
-  sortActive = ''
-  sortDirection = ''
+  sortActive = 'id'
+  sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -59,7 +61,8 @@ export class RoleComponent implements OnInit {
     public store: StoreService,
     private messageService: MessageService,
     private location: Location,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    public router: Router
   ) { }
 
   async ngOnInit() {
@@ -74,10 +77,21 @@ export class RoleComponent implements OnInit {
       }, 100)
     })
 
-    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_ROLE) == -1)
-      this.write_permission = false;
-    else
-      this.write_permission = true;
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.READ_ROLE)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
+      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_ROLE) == -1)
+        this.write_permission = false;
+      else
+        this.write_permission = true;
+    })
 
     this.getPrivilegesList();
     this.getTotalRolesCount();
@@ -103,8 +117,10 @@ export class RoleComponent implements OnInit {
       await this.api.getRolesList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue)
         .pipe(tap(async (rolesRes: IRole[]) => {
           this.roles = [];
-          rolesRes.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          rolesRes.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
+          rolesRes.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          });
 
           let allNotEditable = true
           for (let role of rolesRes) {
@@ -115,6 +131,7 @@ export class RoleComponent implements OnInit {
 
         })).toPromise();
 
+      this.getTotalRolesCount();
       this.filterResultLength = -1
       await this.api.getRoleCount(filterValue, {})
       .pipe(tap( res => {

@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import {Router} from "@angular/router";
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
@@ -7,6 +8,7 @@ import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ROWS_PER_PAGE_OPTIONS } 
 import moment from 'moment';
 import { ISqlUser } from "../../../models/user";
 import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-sql-users',
@@ -28,8 +30,8 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  sortActive = ''
-  sortDirection = ''
+  sortActive = 'id'
+  sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -54,6 +56,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
   required: boolean = true;
 
   constructor(
+    public router: Router,
     public api: ApiService,
     public store: StoreService,
     private messageService: MessageService,
@@ -71,10 +74,21 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
       }, 100)
     })
 
-    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_SQL_SCRIPT) == -1)
-      this.write_permission = false;
-    else
-      this.write_permission = true;
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.READ_SQL_SCRIPT)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
+      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_SQL_SCRIPT) == -1)
+        this.write_permission = false;
+      else
+        this.write_permission = true;
+    })
 
     this.getSftpHosts();
     this.getSqlUsersList();
@@ -101,8 +115,10 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
       await this.api.getSqlUsersList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue)
         .pipe(tap(async (sql_usersRes: ISqlUser[]) => {
           this.sql_users = [];
-          sql_usersRes.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          sql_usersRes.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
+          sql_usersRes.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          });
 
           let allNotEditable = true
           for (let sql_user of sql_usersRes) {
@@ -113,8 +129,9 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
 
         })).toPromise();
 
+      this.getTotalSqlUsersCount();
       this.filterResultLength = -1
-      await this.api.getSqlUserCount(filterValue, {}).pipe(tap( res => {
+      await this.api.getSqlUserCount(filterValue).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -125,7 +142,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
 
   getTotalSqlUsersCount = async () => {
     this.resultsLength = -1
-    await this.api.getSqlUserCount('', {}).pipe(tap( res => {
+    await this.api.getSqlUserCount('').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }

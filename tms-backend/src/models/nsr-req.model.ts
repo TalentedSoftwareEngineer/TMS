@@ -118,8 +118,8 @@ export class NsrReq extends Entity {
   }
 }
 
-export interface NSRReqRelations {
+export interface NsrReqRelations {
   // describe navigational properties here
 }
 
-export type NSRReqWithRelations = NsrReq & NSRReqRelations;
+export type NSRReqWithRelations = NsrReq & NsrReqRelations;

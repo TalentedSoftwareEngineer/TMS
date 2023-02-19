@@ -3,23 +3,23 @@
 <p-panel [header]="retrieveCardTitle" [toggleable]="!bRetrieveCardIconHidden" [collapsed]="bExpRetrieve" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <ng-template pTemplate="icons">
         <span style="flex: 1;"></span>
-    </ng-template>    
+    </ng-template>
     <div class="grid pt-2">
         <div class="lg:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <input type="text" id="searchNum" name="searchNum" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputSearchNum"> 
+                <input type="text" id="searchNum" name="searchNum" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputSearchNum">
                 <label for="searchNum">Toll-Free Number *</label>
             </span>
         </div>
         <div class="lg:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <p-calendar 
-                    inputId="searchEffDtTm" 
-                    [(ngModel)]="inputSearchEffDtTm" 
-                    dateFormat="mm/dd/yy" 
-                    [showButtonBar]="true" 
+                <p-calendar
+                    inputId="searchEffDtTm"
+                    [(ngModel)]="inputSearchEffDtTm"
+                    dateFormat="mm/dd/yy"
+                    [showButtonBar]="true"
                     [showTime]="true"
-                    hourFormat="12" 
+                    hourFormat="12"
                 ></p-calendar>
                 <label for="searchEffDtTm">Effective Date Time</label>
             </span>
@@ -33,17 +33,17 @@
 <p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="true" [collapsed]="bExpResult" iconPos="left" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <ng-template pTemplate="icons">
         <span style="flex: 1;">
-            <p-dropdown 
+            <p-dropdown
                 *ngIf="!bEffDtTmListHidden"
-                [options]="getEffDtTmStatusOptions(effDtTmStatList)" 
-                [(ngModel)]="selectEffDtTmStat" 
-                id="effDtTmStat" 
-                name="effDtTmStat" 
-                optionLabel="name" 
+                [options]="getEffDtTmStatusOptions(effDtTmStatList)"
+                [(ngModel)]="selectEffDtTmStat"
+                id="effDtTmStat"
+                name="effDtTmStat"
+                optionLabel="name"
                 optionValue="value"
-                [showClear]="true" 
-                scrollHeight="150px" 
-                [filter]="true" 
+                [showClear]="true"
+                scrollHeight="150px"
+                [filter]="true"
                 filterBy="name"
             ></p-dropdown>
         </span>
@@ -52,7 +52,7 @@
     <div class="pt-2">
         <div class="flex justify-content-end mb-3">
             <button pButton pRipple class="p-button-text" label="Import CPR Report Data" icon="pi pi-file-import" (click)="fileInput.click()" [disabled]="disable"></button>
-            <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
+            <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".csv"/>
         </div>
 
         <div class="card">
@@ -68,20 +68,20 @@
                             <div class="grid">
                                 <div class="lg:col-3 col-12 p-fluid">
                                     <span class="field p-float-label">
-                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="disable"> 
+                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="disable">
                                         <label for="respOrg">Resp Org</label>
                                     </span>
                                 </div>
                                 <div class="lg:col-3 col-12 p-fluid">
                                     <span class="p-float-label">
-                                        <p-calendar 
-                                            inputId="effDateTime" 
-                                            [(ngModel)]="inputCreateEffDtTm" 
-                                            dateFormat="mm/dd/yy" 
+                                        <p-calendar
+                                            inputId="effDateTime"
+                                            [(ngModel)]="inputCreateEffDtTm"
+                                            dateFormat="mm/dd/yy"
                                             [minDate]="minEffDateTime"
-                                            [showButtonBar]="true" 
+                                            [showButtonBar]="true"
                                             [showTime]="true"
-                                            hourFormat="12" 
+                                            hourFormat="12"
                                         ></p-calendar>
                                         <label for="effDateTime">Eff. Date Time</label>
                                     </span>
@@ -89,15 +89,15 @@
                                 </div>
                                 <div class="lg:col-3 col-12 p-fluid">
                                     <span class="field p-float-label">
-                                        <input type="text" id="customerId" name="customerId" pInputText (input)="handleOnCR()" [(ngModel)]="inputCustomerId"> 
+                                        <input type="text" id="customerId" name="customerId" pInputText (input)="handleOnCR()" [(ngModel)]="inputCustomerId">
                                         <label for="customerId">Customer Id</label>
                                     </span>
                                 </div>
                                 <div class="lg:col-1 col-6 flex align-items-center">
                                     <label class="ml-3" for="createNow">
                                         <p-inputSwitch
-                                            id="createNow" 
-                                            name="createNow" 
+                                            id="createNow"
+                                            name="createNow"
                                             [(ngModel)]="inputCreateNow"
                                             (onChange)="handleOnCR()"
                                         ></p-inputSwitch>
@@ -107,8 +107,8 @@
                                 <div class="lg:col-2 col-6 flex align-items-center">
                                     <label class="ml-3" for="priority">
                                         <p-inputSwitch
-                                            id="priority" 
-                                            name="priority" 
+                                            id="priority"
+                                            name="priority"
                                             [(ngModel)]="inputPriority"
                                             (onChange)="handleOnCR()"
                                         ></p-inputSwitch>
@@ -122,21 +122,21 @@
                             <div class="grid">
                                 <div class="lg:col-4 col-12 p-fluid">
                                     <span class="p-float-label">
-                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)"> 
+                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
                                         <label for="respOrg">Resp Org</label>
                                     </span>
                                 </div>
                                 <div class="lg:col-4 col-12 p-fluid">
                                     <span class="p-float-label">
-                                        <input type="text" id="customerId" name="customerId" pInputText (input)="handleOnCR()" [(ngModel)]="inputCustomerId" disabled> 
+                                        <input type="text" id="customerId" name="customerId" pInputText (input)="handleOnCR()" [(ngModel)]="inputCustomerId" disabled>
                                         <label for="customerId">Customer Id</label>
                                     </span>
                                 </div>
                                 <div class="lg:col-4 col-12 flex align-items-center">
                                     <label class="ml-3" for="createNow">
                                         <p-inputSwitch
-                                            id="priority" 
-                                            name="priority" 
+                                            id="priority"
+                                            name="priority"
                                             [(ngModel)]="inputPriority"
                                             (onChange)="handleOnCR()"
                                         ></p-inputSwitch>
@@ -145,114 +145,114 @@
                                 </div>
                             </div>
                         </ng-container>
-    
+
                         <!-- This is the row that includes the agent, telco, hold -->
                         <div class="grid">
                             <div class="lg:col-4 col-12 p-fluid">
                                 <span class="p-float-label">
-                                    <input type="text" id="agent" name="agent" pInputText (input)="handleOnCR()" [(ngModel)]="inputAgent" [disabled]="action !== gConst.ACTION_CREATE"> 
+                                    <input type="text" id="agent" name="agent" pInputText (input)="handleOnCR()" [(ngModel)]="inputAgent" [disabled]="action !== gConst.ACTION_CREATE">
                                     <label for="agent">Agent</label>
                                 </span>
                             </div>
                             <div class="lg:col-4 col-12 p-fluid">
                                 <span class="p-float-label">
-                                    <input type="text" id="telco" name="telco" pInputText (input)="handleOnCR()" [(ngModel)]="inputTelco" [disabled]="disable"> 
+                                    <input type="text" id="telco" name="telco" pInputText (input)="handleOnCR()" [(ngModel)]="inputTelco" [disabled]="disable">
                                     <label for="telco">Telco</label>
                                 </span>
                             </div>
                             <div class="lg:col-4 col-12 p-fluid">
                                 <span class="p-float-label">
-                                    <p-dropdown 
-                                        [options]="holdOptions" 
-                                        id="hold" 
-                                        name="hold" 
+                                    <p-dropdown
+                                        [options]="holdOptions"
+                                        id="hold"
+                                        name="hold"
                                         (onChange)="handleOnCR()"
-                                        [(ngModel)]="selectHold" 
-                                        optionLabel="name" 
+                                        [(ngModel)]="selectHold"
+                                        optionLabel="name"
                                         optionValue="value"
-                                        scrollHeight="100px" 
+                                        scrollHeight="100px"
                                         [disabled]="disable"
                                     ></p-dropdown>
                                     <label for="hold">Hold</label>
                                 </span>
                             </div>
                         </div>
-    
+
                         <!-- This is the row that includes the End Subscriber Name, End Subscriber Address -->
                         <div class="grid mt-4">
                             <div class="col-12 lg:col-6 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="endSub" name="endSub" pInputText (input)="handleOnCR()" [(ngModel)]="inputEndSub" [disabled]="disable"> 
+                                    <input type="text" id="endSub" name="endSub" pInputText (input)="handleOnCR()" [(ngModel)]="inputEndSub" [disabled]="disable">
                                     <label for="endSub">End Subscriber Name</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-6 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="endSubAddr" name="endSubAddr" pInputText (input)="handleOnCR()" [(ngModel)]="inputEndSubAddr" [disabled]="disable"> 
+                                    <input type="text" id="endSubAddr" name="endSubAddr" pInputText (input)="handleOnCR()" [(ngModel)]="inputEndSubAddr" [disabled]="disable">
                                     <label for="endSubAddr">End Subscriber Address</label>
                                 </span>
                             </div>
                         </div>
-    
+
                         <!-- This is the row that includes the Service Order Number, Support Form Number -->
                         <div class="grid">
                             <div class="col-12 lg:col-6 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="svcOrderNum" name="svcOrderNum" pInputText (input)="handleOnCR()" [(ngModel)]="inputSvcOrderNum" [disabled]="disable"> 
+                                    <input type="text" id="svcOrderNum" name="svcOrderNum" pInputText (input)="handleOnCR()" [(ngModel)]="inputSvcOrderNum" [disabled]="disable">
                                     <label for="svcOrderNum">Service Order Number</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-6 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="suppFormNum" name="suppFormNum" pInputText (input)="handleOnCR()" [(ngModel)]="inputSuppFormNum" [disabled]="disable"> 
+                                    <input type="text" id="suppFormNum" name="suppFormNum" pInputText (input)="handleOnCR()" [(ngModel)]="inputSuppFormNum" [disabled]="disable">
                                     <label for="suppFormNum">Support Form Number</label>
                                 </span>
-                            </div> 
+                            </div>
                         </div>
-    
+
                         <!-- This is the row that includes the Approval, Last Updated, Last User, Prev User -->
                         <div *ngIf="!(action === gConst.ACTION_CREATE || (action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW))" class="grid">
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="approval" name="approval" pInputText (input)="handleOnCR()" [(ngModel)]="inputApproval" disabled> 
+                                    <input type="text" id="approval" name="approval" pInputText (input)="handleOnCR()" [(ngModel)]="inputApproval" disabled>
                                     <label for="approval">Approval</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="lastUpDt" name="lastUpDt" pInputText (input)="handleOnCR()" [(ngModel)]="inputLastUpDt" disabled> 
+                                    <input type="text" id="lastUpDt" name="lastUpDt" pInputText (input)="handleOnCR()" [(ngModel)]="inputLastUpDt" disabled>
                                     <label for="lastUpDt">Last Updated</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="lastUser" name="lastUser" pInputText (input)="handleOnCR()" [(ngModel)]="inputLastUser" disabled> 
+                                    <input type="text" id="lastUser" name="lastUser" pInputText (input)="handleOnCR()" [(ngModel)]="inputLastUser" disabled>
                                     <label for="lastUser">Last User</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="prevUser" name="prevUser" pInputText (input)="handleOnCR()" [(ngModel)]="inputPrevUser" disabled> 
+                                    <input type="text" id="prevUser" name="prevUser" pInputText (input)="handleOnCR()" [(ngModel)]="inputPrevUser" disabled>
                                     <label for="prevUser">Prev User</label>
                                 </span>
                             </div>
                         </div>
                     </div>
-    
+
                     <div class="grid">
                         <!-- Destination Pane -->
                         <div class="col-12 lg:col-6">
                             <p-panel header="Destination" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
                                 <div class="pt-2">
-                                    <p-table 
+                                    <p-table
                                         styleClass="p-datatable-gridlines td-p-0"
-                                        [value]="destNums" 
-                                        [(selection)]="selectedDestNums" 
-                                        dataKey="destNum" 
-                                        responsiveLayout="scroll" 
+                                        [value]="destNums"
+                                        [(selection)]="selectedDestNums"
+                                        dataKey="destNum"
+                                        responsiveLayout="scroll"
                                         [rowHover]="true"
-                                        [paginator]="true" 
-                                        [rows]="5" 
+                                        [paginator]="true"
+                                        [rows]="5"
                                         [showCurrentPageReport]="true"
                                         [rowsPerPageOptions]="[5,10,25]"
                                         selectionPageOnly="true"
@@ -274,17 +274,17 @@
                                                 </td>
                                                 <td class="text-align-center p-fluid">
                                                     <span class="p-column-title">Number</span>
-                                                    <input type="text" [id]="'destNum_'+rowIndex" [name]="'destNum_'+rowIndex" pInputText (input)="handleDestNums($event,'destNum', rowIndex)" [value]="dest_num.destNum" [disabled]="disable"> 
+                                                    <input type="text" [id]="'destNum_'+rowIndex" [name]="'destNum_'+rowIndex" pInputText (input)="handleDestNums($event,'destNum', rowIndex)" [value]="dest_num.destNum" [disabled]="disable">
                                                 </td>
                                                 <td class="text-align-center p-fluid">
                                                     <span class="p-column-title">#Lines</span>
-                                                    <input type="text" [id]="'numTermLine_'+rowIndex" [name]="'numTermLine_'+rowIndex" pInputText (input)="handleDestNums($event,'numTermLine', rowIndex)" [value]="dest_num.numTermLine" [disabled]="disable"> 
+                                                    <input type="text" [id]="'numTermLine_'+rowIndex" [name]="'numTermLine_'+rowIndex" pInputText (input)="handleDestNums($event,'numTermLine', rowIndex)" [value]="dest_num.numTermLine" [disabled]="disable">
                                                 </td>
                                             </tr>
                                         </ng-template>
                                     </p-table>
                                 </div>
-    
+
                                 <ng-template pTemplate="footer">
                                     <span class="p-buttonset flex justify-content-end">
                                         <button pButton pRipple (click)="onAddDestination()" label="Add Row" icon="pi pi-check" class="p-button-text" [disabled]="disable"></button>
@@ -298,11 +298,11 @@
                             <p-panel header="Contact Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
                                 <div class="pt-2 p-fluid">
                                     <span class="field p-float-label">
-                                        <input type="text" id="contactName" name="contactName" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactName" [disabled]="disable"> 
+                                        <input type="text" id="contactName" name="contactName" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactName" [disabled]="disable">
                                         <label for="contactName">Contact Person</label>
                                     </span>
                                     <span class="field p-float-label">
-                                        <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactNumber" [disabled]="disable"> 
+                                        <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactNumber" [disabled]="disable">
                                         <label for="contactNumber">Contact Number</label>
                                     </span>
                                     <span class="field p-float-label">
@@ -313,42 +313,42 @@
                             </p-panel>
                         </div>
                     </div>
-    
+
                     <!-- Disconnect info Pane -->
                     <div *ngIf="!(status === gConst.STAT_OLD || status === gConst.STAT_ACTIVE || action === gConst.ACTION_CREATE || (disable && inputEndIntDtTm === '' && selectReferral === ''))" class="grid">
                         <div class="col-12 md:col-6 p-fluid">
                             <span class="p-float-label">
-                                <p-calendar 
-                                    inputId="effDate" 
-                                    [(ngModel)]="inputEndIntDtTm" 
+                                <p-calendar
+                                    inputId="effDate"
+                                    [(ngModel)]="inputEndIntDtTm"
                                     (onSelect)="handleEndIntDtTm()"
-                                    dateFormat="mm/dd/yy" 
+                                    dateFormat="mm/dd/yy"
                                     [minDate]="minEffDateTime"
-                                    [showButtonBar]="true" 
+                                    [showButtonBar]="true"
                                     [showTime]="true"
-                                    hourFormat="12" 
+                                    hourFormat="12"
                                 ></p-calendar>
                                 <label for="searchEffDtTm">End Intercept</label>
                             </span>
                         </div>
                         <div class="col-12 md:col-6 p-fluid">
                             <span class="p-float-label">
-                                <p-dropdown 
-                                    [options]="referralOptions" 
-                                    id="referral" 
-                                    name="referral" 
+                                <p-dropdown
+                                    [options]="referralOptions"
+                                    id="referral"
+                                    name="referral"
                                     (onChange)="handleOnCR()"
-                                    [(ngModel)]="selectReferral" 
-                                    optionLabel="name" 
+                                    [(ngModel)]="selectReferral"
+                                    optionLabel="name"
                                     optionValue="value"
-                                    scrollHeight="150px" 
+                                    scrollHeight="150px"
                                     [disabled]="disable"
                                 ></p-dropdown>
                                 <label for="referral">Referral</label>
                             </span>
                         </div>
                     </div>
-    
+
                     <div class="grid">
                         <!-- Area Of Service -->
                         <div class="col-12 md:col-6">
@@ -358,7 +358,7 @@
                                         <p-tabPanel header="Networks" tooltip="Networks">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="network" name="network" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNetwork" [disabled]="disable"> 
+                                                    <input type="text" id="network" name="network" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNetwork" [disabled]="disable">
                                                     <label for="network">Networks</label>
                                                 </span>
                                             </div>
@@ -370,7 +370,7 @@
                                         <p-tabPanel header="States" tooltip="States">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="state" name="state" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputState" [disabled]="disable"> 
+                                                    <input type="text" id="state" name="state" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputState" [disabled]="disable">
                                                     <label for="state">States</label>
                                                 </span>
                                             </div>
@@ -382,7 +382,7 @@
                                         <p-tabPanel header="NPAs" tooltip="NPAs">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="npa" name="npa" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNpa" [disabled]="disable"> 
+                                                    <input type="text" id="npa" name="npa" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNpa" [disabled]="disable">
                                                     <label for="npa">NPAs</label>
                                                 </span>
                                             </div>
@@ -394,7 +394,7 @@
                                         <p-tabPanel header="LATAs" tooltip="LATAs">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="lata" name="lata" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLata" [disabled]="disable"> 
+                                                    <input type="text" id="lata" name="lata" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLata" [disabled]="disable">
                                                     <label for="lata">LATAs</label>
                                                 </span>
                                             </div>
@@ -406,7 +406,7 @@
                                         <p-tabPanel header="Labels" tooltip="Labels">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="label" name="label" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLabel" [disabled]="disable"> 
+                                                    <input type="text" id="label" name="label" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLabel" [disabled]="disable">
                                                     <label for="label">Labels</label>
                                                 </span>
                                             </div>
@@ -425,19 +425,19 @@
                                     <p-tabView [(activeIndex)]="activeCarrierTab">
                                         <p-tabPanel header="IntraLATA" tooltip="IntraLATA">
                                             <div class="p-fluid">
-                                                <p-dropdown 
-                                                    [options]="intraLATACarrierOptions" 
-                                                    id="intraLATACarrier" 
-                                                    name="intraLATACarrier" 
+                                                <p-dropdown
+                                                    [options]="intraLATACarrierOptions"
+                                                    id="intraLATACarrier"
+                                                    name="intraLATACarrier"
                                                     (onChange)="handleCarrierSelect()"
-                                                    [(ngModel)]="selectIntraLATACarrier" 
-                                                    optionLabel="name" 
+                                                    [(ngModel)]="selectIntraLATACarrier"
+                                                    optionLabel="name"
                                                     optionValue="value"
-                                                    [showClear]="true" 
-                                                    scrollHeight="150px" 
-                                                    [filter]="true" 
+                                                    [showClear]="true"
+                                                    scrollHeight="150px"
+                                                    [filter]="true"
                                                     filterBy="name"
-                                                    [virtualScroll]="true" 
+                                                    [virtualScroll]="true"
                                                     [itemSize]="40"
                                                     [disabled]="disable"
                                                 ></p-dropdown>
@@ -445,19 +445,19 @@
                                         </p-tabPanel>
                                         <p-tabPanel header="InterLATA" tooltip="InterLATA">
                                             <div class="p-fluid">
-                                                <p-dropdown 
-                                                    [options]="interLATACarrierOptions" 
-                                                    id="interLATACarrier" 
-                                                    name="interLATACarrier" 
+                                                <p-dropdown
+                                                    [options]="interLATACarrierOptions"
+                                                    id="interLATACarrier"
+                                                    name="interLATACarrier"
                                                     (onChange)="handleCarrierSelect()"
-                                                    [(ngModel)]="selectInterLATACarrier" 
-                                                    optionLabel="name" 
+                                                    [(ngModel)]="selectInterLATACarrier"
+                                                    optionLabel="name"
                                                     optionValue="value"
-                                                    [showClear]="true" 
-                                                    scrollHeight="150px" 
-                                                    [filter]="true" 
+                                                    [showClear]="true"
+                                                    scrollHeight="150px"
+                                                    [filter]="true"
                                                     filterBy="name"
-                                                    [virtualScroll]="true" 
+                                                    [virtualScroll]="true"
                                                     [itemSize]="40"
                                                     [disabled]="disable"
                                                 ></p-dropdown>
@@ -469,13 +469,13 @@
                         </div>
                     </div>
                 </p-tabPanel>
-        
+
                 <p-tabPanel header="CPR" tooltip="CPR">
                     <div class="flex justify-content-between align-items-center">
                         <h4 class="mb-0">Call Processing</h4>
                         <button class="p-button-danger p-button-text" pButton pRipple icon="pi pi-trash" label="Delete" (click)="onDeleteCpr()" [disabled]="disable || cprSectNames.length === 0"></button>
                     </div>
-    
+
                     <div class="card">
                         <div class="flex justify-content-end">
                             <span class="p-buttonset">
@@ -484,7 +484,7 @@
                                 <button pButton pRipple (click)="onDeleteCprSect()" label="Delete" icon="pi pi-trash" class="p-button-text p-button-danger" [disabled]="disable || cprSectNames.length < 2"></button>
                             </span>
                         </div>
-    
+
                         <div class="card">
                             <p-tabView [(activeIndex)]="activeCPRTab">
                                 <ng-container *ngFor="let cprSectName of cprSectNames; index as index; first as isFirst">
@@ -509,7 +509,7 @@
                                                     <ng-container *ngIf="cprGridCategory[index]">
                                                         <ng-container *ngFor="let value of cprGridCategory[index]; index as i">
                                                             <td class="p-fluid">
-                                                                <p-dropdown 
+                                                                <p-dropdown
                                                                     [name]="'type_' + i"
                                                                     [id]="'type_' + i"
                                                                     [options]="cprGridCategoryOptions"
@@ -528,24 +528,24 @@
                                                         </ng-container>
                                                     </ng-container>
                                                 </tr>
-        
+
                                                 <ng-container *ngIf="cprGridData[index]">
                                                     <ng-container *ngFor="let datas of cprGridData[index]; index as k">
                                                         <tr>
                                                             <ng-container *ngIf="datas">
                                                                 <ng-container *ngFor="let data of datas; index as g">
                                                                     <td class="p-fluid">
-                                                                        <input 
-                                                                            type="text" 
-                                                                            [id]="k + '_' + g" 
-                                                                            [name]="k + '_' + g" 
-                                                                            pInputText 
+                                                                        <input
+                                                                            type="text"
+                                                                            [id]="k + '_' + g"
+                                                                            [name]="k + '_' + g"
+                                                                            pInputText
                                                                             [value]="data"
                                                                             (blur)="onCPRFieldFocusOut()"
                                                                             (click)="setCPRActiveIndexes(index, k, g)"
-                                                                            (input)="handleCPRCellChange($event, index)" 
+                                                                            (input)="handleCPRCellChange($event, index)"
                                                                             [disabled]="disable || cprSectNames.length === 0 || cprGridCategory[index][g] == null || cprGridCategory[index][g] === ''"
-                                                                        > 
+                                                                        >
                                                                     </td>
                                                                 </ng-container>
                                                             </ng-container>
@@ -554,7 +554,7 @@
                                                 </ng-container>
                                             </tbody>
                                         </table>
-        
+
                                         <div class="grid mt-4">
                                             <div class="lg:col-6 col-12">
                                                 <div class="grid">
@@ -583,80 +583,80 @@
                                         </div>
                                     </p-tabPanel>
                                 </ng-container>
-                            </p-tabView>    
+                            </p-tabView>
                         </div>
-    
+
                         <div class="grid">
                             <div class="col-12 md:col-6 p-fluid">
                                 <span class="p-float-label">
-                                    <p-dropdown 
-                                        [options]="getPriIntraLTOptions()" 
-                                        id="priIntraLT" 
-                                        name="priIntraLT" 
+                                    <p-dropdown
+                                        [options]="getPriIntraLTOptions()"
+                                        id="priIntraLT"
+                                        name="priIntraLT"
                                         (onChange)="handleOnCPR()"
-                                        [(ngModel)]="selectPriIntraLT" 
-                                        optionLabel="name" 
+                                        [(ngModel)]="selectPriIntraLT"
+                                        optionLabel="name"
                                         optionValue="value"
-                                        [showClear]="true" 
-                                        scrollHeight="150px" 
-                                        [filter]="true" 
+                                        [showClear]="true"
+                                        scrollHeight="150px"
+                                        [filter]="true"
                                         filterBy="name"
-                                        [virtualScroll]="true" 
+                                        [virtualScroll]="true"
                                         [itemSize]="40"
                                         [disabled]="disable || cprSectNames.length === 0"
                                     ></p-dropdown>
                                     <label for="priIntraLT">Primary IntraLATA Carrier</label>
                                 </span>
                             </div>
-    
+
                             <div class="col-12 md:col-6 p-fluid">
                                 <span class="p-float-label">
-                                    <p-dropdown 
-                                        [options]="getPriInterLTOptions()" 
-                                        id="priInterLT" 
-                                        name="priInterLT" 
+                                    <p-dropdown
+                                        [options]="getPriInterLTOptions()"
+                                        id="priInterLT"
+                                        name="priInterLT"
                                         (onChange)="handleOnCPR()"
-                                        [(ngModel)]="selectPriInterLT" 
-                                        optionLabel="name" 
+                                        [(ngModel)]="selectPriInterLT"
+                                        optionLabel="name"
                                         optionValue="value"
-                                        [showClear]="true" 
-                                        scrollHeight="150px" 
-                                        [filter]="true" 
+                                        [showClear]="true"
+                                        scrollHeight="150px"
+                                        [filter]="true"
                                         filterBy="name"
-                                        [virtualScroll]="true" 
+                                        [virtualScroll]="true"
                                         [itemSize]="40"
                                         [disabled]="disable || cprSectNames.length === 0"
                                     ></p-dropdown>
                                     <label for="priInterLT">Primary InterLATA Carrier</label>
                                 </span>
                             </div>
-    
+
                             <div class="col-12 md:col-6 p-fluid">
                                 <span class="p-float-label">
-                                    <p-dropdown 
-                                        [options]="timezoneOptions" 
-                                        id="timezone" 
-                                        name="timezone" 
+                                    <p-dropdown
+                                        [options]="timezoneOptions"
+                                        id="timezone"
+                                        name="timezone"
                                         (onChange)="handleOnCPR()"
-                                        [(ngModel)]="selectTimezone" 
-                                        optionLabel="name" 
+                                        [(ngModel)]="selectTimezone"
+                                        optionLabel="name"
                                         optionValue="value"
-                                        scrollHeight="150px" 
-                                        [filter]="true" 
+                                        scrollHeight="150px"
+                                        [filter]="true"
                                         filterBy="name"
-                                        [virtualScroll]="true" 
+                                        [virtualScroll]="true"
                                         [itemSize]="40"
                                         [disabled]="disable"
                                     ></p-dropdown>
                                     <label for="timezone">Timezone</label>
                                 </span>
                             </div>
-    
+
                             <div class="col-12 md:col-6 flex align-items-center">
                                 <label class="ml-3" for="dayLightSaving">
                                     <p-inputSwitch
-                                        id="dayLightSaving" 
-                                        name="dayLightSaving" 
+                                        id="dayLightSaving"
+                                        name="dayLightSaving"
                                         [(ngModel)]="inputDayLightSaving"
                                         (onChange)="handleOnCPR()"
                                         [disabled]="disable"
@@ -664,20 +664,20 @@
                                     Daylight Savings
                                 </label>
                             </div>
-    
+
                             <div class="col-12 p-fluid">
                                 <span class="p-float-label">
-                                    <input type="text" id="npaCntPerCarrier" name="npaCntPerCarrier" pInputText [(ngModel)]="inputNpaCntPerCarrier" disabled> 
+                                    <input type="text" id="npaCntPerCarrier" name="npaCntPerCarrier" pInputText [(ngModel)]="inputNpaCntPerCarrier" disabled>
                                     <label for="npaCntPerCarrier">NPANXX count per carrier</label>
                                 </span>
                             </div>
                         </div>
                     </div>
                 </p-tabPanel>
-        
+
                 <p-tabPanel header="LAD" tooltip="LAD">
                     <h4 class="mb-0">Label Definition</h4>
-    
+
                     <div class="card">
                         <p-tabView [(activeIndex)]="activeLADTab">
                             <ng-container *ngFor="let ladSectName of ladSectNames; index as index; first as isFirst">
@@ -704,16 +704,16 @@
                                                         <ng-container *ngIf="datas">
                                                             <ng-container *ngFor="let data of datas; index as g">
                                                                 <td class="p-fluid">
-                                                                    <input 
-                                                                        type="text" 
-                                                                        [id]="'ladCell_' + k + '_' + g" 
-                                                                        [name]="'ladCell_' + k + '_' + g" 
+                                                                    <input
+                                                                        type="text"
+                                                                        [id]="'ladCell_' + k + '_' + g"
+                                                                        [name]="'ladCell_' + k + '_' + g"
                                                                         class="cell-input"
                                                                         [value]="data"
                                                                         (blur)="handleLADCellChange($event, index, k, g)"
                                                                         (click)="setLADActiveIndexes(index, k, g)"
                                                                         [disabled]="disable || ladSectNames.length === 0 || ladGridCategory[index][g] == null || ladGridCategory[index][g] === ''"
-                                                                    > 
+                                                                    >
                                                                 </td>
                                                             </ng-container>
                                                         </ng-container>
@@ -722,7 +722,7 @@
                                             </ng-container>
                                         </tbody>
                                     </table>
-    
+
                                     <div class="grid mt-4">
                                         <div class="lg:col-6 col-12">
                                             <div class="grid">
@@ -754,7 +754,7 @@
                                     </div>
                                 </p-tabPanel>
                             </ng-container>
-                        </p-tabView>    
+                        </p-tabView>
                     </div>
                 </p-tabPanel>
             </p-tabView>

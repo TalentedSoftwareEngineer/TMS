@@ -38,7 +38,6 @@ export class DashboardComponent implements OnInit {
 
   getConfigNewsEvent = async () => {
     await this.api.getConfigNewsEvent().pipe(tap(res=>{
-      console.log('res', res);
       this.editNewsEvent = res.news_event;
     })).toPromise();
   }
@@ -47,7 +46,6 @@ export class DashboardComponent implements OnInit {
     await this.api.updateConfigNewsEvent({
       value: this.editNewsEvent
     }).pipe(tap(res=>{
-      console.log('res', res);
     })).toPromise();
   }
 

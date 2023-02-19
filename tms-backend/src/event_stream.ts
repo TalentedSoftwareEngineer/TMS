@@ -1,13 +1,14 @@
-import {createQueue, RSMQ_CONFIG, RSMQ_QUEUE} from "./index";
+import {createQueue, PRIVATE_KEY, PUBLIC_KEY, RSMQ_CONFIG, RSMQ_QUEUE, SERVER} from "./index";
 import {Consumer} from "redis-smq";
 import {ConsumerError} from "redis-smq/dist/src/lib/consumer/errors/consumer.error";
 
-export const startEventStreamServer = () => {
+export const startEventStreamServer = (env: any, options: any) => {
     console.log("Starting EventStream Server .......")
 
     const express = require('express');
     const app = express();
     const cors = require('cors');
+
     app.use(cors());
 
     const SSE_RESPONSE_HEADER = {
@@ -76,9 +77,24 @@ export const startEventStreamServer = () => {
         })
     })
 
-    app.listen(6379, function() {
-        console.log("EventStream Server is listening on port 6379.....")
-    })
+    if (env=='production') {
+        const https = require("https");
+
+        const https_options = {
+            host: options.host,
+            key: options.key,
+            cert: options.cert,
+        }
+
+        https.createServer(https_options, app).listen(6379, function() {
+            console.log("EventStream Server is listening on port 6379.....")
+        })
+
+    } else {
+        app.listen(6379, function() {
+            console.log("EventStream Server is listening on port 6379.....")
+        })
+    }
 
     consumer.run()
 

@@ -91,7 +91,7 @@ export class AccountComponent implements OnInit {
     // { pace: 'blue', label: 'Lara Purple', mode: 'light', key: 'lara-light-purple'},
     // { pace: 'blue', label: 'Lara Teal', mode: 'light', key: 'lara-light-teal'},
   ]
-  
+
   menuTypes = [
     { label: 'Static', key: 'static' },
     // { label: 'Slim', key: 'slim' },
@@ -110,7 +110,7 @@ export class AccountComponent implements OnInit {
     public store: StoreService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    public layoutService: LayoutService, 
+    public layoutService: LayoutService,
     private menuService: MenuService,
   ) { }
 
@@ -210,7 +210,7 @@ export class AccountComponent implements OnInit {
 
   getCompaniesList = async () => {
     try {
-      await this.api.getCompaniesList('', '', 1, 400, '', undefined)
+      await this.api.getCompaniesListForFilter()
         .pipe(tap(async (companiesRes: ICompany[]) => {
           this.companies = companiesRes.map(item=>{
             return this.createData(
@@ -218,7 +218,6 @@ export class AccountComponent implements OnInit {
               item.id
             );
           });
-          console.log('companies: ', this.companies);
         })).toPromise();
     } catch (e) {
     }
@@ -226,7 +225,7 @@ export class AccountComponent implements OnInit {
 
   getRolesList = async () => {
     try {
-      await this.api.getRolesList('', '', 1, 400, '')
+      await this.api.getRolesListForFilter()
         .pipe(tap(async (rolesRes: IRole[]) => {
           this.roles = rolesRes.map(item=>{
             return this.createData(
@@ -234,7 +233,6 @@ export class AccountComponent implements OnInit {
               item.id
             );
           });
-          console.log('roles: ', this.roles);
         })).toPromise();
     } catch (e) {
     }
@@ -242,7 +240,7 @@ export class AccountComponent implements OnInit {
 
   getSMSUserList = async () => {
     try {
-      await this.api.getSMSUserList('', '', 1, 400, '')
+      await this.api.getSMSUserListForFilter()
         .pipe(tap(async (SMSUsersRes: ISomosUser[]) => {
           this.sms_users = SMSUsersRes.map(item=>{
             return this.createData(
@@ -250,7 +248,6 @@ export class AccountComponent implements OnInit {
               item.id
             );
           });
-          console.log('sms_users: ', this.sms_users);
         })).toPromise();
     } catch (e) {
     }
@@ -458,7 +455,7 @@ export class AccountComponent implements OnInit {
       let rate = width / height
       if (0.9 < rate && rate < 1.1) {
         if (width > 100 || height > 100) {
-          pThis.toastr.error('Please select the image that width and height are less than 200px', '', {positionClass: 'toast-top-right'})
+          pThis.showError('Please select the image that width and height are less than 200px');
           pThis.customAvatarRef.nativeElement.value = ''
 
         } else {
@@ -466,7 +463,7 @@ export class AccountComponent implements OnInit {
         }
 
       } else {
-        pThis.toastr.error('Please select the image with the almost same width and height', '', {positionClass: 'toast-top-right'})
+        pThis.showError('Please select the image with the almost same width and height');
         pThis.customAvatarRef.nativeElement.value = ''
       }
     }
@@ -616,7 +613,6 @@ export class AccountComponent implements OnInit {
     this.blockContent = true
     // call the user update api
     try {
-      console.log('uiSettings', this.user.ui_settings);
       //ksh
       this.api.updateUserUISettings(this.user.id, {
         ui_settings: this.user.ui_settings
@@ -651,6 +647,6 @@ export class AccountComponent implements OnInit {
   };
   showInfo = (msg: string) => {
     this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
-  };  
+  };
 
 }

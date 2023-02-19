@@ -9,7 +9,7 @@ import {inject, service} from "@loopback/core";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
-import {NQU_TYPE, NSR_SUBMIT_TYPE, NSR_TYPE, PROGRESSING_STATUS} from "../constants/number_adminstration";
+import {NSR_SUBMIT_TYPE, NSR_TYPE, PROGRESSING_STATUS} from "../constants/number_adminstration";
 import {MnqReq, MnqResult, NsrReq, NsrResult} from "../models";
 import {authenticate} from "@loopback/authentication";
 import {NQURequest} from "../models/nqu.request";
@@ -17,6 +17,7 @@ import {NumberService} from "../services";
 import {MNQRequest} from "../models/mnq.request";
 import {Count, CountSchema, Filter, repository, Where} from "@loopback/repository";
 import {MnqReqRepository, MnqResultRepository, NsrReqRepository, NsrResultRepository} from "../repositories";
+import DataUtils from "../utils/data";
 
 @authenticate('jwt')
 export class MNQController {
@@ -97,13 +98,14 @@ export class MNQController {
     }
   })
   async count(
-      @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.where(MnqReq) where?: Where<MnqReq>,
+      @inject(SecurityBindings.USER) currentUserProfile: UserProfile, 
+      @param.query.string('value') value: string,
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.MNQ))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.mnqReqRepository.count(where);
+    return this.mnqReqRepository.count(DataUtils.getWhere(value,  ['request_desc', 'ro_id', 'sub_dt_tm', 'message', 'status'], 'num_list', undefined));
   }
 
   @get('/MNQ/data', {
@@ -123,26 +125,27 @@ export class MNQController {
     }
   })
   async find(
-      @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.filter(MnqReq) filter?: Filter<MnqReq>,
+      @inject(SecurityBindings.USER) currentUserProfile: UserProfile, 
+      @param.query.number('limit') limit: number,
+      @param.query.number('skip') skip: number,
+      @param.query.string('order') order: string,
+      @param.query.string('value') value: string,
   ): Promise<MnqReq[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.MNQ))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    if (!filter)
-      filter = {}
+    let include = [
+        {
+            relation: 'user',
+            scope: {
+                fields: { username: true, email: true, first_name: true, last_name: true }
+            }
+        }
+    ];
 
-    if (!filter.include)
-      filter.include = []
-
-    filter.include.push({
-      relation: 'user',
-      scope: {
-        fields: { username: true, email: true, first_name: true, last_name: true }
-      }
-    })
-
-    return this.mnqReqRepository.find(filter);
+    return this.mnqReqRepository.find(DataUtils.getFilter(limit, skip, order, value,
+        [ 'request_desc', 'ro_id', 'sub_dt_tm', 'message', 'status' ], 'num_list', undefined, include));
   }
 
   @get('/MNQ/{id}', {
@@ -164,7 +167,6 @@ export class MNQController {
   async findById(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
       @param.path.string('id') id: string,
-      // @param.filter(NSRResult, {exclude: 'where'}) filter?: FilterExcludingWhere<NSRResult>
   ): Promise<MnqResult[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.MNQ))

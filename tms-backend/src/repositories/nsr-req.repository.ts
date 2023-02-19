@@ -1,13 +1,13 @@
 import {inject, Getter} from '@loopback/core';
 import {DefaultCrudRepository, repository, BelongsToAccessor} from '@loopback/repository';
 import {DbDataSource} from '../datasources';
-import {NsrReq, NSRReqRelations, User} from '../models';
+import {NsrReq, NsrReqRelations, User} from '../models';
 import {UserRepository} from './user.repository';
 
 export class NsrReqRepository extends DefaultCrudRepository<
   NsrReq,
   typeof NsrReq.prototype.id,
-  NSRReqRelations
+  NsrReqRelations
 > {
 
   public readonly user: BelongsToAccessor<User, typeof NsrReq.prototype.id>;

@@ -25,6 +25,7 @@ import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import AuditionedUtils from "../utils/audition";
 import {MESSAGES} from "../constants/messages";
 import {PERMISSIONS} from "../constants/permissions";
+import DataUtils from '../utils/data';
 
 @authenticate('jwt')
 export class CompanyController {
@@ -89,13 +90,20 @@ export class CompanyController {
         }
     })
     async count(
-        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.where(Company) where?: Where<Company>,
+        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, 
+        @param.query.string('value') value: string,
+        @param.query.string('statusFilter') statusFilter: string
     ): Promise<Count> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.READ_COMPANY))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.companyRepository.count(where);
+        let tmpStatusFilter = statusFilter=='' ? undefined : statusFilter;
+
+        let fields = ['name','code','role_code','resp_org_id','company_email'];
+        let num_fields = undefined;
+        let custom = [{status: tmpStatusFilter}];
+        return this.companyRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
     }
 
     @get('/companies', {
@@ -115,13 +123,24 @@ export class CompanyController {
         }
     })
     async find(
-        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.filter(Company) filter?: Filter<Company>,
+        @inject(SecurityBindings.USER) currentUserProfile: UserProfile, 
+        @param.query.number('limit') limit: number,
+        @param.query.number('skip') skip: number,
+        @param.query.string('order') order: string,
+        @param.query.string('value') value: string,
+        @param.query.string('statusFilter') statusFilter: string
     ): Promise<Company[]> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.READ_COMPANY))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.companyRepository.find(AuditionedUtils.includeAuditionedFilter(filter));
+        let tmpStatusFilter = statusFilter=='' ? undefined : statusFilter;
+    
+        let fields = ['name','code','role_code','resp_org_id','company_email'];
+        let num_fields = undefined;
+        let custom = [{status: tmpStatusFilter}];
+        let include = [{relation: 'created'}, {relation: 'updated'}];
+        return this.companyRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
     }
 
     @get('/companies/{id}', {
@@ -227,4 +246,28 @@ export class CompanyController {
 
         await this.companyRepository.deleteById(id);
     }
+
+    @get('/companies/for_filter', {
+        description: 'Find all companies without checking permission',
+        responses: {
+            '200': {
+                description: 'Array of Company model instances',
+                content: {
+                    'application/json': {
+                        schema: {
+                            type: 'array',
+                            items: getModelSchemaRef(Company, {includeRelations: true}),
+                        },
+                    },
+                },
+            }
+        }
+    })
+    async forFilter(
+        @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+    ): Promise<Company[]> {
+        const profile = JSON.parse(currentUserProfile[securityId]);
+        return this.companyRepository.find({});
+    }
+
 }

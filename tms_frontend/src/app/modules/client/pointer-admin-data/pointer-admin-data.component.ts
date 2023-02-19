@@ -30,6 +30,8 @@ import {
   STAT_MUSTCHECK,
   STAT_FAILED,
 } from '../../constants';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-pointer-admin-data',
@@ -142,7 +144,16 @@ export class PointerAdminDataComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.PAD)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this._router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+    })
   }
 
   handleUppercase = async (event: Event) => {
@@ -331,5 +342,18 @@ export class PointerAdminDataComponent implements OnInit {
   toggleCancel = () => {
     
   }
+
+  showWarn = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'warn', summary: 'Warning', detail: msg });
+  }
+  showError = (msg: string, summary: string) => {
+    this.messageService.add({ key: 'tst', severity: 'error', summary: summary, detail: msg });
+  }
+  showSuccess = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'success', summary: 'Success', detail: msg });
+  };
+  showInfo = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
+  };
 
 }

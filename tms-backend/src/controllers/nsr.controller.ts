@@ -143,13 +143,16 @@ export class NSRController {
     }
   })
   async count(
-      @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.where(NsrReq) where?: Where<NsrReq>,
+      @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+      @param.query.string('value') value: string,
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.SEARCH_NUMBER))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.nsrReqRepository.count(where);
+    return this.nsrReqRepository.count(DataUtils.getWhere(value,
+        ['submit_type', 'type', 'ro_id', 'message', 'npa', 'nxx', 'line', 'wild_card_num', 'status', 'sub_dt_tm'],
+        'npa,nxx,line,specific_num'));
   }
 
   @get('/NSR/data', {
@@ -169,26 +172,29 @@ export class NSRController {
     }
   })
   async find(
-      @inject(SecurityBindings.USER) currentUserProfile: UserProfile, @param.filter(NsrReq) filter?: Filter<NsrReq>,
+      @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+      @param.query.number('limit') limit: number,
+      @param.query.number('skip') skip: number,
+      @param.query.string('order') order: string,
+      @param.query.string('value') value: string,
   ): Promise<NsrReq[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.SEARCH_NUMBER))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    if (!filter)
-      filter = {}
-
-    if (!filter.include)
-      filter.include = []
-
-    filter.include.push({
-      relation: 'user',
-      scope: {
-        fields: { username: true, email: true, first_name: true, last_name: true }
+    let include = [
+      {
+        relation: 'user',
+        scope: {
+          fields: { username: true, email: true, first_name: true, last_name: true }
+        }
       }
-    })
+    ];
 
-    return this.nsrReqRepository.find(filter);
+    return this.nsrReqRepository.find(DataUtils.getFilter(limit, skip, order, value,
+        ['submit_type', 'type', 'ro_id', 'message', 'npa', 'nxx', 'line', 'wild_card_num', 'status', 'sub_dt_tm'],
+        'npa,nxx,line,specific_num', undefined, include
+        ));
   }
 
   @get('/NSR/{id}', {

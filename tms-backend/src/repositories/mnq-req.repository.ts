@@ -1,13 +1,13 @@
 import {inject, Getter} from '@loopback/core';
 import {DefaultCrudRepository, repository, BelongsToAccessor} from '@loopback/repository';
 import {DbDataSource} from '../datasources';
-import {MnqReq, MNQReqRelations, User} from '../models';
+import {MnqReq, MnqReqRelations, User} from '../models';
 import {UserRepository} from './user.repository';
 
 export class MnqReqRepository extends DefaultCrudRepository<
   MnqReq,
   typeof MnqReq.prototype.id,
-  MNQReqRelations
+  MnqReqRelations
 > {
 
   public readonly user: BelongsToAccessor<User, typeof MnqReq.prototype.id>;

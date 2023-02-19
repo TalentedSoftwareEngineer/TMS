@@ -25,6 +25,7 @@ import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
 import AuditionedUtils from "../utils/audition";
 import {authenticate} from "@loopback/authentication";
+import DataUtils from '../utils/data';
 
 @authenticate('jwt')
 export class ScriptSqlController {
@@ -82,13 +83,16 @@ export class ScriptSqlController {
     })
     async count(
         @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-        @param.where(ScriptSql) where?: Where<ScriptSql>,
+        @param.query.string('value') value: string
     ): Promise<Count> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.READ_SQL_SCRIPT))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.scriptSqlRepository.count(where);
+        let fields = ['content'];
+        let num_fields = undefined;
+        let custom = undefined;
+        return this.scriptSqlRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
     }
 
     @get('/script-sqls', {
@@ -109,21 +113,20 @@ export class ScriptSqlController {
     })
     async find(
         @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-        @param.filter(ScriptSql) filter?: Filter<ScriptSql>,
+        @param.query.number('limit') limit: number,
+        @param.query.number('skip') skip: number,
+        @param.query.string('order') order: string,
+        @param.query.string('value') value: string
     ): Promise<ScriptSql[]> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.READ_SQL_SCRIPT))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        filter = AuditionedUtils.includeAuditionedFilter(filter)
-        filter?.include?.push({
-            relation: 'user',
-            scope: {
-                fields: { username: true, password: true }
-            }
-        })
-
-        return this.scriptSqlRepository.find(filter);
+        let fields = ['content'];
+        let num_fields = undefined;
+        let custom = undefined;
+        let include = [{relation: 'created'}, {relation: 'updated'}, {relation: 'user'}];
+        return this.scriptSqlRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
     }
 
     @get('/script-sqls/{id}', {

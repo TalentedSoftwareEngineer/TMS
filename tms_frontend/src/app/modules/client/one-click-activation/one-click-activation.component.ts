@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {StoreService} from "../../../services/store/store.service";
 import {ApiService} from "../../../services/api/api.service";
-import { 
+import {
   OCA_NUM_TYPE_RANDOM,
   OCA_NUM_TYPE_WILDCARD,
   WILDCARDNUM_REG_EXP,
@@ -20,7 +20,10 @@ import {
 import { tap } from "rxjs/operators";
 import * as gFunc from 'src/app/utils/utils';
 import moment from 'moment';
-
+import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-one-click-activation',
@@ -87,6 +90,8 @@ export class OneClickActivationComponent implements OnInit {
   constructor(
     public store: StoreService,
     public api: ApiService,
+    public router: Router,
+    private messageService: MessageService
   ) { }
 
   async ngOnInit() {
@@ -98,6 +103,17 @@ export class OneClickActivationComponent implements OnInit {
           resolve()
         }
       }, 100)
+    })
+
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.ONE_CLICK_ACTIVATE)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
     })
 
     this.timeZones = [
@@ -141,12 +157,9 @@ export class OneClickActivationComponent implements OnInit {
     if (num !== null && num !== "") {
 
       let nums = gFunc.retrieveNumListWithHyphen(num)
-      console.log("gFunc.retrieveNumListWithHyphen: " + nums.join(","))
       this.inputNumberMaskEntry = nums.join(",");
 
       if (num.includes('*') || num.includes('&')) { // to wildcard mode
-
-        console.log("Wildcard")
         this.numType = OCA_NUM_TYPE_WILDCARD;
         this.inputNpa = {name: 'Toll-Free NPA', value: ''};
         this.inputNxx = ''
@@ -201,26 +214,21 @@ export class OneClickActivationComponent implements OnInit {
         this.validNxx = true;
         this.inputLine = '';
         this.validLine = true;
-        console.log("Specific")
 
         // check if the number list is valid
         let specificNumReg = SPECIFICNUM_REG_EXP
         let isValid = true
         let isNpaInvalid = false
         for (let el of nums) {
-          console.log("el: " + el)
           if (!specificNumReg.test(el)) {   // if anyone among the number list is invalid, the number list is invalid.
             isValid = false
 
             if (!TFNPA_WILDCAD_REG_EXP.test(el))
               isNpaInvalid = true
 
-            console.log("Valid is false ")
             break
           }
         }
-
-        console.log("Specific: " + isValid)
 
         if (!isValid) {
           if (!isNpaInvalid)
@@ -359,5 +367,18 @@ export class OneClickActivationComponent implements OnInit {
   onReset = () => {
 
   }
+
+  showWarn = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'warn', summary: 'Warning', detail: msg });
+  }
+  showError = (msg: string, summary: string) => {
+    this.messageService.add({ key: 'tst', severity: 'error', summary: summary, detail: msg });
+  }
+  showSuccess = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'success', summary: 'Success', detail: msg });
+  };
+  showInfo = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
+  };
 
 }

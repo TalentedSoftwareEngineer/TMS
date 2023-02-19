@@ -9,6 +9,8 @@ import moment from 'moment';
 import {IUser} from "../../../models/user";
 import { async } from '@angular/core/testing';
 import { PERMISSIONS } from 'src/app/consts/permissions';
+import {Router} from "@angular/router";
+import {ROUTES} from "../../../app.routes";
 
 @Component({
   selector: 'app-id-ro',
@@ -27,8 +29,8 @@ export class IdRoComponent implements OnInit {
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  sortActive = ''
-  sortDirection = ''
+  sortActive = 'id'
+  sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -55,6 +57,7 @@ export class IdRoComponent implements OnInit {
   write_permission: boolean = false;
 
   constructor(
+    public router: Router,
     public api: ApiService,
     public store: StoreService,
     private messageService: MessageService,
@@ -73,10 +76,21 @@ export class IdRoComponent implements OnInit {
       }, 100)
     })
 
-    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_ID_RO) == -1)
-      this.write_permission = false;
-    else
-      this.write_permission = true;
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.READ_ID_RO)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
+      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_ID_RO) == -1)
+        this.write_permission = false;
+      else
+        this.write_permission = true;
+    })
 
     this.getIdRosList();
     this.getTotalIdRosCount();
@@ -91,11 +105,12 @@ export class IdRoComponent implements OnInit {
       await this.api.getIdRosList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue)
         .pipe(tap(async (id_rosRes: IUser[]) => {
           this.id_ros = [];
-          id_rosRes.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          id_rosRes.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-
-          id_rosRes.map(u => u.created_by = u.created_by ? this.getAuditionedUsername(u.created_by, username=>u.created_by=username) : '');
-          id_rosRes.map(u => u.updated_by = u.updated_by ? this.getAuditionedUsername(u.updated_by, username=>u.updated_by=username) : '');
+          id_rosRes.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.created_by = u.created_by ? this.getAuditionedUsername(u.created_by, username=>u.created_by=username) : '';
+            u.updated_by = u.updated_by ? this.getAuditionedUsername(u.updated_by, username=>u.updated_by=username) : '';
+          });
 
           let allNotEditable = true
           for (let id_ro of id_rosRes) {
@@ -107,7 +122,7 @@ export class IdRoComponent implements OnInit {
         })).toPromise();
 
       this.filterResultLength = -1
-      await this.api.getUserCount(filterValue, ['username', 'ro'], {}).pipe(tap( res => {
+      await this.api.getUserCount(filterValue, '', '').pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -118,7 +133,7 @@ export class IdRoComponent implements OnInit {
 
   getTotalIdRosCount = async () => {
     this.resultsLength = -1
-    await this.api.getUserCount('', [], {}).pipe(tap( res => {
+    await this.api.getUserCount('', '', '').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }

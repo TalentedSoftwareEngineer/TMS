@@ -85,8 +85,8 @@ export class MnqResult extends Entity {
   }
 }
 
-export interface MNQResultRelations {
+export interface MnqResultRelations {
   // describe navigational properties here
 }
 
-export type MnqResultWithRelations = MnqResult & MNQResultRelations;
+export type MnqResultWithRelations = MnqResult & MnqResultRelations;

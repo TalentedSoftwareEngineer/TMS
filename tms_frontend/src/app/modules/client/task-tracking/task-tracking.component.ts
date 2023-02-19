@@ -5,6 +5,10 @@ import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, SUPER_
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IUser, ITaskTracking} from "../../../models/user";
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { Router } from '@angular/router';
+import { ROUTES } from 'src/app/app.routes';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-task-tracking',
@@ -26,9 +30,9 @@ export class TaskTrackingComponent implements OnInit {
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  userIdFilterValue = {name: 'All', value: ALL_FILTER_VALUE}
-  sortActive = ''
-  sortDirection = ''
+  userIdFilterValue = {name: 'All', value: ''}
+  sortActive = 'sub_dt_tm'
+  sortDirection = 'DESC'
   resultsLength = -1;
   filterResultLength = -1;
   isLoading = true
@@ -46,6 +50,8 @@ export class TaskTrackingComponent implements OnInit {
   constructor(
     public api: ApiService,
     public store: StoreService,
+    public router: Router,
+    private messageService: MessageService
   ) { }
 
   async ngOnInit() {
@@ -58,6 +64,17 @@ export class TaskTrackingComponent implements OnInit {
         }
       }, 100)
     })
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.TASK_TRACKING)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+    })
+
     this.authenticatedUserId = this.store.getUser().id;
     this.getTotalTasksCount();
     this.getTasksList();
@@ -78,9 +95,11 @@ export class TaskTrackingComponent implements OnInit {
       await this.api.getTasksList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.authenticatedUserId==SUPER_ADMIN_ID ? this.userIdFilterValue.value : this.authenticatedUserId)
         .pipe(tap(async (res: ITaskTracking[]) => {
           this.tasks = [];
-          res.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          res.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+          res.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '';
+          });
 
           let allNotEditable = true
           for (let item of res) {
@@ -92,9 +111,7 @@ export class TaskTrackingComponent implements OnInit {
         })).toPromise();
 
       this.filterResultLength = -1
-      await this.api.getTasksCount(filterValue, {
-        "user_id": this.authenticatedUserId==SUPER_ADMIN_ID ? this.userIdFilterValue.value : this.authenticatedUserId
-      }).pipe(tap( res => {
+      await this.api.getTasksCount(filterValue, this.authenticatedUserId==SUPER_ADMIN_ID ? this.userIdFilterValue.value : this.authenticatedUserId).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -105,14 +122,14 @@ export class TaskTrackingComponent implements OnInit {
 
   getTotalTasksCount = async () => {
     this.resultsLength = -1
-    await this.api.getTasksCount('', {}).pipe(tap( res => {
+    await this.api.getTasksCount('', '').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }
 
   getUsersList = async () => {
     try {
-      await this.api.getUsersList(this.sortActive, this.sortDirection, this.pageIndex, 400, '', undefined, undefined)
+      await this.api.getUsersListForFilter()
         .pipe(tap(async (res: IUser[]) => {
           let tmp = res.map(item=>{
             return this.createData(
@@ -120,7 +137,7 @@ export class TaskTrackingComponent implements OnInit {
               item.id
             );
           });
-          this.users = [{name: 'All', value: ALL_FILTER_VALUE}, ...tmp];
+          this.users = [{name: 'All', value: ''}, ...tmp];
         })).toPromise();
     } catch (e) {
     }
@@ -152,4 +169,17 @@ export class TaskTrackingComponent implements OnInit {
   paginate = (event: any) => {
     this.onPagination(event.page+1);
   }
+
+  showWarn = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'warn', summary: 'Warning', detail: msg });
+  }
+  showError = (msg: string, summary: string) => {
+    this.messageService.add({ key: 'tst', severity: 'error', summary: summary, detail: msg });
+  }
+  showSuccess = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'success', summary: 'Success', detail: msg });
+  };
+  showInfo = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
+  };
 }

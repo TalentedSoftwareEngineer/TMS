@@ -58,22 +58,28 @@ export class ApiService {
 
   //Company APIs
   getCompaniesList(active: string, direction: string, page: number, size: number, filterValue: string, statusFilterValue: any): Observable<ICompany[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'name',
-      'code',
-      'role_code',
-      'resp_org_id',
-      'company_email'
-    ], undefined, {
-      "status": statusFilterValue
-    });
-    const url = `${this.coreApi}/companies?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      statusFilter: `${statusFilterValue}`,
+    }).toString();
+    const url = `${this.coreApi}/companies?${parametersQuery}`;
     return this.http.get<ICompany[]>(url);
   }
 
-  getCompanyCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', ['name','code','role_code','resp_org_id','company_email'], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/companies/count?${'where=' + whereParam}`);
+  getCompaniesListForFilter(): Observable<ICompany[]> {
+    const url = `${this.coreApi}/companies/for_filter`;
+    return this.http.get<ICompany[]>(url);
+  }
+
+  getCompanyCount(filterValue: string, statusFilterValue: any): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`,
+      statusFilter: `${statusFilterValue}`,
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/companies/count?${parametersQuery}`);
   }
 
   createCompany(data: any): Observable<ICompany> {
@@ -99,19 +105,26 @@ export class ApiService {
 
   //Somos User APIs
   getSMSUserList(active: string, direction: string, page: number, size: number, filterValue: string): Observable<ISomosUser[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'username',
-      'password',
-      'client_key',
-      'client_password',
-    ]);
-    const url = `${this.coreApi}/somos-users?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/somos-users?${parametersQuery}`;
     return this.http.get<ISomosUser[]>(url);
   }
 
-  getSMSUserCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', ['username', 'password', 'client_key', 'client_password'], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/somos-users/count?${'where=' + whereParam}`);
+  getSMSUserListForFilter(): Observable<ISomosUser[]> {
+    const url = `${this.coreApi}/somos-users/for_filter`;
+    return this.http.get<ISomosUser[]>(url);
+  }
+
+  getSMSUserCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/somos-users/count?${parametersQuery}`);
   }
 
   createSMSUser(data: any): Observable<ISomosUser> {
@@ -144,17 +157,33 @@ export class ApiService {
 
   //Roles APIs
   getRolesList(active: string, direction: string, page: number, size: number, filterValue: string): Observable<IRole[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'name', 
-      'description', 
-    ]);
-    const url = `${this.coreApi}/roles?${filter !== 'filter=' ? filter + '&' : ''}`;
+    // const filter = getFilter(active, direction, size, page, filterValue, null, null, [
+    //   'name',
+    //   'description',
+    // ]);
+    // const url = `${this.coreApi}/roles?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/roles?${parametersQuery}`;
+    return this.http.get<IRole[]>(url);
+  }
+
+  getRolesListForFilter(): Observable<IRole[]> {
+    const url = `${this.coreApi}/roles/for_filter`;
     return this.http.get<IRole[]>(url);
   }
 
   getRoleCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', ['name','description'], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/roles/count?${'where=' + whereParam}`);
+    // const whereParam = getCountWhere(filterValue, '', '', ['name','description'], customerFilter);
+    // return this.http.get<any>(`${this.coreApi}/roles/count?${'where=' + whereParam}`);
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/roles/count?${parametersQuery}`);
   }
 
   createRole(data: any): Observable<IRole> {
@@ -176,17 +205,23 @@ export class ApiService {
 
   //UserController APIs
   getIdRosList(active: string, direction: string, page: number, size: number, filterValue: string): Observable<IUser[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'username', 
-      'ro', 
-    ]);
-    const url = `${this.coreApi}/users/id_ro?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/users/id_ro?${parametersQuery}`;
     return this.http.get<IUser[]>(url);
   }
 
-  getUserCount(filterValue: string, filterKeys: string[], customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', filterKeys, customerFilter);
-    return this.http.get<any>(`${this.coreApi}/users/count?${'where=' + whereParam}`);
+  getUserCount(filterValue: string, roleIdFilterValue: any, statusFilterValue: any): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`,
+      roleFilterId: `${roleIdFilterValue}`,
+      statusFilter: `${statusFilterValue}`,
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/users/count?${parametersQuery}`);
   }
 
   getUser(id: number): Observable<IUser> {
@@ -204,16 +239,30 @@ export class ApiService {
   }
 
   getUsersList(active: string, direction: string, page: number, size: number, filterValue: string, roleIdFilterValue: any, statusFilterValue: any): Observable<IUser[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'username',
-      'first_name',
-      'last_name',
-      'email'
-    ], undefined, {
-      "role_id": roleIdFilterValue,
-      "status": statusFilterValue
-    });
-    const url = `${this.coreApi}/users?${filter !== 'filter=' ? filter + '&' : ''}`;
+    // const filter = getFilter(active, direction, size, page, filterValue, null, null, [
+    //   'username',
+    //   'first_name',
+    //   'last_name',
+    //   'email'
+    // ], undefined, {
+    //   "role_id": roleIdFilterValue,
+    //   "status": statusFilterValue
+    // });
+    // const url = `${this.coreApi}/users?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      roleFilterId: `${roleIdFilterValue}`,
+      statusFilter: `${statusFilterValue}`,
+    }).toString();
+    const url = `${this.coreApi}/users?${parametersQuery}`;
+    return this.http.get<IUser[]>(url);
+  }
+
+  getUsersListForFilter(): Observable<IUser[]> {
+    const url = `${this.coreApi}/users/for_filter`;
     return this.http.get<IUser[]>(url);
   }
 
@@ -262,17 +311,21 @@ export class ApiService {
 
   //sqlUsers APIs
   getSqlUsersList(active: string, direction: string, page: number, size: number, filterValue: string): Observable<ISqlUser[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'username',
-      'password'
-    ]);
-    const url = `${this.coreApi}/script-users?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/script-users?${parametersQuery}`;
     return this.http.get<ISqlUser[]>(url);
   }
 
-  getSqlUserCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', ['username','password'], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/script-users/count?${'where=' + whereParam}`);
+  getSqlUserCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/script-users/count?${parametersQuery}`);
   }
 
   createSqlUser(data: any): Observable<ISqlUser> {
@@ -294,14 +347,21 @@ export class ApiService {
 
   //SqlScripts APIs
   getSqlScriptsList(active: string, direction: string, page: number, size: number, filterValue: string): Observable<ISqlScript[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, ['content']);
-    const url = `${this.coreApi}/script-sqls?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/script-sqls?${parametersQuery}`;
     return this.http.get<ISqlScript[]>(url);
   }
 
-  getSqlScriptsCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', ['content'], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/script-sqls/count?${'where=' + whereParam}`);
+  getSqlScriptsCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/script-sqls/count?${parametersQuery}`);
   }
 
   createSqlScript(data: any): Observable<ISqlScript> {
@@ -323,20 +383,27 @@ export class ApiService {
 
   //ScriptResult APIs
   getScriptResultsList(active: string, direction: string, page: number, size: number, filterValue: string, sqlIdFilterValue: any, resultFilterValue: any, userIdFilterValue: any): Observable<IScriptResults[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'message'
-    ], undefined, {
-      "user_id": userIdFilterValue,
-      "result": resultFilterValue,
-      "sql_id": sqlIdFilterValue
-    });
-    const url = `${this.coreApi}/script-results?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilterValue}`,
+      resultFilter: `${resultFilterValue}`,
+      sqlIdFilter: `${sqlIdFilterValue}`,
+    }).toString();
+    const url = `${this.coreApi}/script-results?${parametersQuery}`;
     return this.http.get<IScriptResults[]>(url);
   }
 
-  getScriptResultsCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', ['message'], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/script-results/count?${'where=' + whereParam}`);
+  getScriptResultsCount(filterValue: string, sqlIdFilterValue: any, resultFilterValue: any, userIdFilterValue: any): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilterValue}`,
+      resultFilter: `${resultFilterValue}`,
+      sqlIdFilter: `${sqlIdFilterValue}`,
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/script-results/count?${parametersQuery}`);
   }
 
   //User Activity APIs
@@ -381,43 +448,46 @@ export class ApiService {
     // };
     // let encodeURI_filter = encodeURIComponent(JSON.stringify(json_filter))
     // const url = `${this.coreApi}/activities?${'filter='+encodeURI_filter}`;
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, [
-      'page',
-      'operation',
-      'sub_dt_tm',
-      'message',
-      'user.username'
-    ], undefined, {
-      "user_id": userIdFilterValue,
-      "status": statusFilterValue
-    });
-    const url = `${this.coreApi}/activities?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilterValue}`,
+      statusFilter: `${statusFilterValue}`,
+    }).toString();
+    const url = `${this.coreApi}/activities?${parametersQuery}`;
     return this.http.get<IUserActivities[]>(url);
   }
 
-  getUserActivitiesCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', [
-      'page',
-      'operation',
-      'sub_dt_tm',
-      'message',
-      'user.username'
-    ], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/activities/count?${'where=' + whereParam}`);
+  getUserActivitiesCount(filterValue: string, statusFilterValue: any, userIdFilterValue: any): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilterValue}`,
+      statusFilter: `${statusFilterValue}`,
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/activities/count?${parametersQuery}`);
   }
 
   //Task Tracking APIs
   getTasksList(active: string, direction: string, page: number, size: number, filterValue: string, userIdFilterValue: any): Observable<ITaskTracking[]> {
-    const filter = getFilter(active, direction, size, page, filterValue, null, null, TASK_FILTER_FILEDS, undefined, {
-      "user_id": userIdFilterValue
-    }, 'src_num, tgt_num');
-    const url = `${this.coreApi}/activity-result?${filter !== 'filter=' ? filter + '&' : ''}`;
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilterValue}`,
+    }).toString();
+    const url = `${this.coreApi}/activity-result?${parametersQuery}`;
     return this.http.get<ITaskTracking[]>(url);
   }
 
-  getTasksCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', TASK_FILTER_FILEDS, customerFilter, 'src_num, tgt_num');
-    return this.http.get<any>(`${this.coreApi}/activity-result/count?${'where=' + whereParam}`);
+  getTasksCount(filterValue: string, userIdFilterValue: any): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilterValue}`,
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/activity-result/count?${parametersQuery}`);
   }
 
   //Resp Org Information
@@ -450,23 +520,22 @@ export class ApiService {
     return this.http.get<any>(url);
   }
 
-  getNSRData(active: string, direction: string, size: number, page: number): Observable<any> {
-    const filter = getFilter(active, direction, size, page, '', null, null, [
-      'sub_dt_tm',
-      'type',
-      'submit_type',
-      'total',
-      'completed',
-      'status',
-    ]);
-    
-    const url = `${this.coreApi}/NSR/data?${filter !== 'filter=' ? filter + '&' : ''}`;
+  getNSRData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/NSR/data?${parametersQuery}`;
     return this.http.get<any>(url);
   }
 
-  getNSRCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', [], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/NSR/count?${'where=' + whereParam}`);
+  getNSRCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/NSR/count?${parametersQuery}`);
   }
 
   deleteNSR(id: string): Observable<any> {
@@ -497,11 +566,14 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/MNQ/query`, data);
   }
 
-  getMNQData(/* active: string, direction: string, size: number, page: number */): Observable<any> {
-    // const filter = getFilter(active, direction, size, page, '', null, null, ['completed']);
-    const filter = 'filter=';
-    
-    const url = `${this.coreApi}/MNQ/data?${filter !== 'filter=' ? filter + '&' : ''}`;
+  getMNQData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/MNQ/data?${parametersQuery}`;
     return this.http.get<any>(url);
   }
 
@@ -510,9 +582,11 @@ export class ApiService {
     return this.http.get<any>(url);
   }
 
-  getMNQCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', [], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/MNQ/count?${'where=' + whereParam}`);
+  getMNQCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/MNQ/count?${parametersQuery}`);
   }
 
   deleteMNQ(id: string): Observable<any> {
@@ -524,11 +598,14 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/MND/disconnect`, data);
   }
 
-  getMNDData(/* active: string, direction: string, size: number, page: number */): Observable<any> {
-    // const filter = getFilter(active, direction, size, page, '', null, null, ['completed']);
-    const filter = 'filter=';
-    
-    const url = `${this.coreApi}/MND/data?${filter !== 'filter=' ? filter + '&' : ''}`;
+  getMNDData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/MND/data?${parametersQuery}`;
     return this.http.get<any>(url);
   }
 
@@ -537,9 +614,11 @@ export class ApiService {
     return this.http.get<any>(url);
   }
 
-  getMNDCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', [], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/MND/count?${'where=' + whereParam}`);
+  getMNDCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/MND/count?${parametersQuery}`);
   }
 
   deleteMND(id: string): Observable<any> {
@@ -551,11 +630,14 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/TRQ/retrieve`, data);
   }
 
-  getTrqData(/* active: string, direction: string, size: number, page: number */): Observable<any> {
-    // const filter = getFilter(active, direction, size, page, '', null, null, ['completed']);
-    const filter = 'filter=';
-    
-    const url = `${this.coreApi}/TRQ/data?${filter !== 'filter=' ? filter + '&' : ''}`;
+  getTrqData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/TRQ/data?${parametersQuery}`;
     return this.http.get<any>(url);
   }
 
@@ -564,12 +646,103 @@ export class ApiService {
     return this.http.get<any>(url);
   }
 
-  getTrqCount(filterValue: string, customerFilter?: any): Observable<any> {
-    const whereParam = getCountWhere(filterValue, '', '', [], customerFilter);
-    return this.http.get<any>(`${this.coreApi}/TRQ/count?${'where=' + whereParam}`);
+  getTrqCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/TRQ/count?${parametersQuery}`);
   }
 
   deleteTrq(id: string): Observable<any> {
     return this.http.delete<any>(`${this.coreApi}/TRQ/${id}`);
   }
+
+  submitMNS(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/MNS/spare`, data);
+  }
+
+  getMNSData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/MNS/data?${parametersQuery}`;
+    return this.http.get<any>(url);
+  }
+
+  getMNSCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/MNS/count?${parametersQuery}`);
+  }
+
+  deleteMNS(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/MNS/${id}`);
+  }
+
+  getMroData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/MRO/data?${parametersQuery}`;
+    return this.http.get<any>(url);
+  }
+
+  getMroCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/MRO/count?${parametersQuery}`);
+  }
+
+  getMroById(id: string): Observable<any> {
+    const url = `${this.coreApi}/MRO/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  deleteMro(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/MRO/${id}`);
+  }
+
+  submitMro(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/MRO/change`, data);
+  }
+
+  getMcpData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`
+    }).toString();
+    const url = `${this.coreApi}/MCP/data?${parametersQuery}`;
+    return this.http.get<any>(url);
+  }
+
+  getMcpCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/MCP/count?${parametersQuery}`);
+  }
+
+  getMcpById(id: string): Observable<any> {
+    const url = `${this.coreApi}/MCP/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  deleteMcp(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/MCP/${id}`);
+  }
+
+  submitMcp(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/MCP/convert`, data);
+  }
+  
 }

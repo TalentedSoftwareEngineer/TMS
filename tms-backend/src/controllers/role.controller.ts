@@ -26,6 +26,7 @@ import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import AuditionedUtils from "../utils/audition";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
+import DataUtils from '../utils/data';
 
 @authenticate('jwt')
 export class RoleController {
@@ -103,13 +104,16 @@ export class RoleController {
   })
   async count(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-    @param.where(Role) where?: Where<Role>,
+      @param.query.string('value') value: string
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_ROLE))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.roleRepository.count(where);
+    let fields = ['name','description'];
+    let num_fields = undefined;
+    let custom = undefined;
+    return this.roleRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
   }
 
   @get('/roles', {
@@ -130,13 +134,33 @@ export class RoleController {
   })
   async find(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-    @param.filter(Role) filter?: Filter<Role>,
+      @param.query.number('limit') limit: number,
+      @param.query.number('skip') skip: number,
+      @param.query.string('order') order: string,
+      @param.query.string('value') value: string
   ): Promise<Role[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_ROLE))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.roleRepository.find(AuditionedUtils.includeAuditionedFilter(filter));
+    let fields = ['name','description'];
+    let num_fields = undefined;
+    let custom = undefined;
+    let include = [
+      {
+          relation: 'created',
+          scope: {
+              fields: { username: true, email: true, first_name: true, last_name: true }
+          }
+      },
+      {
+        relation: 'updated',
+        scope: {
+            fields: { username: true, email: true, first_name: true, last_name: true }
+        }
+      }
+    ];
+    return this.roleRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
   }
 
   @get('/roles/for_filter', {
@@ -156,14 +180,9 @@ export class RoleController {
     }
   })
   async findForFilter(
-      // @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-      // @param.filter(Role) filter?: Filter<Role>,
   ): Promise<Role[]> {
-    // const profile = JSON.parse(currentUserProfile[securityId]);
-    // if (!profile.permissions.includes(PERMISSIONS.READ_ROLE))
-    //   throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.roleRepository.find({fields: {id: true, name: true, description: true, created_at: false, created_by: false, updated_at: false, updated_by: false}});
+    return this.roleRepository.find({fields: {id: true, name: true, description: true}});
   }
 
   @get('/roles/{id}', {

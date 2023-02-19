@@ -9,14 +9,6 @@ export const NSR_SUBMIT_TYPE = {
     SEARCH_RESERVE: "SEARCH & RESERVE",
 }
 
-export const NQU_TYPE = {
-    QUERY: "QUERY",
-    UPDATE: "UPDATE",
-}
-
-export const TRQ_TYPE = {
-    RETRIEVE: "RETRIEVE",
-}
 
 export const NUMBER_STATUS = {
     SPARE: "SPARE",
@@ -43,14 +35,25 @@ export const TASK_TYPE = {
     OTHER: "OTHER",
 }
 
+export const PAGE_OPERATION = {
+    SEARCH: "SEARCH",
+    RESERVE: "RESERVE",
+    QUERY: "QUERY",
+    UPDATE: "UPDATE",
+    RETRIEVE: "RETRIEVE",
+    DISCONNECT: "DISCONNECT",
+    SPARE: "SPARE",
+    CHANGE: "CHANGE",
+    CONVERT: "CONVERT",
+}
+
 export const TASK_ACTION = {
     SEARCH: "SEARCH",
     RESERVE: "RESERVE",
     UPDATE: "UPDATE",
     RETRIEVE: "RETRIEVE",
     DISCONNECT: "DISCONNECT",
-}
-
-export const MNQ_TYPE = {
-    QUERY: "QUERY",
+    SPARE: "SPARE",
+    CHANGE: "CHANGE",
+    CONVERT: "CONVERT",
 }

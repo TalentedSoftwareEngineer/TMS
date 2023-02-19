@@ -21,7 +21,7 @@ export class StatusInterceptor implements HttpInterceptor {
     return next.handle(request).pipe(
       tap(event => {
         if (event instanceof HttpErrorResponse) {
-          console.log('Error', event.status, 'for :', event.url);
+          // console.log('Error', event.status, 'for :', event.url);
         } else if (event instanceof HttpResponse) {
           // Just for debugging purpose
           // console.log('Status', event.status, 'for:', event.url);
@@ -46,7 +46,6 @@ export class StatusInterceptor implements HttpInterceptor {
             if (u && u.username && u.password) {
               this.api.login({username: u.username, password: u.password}, false).subscribe(r => {
                 if (r) {
-                  console.log('auto relogin executed');
                 }
               });
             } else {

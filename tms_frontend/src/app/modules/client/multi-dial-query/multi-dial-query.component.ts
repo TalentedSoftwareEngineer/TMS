@@ -13,8 +13,11 @@ import {
   INVALID_NUM_TYPE_COMMON,
   SPECIFICNUM_REG_EXP,
   PHONE_NUMBER_WITH_HYPHEN_REG_EXP,
-  LIMIT_SIXTY_LETTERS_REG_EXP
- } from '../../constants';
+  LIMIT_SIXTY_LETTERS_REG_EXP, ROWS_PER_PAGE_OPTIONS
+} from '../../constants';
+ import { Router } from '@angular/router';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-multi-dial-query',
@@ -31,6 +34,17 @@ export class MultiDialQueryComponent implements OnInit {
 
   @ViewChild('numbersTable') numbersTable!: Table;
 
+  pageSize = 10;
+  pageIndex = 1
+  filterName = ''
+  filterValue = ''
+  sortActive = 'sub_dt_tm'
+  sortDirection = 'DESC'
+  resultsLength = -1
+  filterResultLength = -1;
+  isLoading = true
+  rowsPerPageOptions: any = ROWS_PER_PAGE_OPTIONS
+
   inputDialNumbers: string = '';
   invalidNumType: number = INVALID_NUM_TYPE_NONE;
   inputRequestName: string = '';
@@ -45,7 +59,7 @@ export class MultiDialQueryComponent implements OnInit {
 
   viewedResult: any;
   csvNumbersContent: string = '';
-  
+
   flagOpenModal: boolean = false;
   numberList: any[] = [];
   filterNumberList: any[] = [];
@@ -59,6 +73,7 @@ export class MultiDialQueryComponent implements OnInit {
     private sseClient: SseClient,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
+    public router: Router
   ) { }
 
   async ngOnInit() {
@@ -71,7 +86,19 @@ export class MultiDialQueryComponent implements OnInit {
         }
       }, 100)
     })
-    this.getMNQData();
+
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.MNQ)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+    })
+
+    this.getData();
 
     this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
       if(data.page.toUpperCase()=='MNQ') {
@@ -108,19 +135,28 @@ export class MultiDialQueryComponent implements OnInit {
     })
   }
 
-  getMNQData = async () => {
-    // let filterValue = this.filterValue.replace('(', '').replace('-', '').replace(') ', '').replace(')', '')
-    await this.api.getMNQData(/* this.sortActive, this.sortDirection, this.pageSize, this.pageIndex */)
+  getData = async () => {
+    this.getTotalCount();
+
+    await this.api.getMNQData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue)
       .pipe(tap(async (res: any[])=>{
         res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
         this.activityLogs = res;
       })).toPromise();
-    
-    // this.resultsLength = -1;
-    // await this.api.getNSRCount(filterValue, {})
-    // .pipe(tap( res => {
-    //   this.resultsLength = res.count
-    // })).toPromise();
+
+    this.filterResultLength = -1;
+    await this.api.getMNQCount(this.filterValue)
+    .pipe(tap( res => {
+      this.filterResultLength = res.count
+    })).toPromise();
+  }
+
+  getTotalCount = async () => {
+    this.resultsLength = -1;
+    await this.api.getMNQCount('')
+    .pipe(tap( res => {
+      this.resultsLength = res.count
+    })).toPromise();
   }
 
   onCsvXlUploadAuto = async (event: any) => {
@@ -162,32 +198,37 @@ export class MultiDialQueryComponent implements OnInit {
 
     this.api.submitMNQ(body).subscribe(res=>{
       if(res.success) {
-        this.getMNQData();
+        setTimeout(()=>{
+          this.sortActive = 'sub_dt_tm'
+          this.sortDirection = 'DESC'
+          this.getData();
+        }, 100)
       }
     });
   }
 
   onClear = () => {
+    this.inputDialNumbers = ""
+    this.inputRequestName = ""
 
+    this.onNumFieldFocusOut()
   }
 
   onNumFieldFocusOut = () => {
     let num = this.inputDialNumbers;
     if (num !== null && num !== "") {
       let nums = gFunc.retrieveNumListWithHyphen(num)
-      console.log("gFunc.retrieveNumListWithHyphen: " + nums.join(","))
       this.inputDialNumbers = nums.join(",");
 
       let specificNumReg = SPECIFICNUM_REG_EXP
       let isValid = true
       for (let el of nums) {
-        console.log("el: " + el)
         if (!specificNumReg.test(el)) {   // if anyone among the number list is invalid, the number list is invalid.
           isValid = false
           break
         }
       }
-      console.log("Specific: " + isValid)
+
       if (!isValid) {
         this.invalidNumType = INVALID_NUM_TYPE_COMMON;
       } else {
@@ -268,14 +309,16 @@ export class MultiDialQueryComponent implements OnInit {
 
     await this.api.getMNQById(result.id)
       .pipe(tap((response: any[])=>{
-        response.map(u => u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        response.map(u => u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        response.map(u => u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        response.map(u => u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
+        response.map(u => {
+          u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+          u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+          u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+          u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : ''
+        });
 
         this.numberList = response;
         response.forEach((item, index) => {
-          this.csvNumbersContent += `\n${item.num}, ${item.resp_org_id==null?'':item.resp_org_id}, ${item.status}, ${item.eff_dt==null?'':item.eff_dt}, ${item.last_act_dt==null?'':item.last_act_dt}, ${item.res_until_dt==null?'':item.res_until_dt}, ${item.disc_until_dt==null?'':item.disc_until_dt}, ${item.con_name==null?'':item.con_name}, ${item.con_phone==null?'':item.con_phone}, ${item.message==null?'':item.message}, ${item.short_notes==null?'':item.short_notes}`;
+          this.csvNumbersContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.status},${item.eff_dt==null?'':item.eff_dt},${item.last_act_dt==null?'':item.last_act_dt},${item.res_until_dt==null?'':item.res_until_dt},${item.disc_until_dt==null?'':item.disc_until_dt},${item.con_name==null?'':item.con_name},${item.con_phone==null?'':item.con_phone},${item.message==null?'':item.message},${item.short_notes==null?'':item.short_notes}`;
         });
 
         this.filterNumberList = this.numberList;
@@ -287,22 +330,24 @@ export class MultiDialQueryComponent implements OnInit {
 
   onDownloadCsv = async (event: Event, result: any) => {
     let numsContent = '';
-    
-    await this.api.getMNQById(result.id).pipe(tap((response: any[])=>{
-      response.map(u => u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-      response.map(u => u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-      response.map(u => u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-      response.map(u => u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
 
-      response.forEach((item, index) => {
-        numsContent += `\n${item.num}, ${item.resp_org_id==null?'':item.resp_org_id}, ${item.status}, ${item.eff_dt==null?'':item.eff_dt}, ${item.last_act_dt==null?'':item.last_act_dt}, ${item.res_until_dt==null?'':item.res_until_dt}, ${item.disc_until_dt==null?'':item.disc_until_dt}, ${item.con_name==null?'':item.con_name}, ${item.con_phone==null?'':item.con_phone}, ${item.message==null?'':item.message}, ${item.short_notes==null?'':item.short_notes}`;
+    await this.api.getMNQById(result.id).pipe(tap((response: any[])=>{
+      response.map(u => {
+        u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+        u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+        u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+        u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
       });
 
-      let data = `Number, Resp Org, Status, Effective Date, Last Active, Reserved Until, Disconnect Until, Contact Person, Contact Number, Message, Notes,${numsContent}\n`
+      response.forEach((item, index) => {
+        numsContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.status},${item.eff_dt==null?'':item.eff_dt},${item.last_act_dt==null?'':item.last_act_dt},${item.res_until_dt==null?'':item.res_until_dt},${item.disc_until_dt==null?'':item.disc_until_dt},${item.con_name==null?'':item.con_name},${item.con_phone==null?'':item.con_phone},${item.message==null?'':item.message},${item.short_notes==null?'':item.short_notes}`;
+      });
+
+      let data = `Number,Resp Org,Status,Effective Date,Last Active,Reserved Until,Disconnect Until,Contact Person,Contact Number,Message,Notes${numsContent}\n`
       const csvContent = 'data:text/csv;charset=utf-8,' + data;
       const url = encodeURI(csvContent);
       let fileName = 'MNQ_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
-  
+
       const tempLink = document.createElement('a');
       tempLink.href = url;
       tempLink.setAttribute('download', fileName);
@@ -318,7 +363,7 @@ export class MultiDialQueryComponent implements OnInit {
       accept: () => {
         this.api.deleteMNQ(id).subscribe(async res=>{
           this.showSuccess('Successfully deleted!');
-          await this.getMNQData();
+          await this.getData();
         });
       },
       reject: (type: any) => {
@@ -335,7 +380,6 @@ export class MultiDialQueryComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    let dkdk = this.inputNumListFilterKey.replace(/^[A-Za-z0-9]$/g, '');
     this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/^[A-Za-z0-9]$/g, ''), 'contains');
   }
 
@@ -344,8 +388,8 @@ export class MultiDialQueryComponent implements OnInit {
   }
 
   onViewNumbersDownload = () => {
-    let data = `Number, Resp Org, Status, Effective Date, Last Active, Reserved Until, Disconnect Until, Contact Person, Contact Number, Message, Notes${this.csvNumbersContent}\n`
-    
+    let data = `Number,Resp Org,Status,Effective Date,Last Active,Reserved Until,Disconnect Until,Contact Person,Contact Number,Message,Notes${this.csvNumbersContent}\n`
+
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);
     let fileName = 'MNQ_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
@@ -354,6 +398,33 @@ export class MultiDialQueryComponent implements OnInit {
     tempLink.href = url;
     tempLink.setAttribute('download', fileName);
     tempLink.click();
+  }
+
+  onSortChange = async (name: any) => {
+    this.sortActive = name;
+    this.sortDirection = this.sortDirection === 'ASC' ? 'DESC' : 'ASC';
+    this.pageIndex = 1;
+    await this.getData();
+  }
+
+  onFilter = (event: Event) => {
+    this.pageIndex = 1;
+    this.filterName = (event.target as HTMLInputElement).name;
+    this.filterValue = (event.target as HTMLInputElement).value;
+  }
+
+  onClickFilter = () => this.getData();
+
+  onPagination = async (pageIndex: any) => {
+    const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
+    if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
+    if (pageIndex === this.pageIndex) {return;}
+    this.pageIndex = pageIndex;
+    await this.getData();
+  }
+
+  paginate = (event: any) => {
+    this.onPagination(event.page+1);
   }
 
   showWarn = (msg: string) => {
@@ -367,6 +438,6 @@ export class MultiDialQueryComponent implements OnInit {
   };
   showInfo = (msg: string) => {
     this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
-  };  
+  };
 
 }

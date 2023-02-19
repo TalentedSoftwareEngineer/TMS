@@ -41,7 +41,7 @@
             <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_WILDCARD" class="p-error">Number or Mask Entry: When performing a wild card search, the Number or Mask Entry field can be either empty or contain at most one number.</strong>
         </div>
 
-        <p-panel styleClass="child_panel" header="Advanced Search" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+        <p-panel styleClass="mt-3" header="Advanced Search" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
             <div class="pt-4">
                 <div class="grid">
                     <div class="lg:col-4 col-12 p-fluid">
@@ -83,7 +83,7 @@
             </div>
         </p-panel>
 
-        <p-panel styleClass="child_panel" header="One Click Activate" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+        <p-panel styleClass="mt-3" header="One Click Activate" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
             <div class="pt-4">
                 <div class="grid">
                     <div class="lg:col-6 col-12">
@@ -148,7 +148,7 @@
                     </div>
                 </div>
 
-                <div class="grid flex align-items-center">
+                <div class="grid flex align-items-start">
                     <div class="lg:col-6 col-12">
                         <div class="grid">
                             <div class="col-8 p-fluid">
@@ -166,11 +166,12 @@
                                         dateFormat="mm/dd/yy" 
                                         [minDate]="minEffDate"
                                         [showButtonBar]="true" 
-                                        [numberOfMonths]="3" 
+                                        [numberOfMonths]="1" 
                                         [showTransitionOptions]="'0ms'" 
                                         [hideTransitionOptions]="'0ms'" 
                                         (onBlur)="onDateFieldFocusOut()"
                                         (onInput)="validEffDate=true"
+                                        (onSelect)="validEffDate=true"
                                         [disabled]="inputNow"
                                     ></p-calendar>
                                     <label for="effDate">Effective Date *</label>
@@ -211,12 +212,12 @@
             </div>
         </p-panel>
 
-        <div class="p-fluid mt-5">
+        <!-- <div class="p-fluid mt-5">
             <span class="p-float-label">
                 <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="5" cols="30" pInputTextarea disabled></textarea>
                 <label for="message">Message</label>
             </span>
-        </div>
+        </div> -->
     </div>
 
     <ng-template pTemplate="footer">

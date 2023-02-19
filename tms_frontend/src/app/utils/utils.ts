@@ -8,7 +8,7 @@ import {zonedTimeToUtc} from "date-fns-tz";
  */
  export function retrieveNumListWithHyphen(numString: any) {
     numString = numString.trim().replaceAll('-', '');
-  
+
     while (numString.includes("  ")) {
       numString = numString.replace("  ", " ")
     }
@@ -18,26 +18,26 @@ import {zonedTimeToUtc} from "date-fns-tz";
     numString = numString.replace(/\, /g, ",")
     numString = numString.replace(/\ /g, "\n")
     numString = numString.replace(/\n/g, ",")
-  
+
     let numberReg = RegExp('\\d{10}|\\d{3}\\-\\d{3}\\-\\d{4}$')
     let numStrWithHyphen = ""
     let numList = numString.split(",")
-  
+
     for (let num of numList) {
       if (numStrWithHyphen !== '')
         numStrWithHyphen += ','
-  
+
       if (numberReg.test(num) && !num.includes("-")) {
         numStrWithHyphen += num.substring(0, 3) + "-" + num.substring(3, 6) + "-" + num.substring(6, Math.max(6, num.length))
       } else {
         numStrWithHyphen += num
       }
     }
-  
+
     return numStrWithHyphen.split(",")
   }
 
-  
+
 /**
  * this is the function that converts the numbers from numbers string to array list.
  * @param numString
@@ -89,11 +89,8 @@ export function retrieveNumList(numString: string) {
   let localTimezoneOffsetValue = localTime.getTimezoneOffset() * 60 * 1000
 
   let utcTime = new Date( localTimeValue + localTimezoneOffsetValue)
-  console.log("utcTime: " + utcTime)
   let ctTimeString = localTime.toLocaleString("en-US", {timeZone: US_CT_TIMEZONE});
-  console.log("ctTimeString: " + ctTimeString)
   let ctTime = new Date(ctTimeString)
-  console.log("ctTime: " + ctTime)
 
   let hourOffest = (utcTime.getTime() - ctTime.getTime()) / 1000 / 3600
 
@@ -123,7 +120,6 @@ export function retrieveNumList(numString: string) {
     newArray.push(Array(8).fill(""));
   }
 
-  console.log(newArray);
   return newArray;
 }
 
@@ -143,7 +139,6 @@ export function retrieveNumList(numString: string) {
     newArray.push(Array(8).fill(""));
   }
 
-  console.log(newArray);
   return newArray;
 }
 

@@ -35,6 +35,7 @@ import AuditionedUtils from "../utils/audition";
 import {hash, genSalt} from "bcryptjs";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
+import DataUtils from '../utils/data';
 
 @authenticate('jwt')
 export class UserController {
@@ -197,13 +198,21 @@ export class UserController {
   })
   async count(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-    @param.where(User) where?: Where<User>,
+      @param.query.string('value') value: string,
+      @param.query.string('roleFilterId') roleFilterId: string,
+      @param.query.string('statusFilter') statusFilter: string
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_USER))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.userRepository.count(where);
+    let tmpRoleFilterId = roleFilterId=='' ? undefined : roleFilterId;
+    let tmpStatusFilter = statusFilter=='' ? undefined : statusFilter;
+
+    let fields = ['username','first_name','last_name','email'];
+    let num_fields = undefined;
+    let custom = [{role_id: tmpRoleFilterId}, {status: tmpStatusFilter}];
+    return this.userRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
   }
 
   @get('/users', {
@@ -224,28 +233,25 @@ export class UserController {
   })
   async find(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-    @param.filter(User) filter?: Filter<User>,
+      @param.query.number('limit') limit: number,
+      @param.query.number('skip') skip: number,
+      @param.query.string('order') order: string,
+      @param.query.string('value') value: string,
+      @param.query.string('roleFilterId') roleFilterId: string,
+      @param.query.string('statusFilter') statusFilter: string
   ): Promise<User[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_USER))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    let include: any[] = []
+    let tmpRoleFilterId = roleFilterId=='' ? undefined : roleFilterId;
+    let tmpStatusFilter = statusFilter=='' ? undefined : statusFilter;
 
-    if (!filter)
-      filter = {}
-
-    if (filter.include)
-      include = filter.include
-
-    include.push({relation: 'company'})
-    include.push({relation: 'somosUser'})
-    include.push({relation: 'role'})
-    include.push({relation: 'userInfo'})
-
-    filter.include = include
-
-    return this.userRepository.find(filter);
+    let fields = ['username','first_name','last_name','email'];
+    let num_fields = undefined;
+    let custom = [{role_id: tmpRoleFilterId}, {status: tmpStatusFilter}];
+    let include = [{relation: 'company'}, {relation: 'somosUser'}, {relation: 'role'}];
+    return this.userRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
   }
 
   @get('/users/{id}', {
@@ -573,13 +579,20 @@ export class UserController {
   })
   async findIdAndRO(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-      @param.filter(User) filter?: Filter<User>,
+      @param.query.number('limit') limit: number,
+      @param.query.number('skip') skip: number,
+      @param.query.string('order') order: string,
+      @param.query.string('value') value: string
   ): Promise<User[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_ID_RO))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.userRepository.find(filter, {});
+    let fields = ['username','ro'];
+    let num_fields = undefined;
+    let custom = undefined;
+    let include = [{relation: 'company'}, {relation: 'somosUser'}, {relation: 'role'}];
+    return this.userRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
   }
 
   @patch('/users/{id}/id_ro', {
@@ -620,4 +633,26 @@ export class UserController {
     await this.userRepository.updateById(id, user);
   }
 
+  @get('/users/for_filter', {
+    description: 'Get users without checking permission',
+    responses: {
+      '200': {
+        description: 'Array of User model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(User, {includeRelations: true}),
+            },
+          },
+        },
+      }
+    }
+  })
+  async forFilter(
+      @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+  ): Promise<User[]> {
+    const profile = JSON.parse(currentUserProfile[securityId]);
+    return this.userRepository.find({});
+  }
 }

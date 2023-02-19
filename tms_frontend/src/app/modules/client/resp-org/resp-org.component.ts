@@ -5,6 +5,10 @@ import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, NUM_RE
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IUser, ITaskTracking, IRetrieveRespOrg} from "../../../models/user";
+import { MessageService } from 'primeng/api';
+import { Router } from '@angular/router';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-resp-org',
@@ -45,6 +49,8 @@ export class RespOrgComponent implements OnInit {
   constructor(
     public api: ApiService,
     public store: StoreService,
+    public router: Router,
+    private messageService: MessageService
   ) { }
 
   async ngOnInit() {
@@ -56,6 +62,17 @@ export class RespOrgComponent implements OnInit {
           resolve()
         }
       }, 100)
+    })
+
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.RESP_ORG_INFORMATION)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
     })
 
     this.getRespOrgUnitList();
@@ -206,4 +223,17 @@ export class RespOrgComponent implements OnInit {
   paginate = (event: any) => {
     this.onPagination(event.page+1);
   }
+
+  showWarn = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'warn', summary: 'Warning', detail: msg });
+  }
+  showError = (msg: string, summary: string) => {
+    this.messageService.add({ key: 'tst', severity: 'error', summary: summary, detail: msg });
+  }
+  showSuccess = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'success', summary: 'Success', detail: msg });
+  };
+  showInfo = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
+  };
 }

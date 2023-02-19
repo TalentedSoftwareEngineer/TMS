@@ -22,9 +22,8 @@ export class MnqReq extends Entity {
 
   @property({
     type: 'string',
-    required: true,
   })
-  request_desc: string;
+  request_desc?: string;
 
   @property({
     type: 'number',
@@ -88,8 +87,8 @@ export class MnqReq extends Entity {
   }
 }
 
-export interface MNQReqRelations {
+export interface MnqReqRelations {
   // describe navigational properties here
 }
 
-export type MnqReqWithRelations = MnqReq & MNQReqRelations;
+export type MnqReqWithRelations = MnqReq & MnqReqRelations;

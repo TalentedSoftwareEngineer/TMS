@@ -9,6 +9,8 @@ import moment from 'moment';
 import {ICompany} from "../../../models/user";
 import { GuiVisibility } from '../../../models/gui';
 import { PERMISSIONS } from 'src/app/consts/permissions';
+import {Router} from "@angular/router";
+import {ROUTES} from "../../../app.routes";
 
 @Component({
   selector: 'app-company',
@@ -27,15 +29,15 @@ export class CompanyComponent implements OnInit {
   pageIndex = 1
   companies: any[] = []
   filter_status: any[] = [
-    {name: 'All', value: ALL_FILTER_VALUE},
+    {name: 'All', value: ''},
     {name: '✔︎ Active', value: true},
     {name: '✖︎ Inactive', value: false}
   ]
   filterName = ''
   filterValue = ''
-  statusFilterValue = {name: 'All', value: ALL_FILTER_VALUE}
-  sortActive = ''
-  sortDirection = ''
+  statusFilterValue = {name: 'All', value: ''}
+  sortActive = 'id'
+  sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -77,6 +79,7 @@ export class CompanyComponent implements OnInit {
   write_permission: boolean = false;
 
   constructor(
+    public router: Router,
     public api: ApiService,
     public store: StoreService,
     private messageService: MessageService,
@@ -96,10 +99,21 @@ export class CompanyComponent implements OnInit {
       }, 100)
     })
 
-    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_COMPANY) == -1)
-      this.write_permission = false;
-    else
-      this.write_permission = true;
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.READ_COMPANY)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
+      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_COMPANY) == -1)
+        this.write_permission = false;
+      else
+        this.write_permission = true;
+    })
 
     this.getCompaniesList();
     this.getTotalCompaniesCount();
@@ -121,8 +135,10 @@ export class CompanyComponent implements OnInit {
       await this.api.getCompaniesList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.statusFilterValue.value)
         .pipe(tap(async (companiesRes: ICompany[]) => {
           this.companies = [];
-          companiesRes.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          companiesRes.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
+          companiesRes.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          });
 
           let allNotEditable = true
           for (let company of companiesRes) {
@@ -134,7 +150,7 @@ export class CompanyComponent implements OnInit {
         })).toPromise();
 
       this.filterResultLength = -1
-      await this.api.getCompanyCount(filterValue, {"status": this.statusFilterValue.value}).pipe(tap( res => {
+      await this.api.getCompanyCount(filterValue, this.statusFilterValue.value).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -145,7 +161,7 @@ export class CompanyComponent implements OnInit {
 
   getTotalCompaniesCount = async () => {
     this.resultsLength = -1
-    await this.api.getCompanyCount('', {}).pipe(tap( res => {
+    await this.api.getCompanyCount('', '').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }

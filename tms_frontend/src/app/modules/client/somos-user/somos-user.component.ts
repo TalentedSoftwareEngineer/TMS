@@ -9,6 +9,8 @@ import moment from 'moment';
 import {ISomosUser} from "../../../models/user";
 import { GuiVisibility } from '../../../models/gui';
 import { PERMISSIONS } from 'src/app/consts/permissions';
+import {Router} from "@angular/router";
+import {ROUTES} from "../../../app.routes";
 
 @Component({
   selector: 'app-somos-user',
@@ -23,8 +25,8 @@ export class SomosUserComponent implements OnInit {
   somos_users: any[] = []
   filterName = ''
   filterValue = ''
-  sortActive = ''
-  sortDirection = ''
+  sortActive = 'id'
+  sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -48,6 +50,7 @@ export class SomosUserComponent implements OnInit {
   write_permission: boolean = false;
 
   constructor(
+    public router: Router,
     public api: ApiService,
     public store: StoreService,
     private messageService: MessageService,
@@ -68,10 +71,21 @@ export class SomosUserComponent implements OnInit {
       }, 100)
     })
 
-    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_SOMOS_USER) == -1)
-      this.write_permission = false;
-    else
-      this.write_permission = true;
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.READ_SOMOS_USER)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
+      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_SOMOS_USER) == -1)
+        this.write_permission = false;
+      else
+        this.write_permission = true;
+    })
 
     this.getSMSUserList();
     this.getTotalSMSUserCount();
@@ -86,8 +100,10 @@ export class SomosUserComponent implements OnInit {
       await this.api.getSMSUserList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue)
         .pipe(tap(async (SMSUsersRes: ISomosUser[]) => {
           this.somos_users = [];
-          SMSUsersRes.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          SMSUsersRes.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
+          SMSUsersRes.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          });
 
           let allNotEditable = true
           for (let somos_user of SMSUsersRes) {
@@ -99,7 +115,7 @@ export class SomosUserComponent implements OnInit {
         })).toPromise();
 
       this.filterResultLength = -1
-      await this.api.getSMSUserCount(filterValue, {}).pipe(tap( res => {
+      await this.api.getSMSUserCount(filterValue).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -110,7 +126,7 @@ export class SomosUserComponent implements OnInit {
 
   getTotalSMSUserCount = async () => {
     this.resultsLength = -1
-    await this.api.getSMSUserCount('', {}).pipe(tap( res => {
+    await this.api.getSMSUserCount('').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }

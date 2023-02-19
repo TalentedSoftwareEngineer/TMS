@@ -18,3 +18,6 @@ export * from './trq.controller';
 export * from './test.controller';
 export * from './mnq.controller';
 export * from './mnd.controller';
+export * from './mns.controller';
+export * from './mro.controller';
+export * from './mcp.controller';

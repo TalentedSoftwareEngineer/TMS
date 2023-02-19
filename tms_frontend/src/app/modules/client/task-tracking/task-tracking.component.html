@@ -1,15 +1,15 @@
 <h4 class="page_title">Task Tracking</h4>
 <div class="card pb-3">
     <div class="grid">
-      <div class="col-12 md:col-6">
+      <div class="col-12 md:col-7">
         <div class="grid">
-            <div *ngIf="authenticatedUserId==gConst.SUPER_ADMIN_ID" class="col p-fluid pl-0 pr-0">
+            <div *ngIf="authenticatedUserId==gConst.SUPER_ADMIN_ID" class="col-5 p-fluid pl-0 pr-0">
               <span class="field p-float-label">
                 <p-dropdown [options]="users" id="user_search" [(ngModel)]="userIdFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
                 <label for="user_search">User</label>
               </span>
             </div>
-            <div class="col p-fluid pl-0 pr-0">
+            <div class="col-7 p-fluid pl-0 pr-0">
               <div class="p-inputgroup">
                 <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
                 <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>

@@ -14,10 +14,12 @@ export enum TMSUserType {
 }
 
 export const PAGES = {
-  MND: 'Multi Dial Number Disconnect',
-  MNQ: 'Multi Dial Number Query',
-  NQU: 'Number Query & Update',
   NSR: 'Number Search & Reserve',
+  NQU: 'Number Query & Update',
+
+  MNQ: 'Multi Dial Number Query',
+  MND: 'Multi Dial Number Disconnect',
+  MNS: 'Multi Dial Number Spare',
   TRQ: 'Trouble Referral Number Query'
 }
 
@@ -44,10 +46,11 @@ export const TFNPA_WILDCAD_REG_EXP= RegExp('^(8(00|33|44|55|66|77|88|0(&|\\*)|(&
 export const SPECIFICNUM_REG_EXP  = RegExp('^(800|833|844|855|866|877|888)((\\d|[A-Z]|[a-z]){7}|\\-(\\d|[A-Z]|[a-z]){3}\\-(\\d|[A-Z]|[a-z]){4})$')
 export const SVC_ORDR_NUM_REG_EXP = RegExp('^([a-z]|[A-Z]){1}(\\d|[a-z]|[A-Z]){3,12}(([a-z]|[A-Z]){1})?$')
 export const TIME_REG_EXP         = RegExp('^(0?[0-9]|1[0-2]):(00|15|30|45)\\ (a|A|p|P)(m|M)$')
-export const RESPORG_REG_EXP      = /[A-Z]{3}[0-9]{2}$/g
+export const RESPORG_REG_EXP      = /[A-Z]{3}[0-9]{2}$/
 export const TFNUM_REG_EXP        = RegExp('^(800|833|844|855|866|877|888)(\\d{7}|\\-\\d{3}\\-\\d{4})$')
 export const PHONE_NUMBER_WITH_HYPHEN_REG_EXP = RegExp('\\d{10}|\\d{3}\\-\\d{3}\\-\\d{4}$')
 export const LIMIT_SIXTY_LETTERS_REG_EXP = /^[\w\d\s`'!@#$%&*()-_+={}\[\]\:;<>,.?/.]{1,60}$/;
+export const TEMPLATE_NAME_REG_EXP        = /^[*][a-zA-Z0-9]{2}[a-zA-Z0-9-]{1,12}$/
 
 export const INVALID_NUM_TYPE_NONE        = 0
 export const INVALID_NUM_TYPE_COMMON      = 1

@@ -40,7 +40,7 @@ export const PERMISSIONS = {
     MRO: 115,
     MNQ: 116,
     MND: 117,
-    MSP: 118,
+    MNS: 118,
     MCP: 119,
 
     USER_ACTIVITY: 120,

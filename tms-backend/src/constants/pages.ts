@@ -4,4 +4,7 @@ export const PAGES = {
     TroubleReferralNumberQuery: "TRQ",
     MultiDialNumberQuery: "MNQ",
     MultiDialNumberDisconnect: "MND",
+    MultiDialNumberSpare: "MNS",
+    MultiDialNumberRespOrgChange: "MRO",
+    MultiConversionToPointerRecord: "MCP",
 }

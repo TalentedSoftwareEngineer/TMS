@@ -117,7 +117,7 @@
           {{ user.updated_by }}
         </td>
         <td class="text-align-center" *ngIf="write_permission">
-          <span class="p-buttonset">
+          <span *ngIf="authUserId!=user.id" class="p-buttonset">
             <button *ngIf="!user.status" pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)"></button>
             <button *ngIf="user.status" pButton type="button" icon="pi pi-eye-slash" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)"></button>
             <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, user.id)"></button>
@@ -182,7 +182,7 @@
 
             <span class="p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
               <button pButton pRipple (click)="mainReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
-              <button pButton pRipple (click)="onMainUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+              <button pButton pRipple (click)="onMainUpdate()" label="Save" icon="pi pi-save" class="p-button-text"></button>
             </span>
           </p-panel>
           <!-- <c-panel panelHeader_title="Main Information">
@@ -207,7 +207,7 @@
 
             <span class="p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
               <button pButton pRipple (click)="passwordReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
-              <button pButton pRipple (click)="onPasswordUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+              <button pButton pRipple (click)="onPasswordUpdate()" label="Save" icon="pi pi-save" class="p-button-text"></button>
             </span>
           </p-panel>
 
@@ -221,7 +221,7 @@
             
             <span class="p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
               <button pButton pRipple (click)="somosReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
-              <button pButton pRipple (click)="onSomosUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+              <button pButton pRipple (click)="onSomosUpdate()" label="Save" icon="pi pi-save" class="p-button-text"></button>
             </span>
           </p-panel>
         </div>
@@ -276,7 +276,7 @@
 
             <span class="field p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
               <button pButton pRipple (click)="AdditionalReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
-              <button pButton pRipple (click)="onAdditionalUpdate()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+              <button pButton pRipple (click)="onAdditionalUpdate()" label="Save" icon="pi pi-save" class="p-button-text"></button>
             </span>
           </p-panel>
         </div>
@@ -285,7 +285,7 @@
       <div *ngIf="modalTitle.toLowerCase()=='add'" class="flex justify-content-end mt-5">
         <span class="p-buttonset">
           <button pButton pRipple (click)="clearInputs()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
-          <button pButton pRipple (click)="onUserSubmit()" label="Save" icon="pi pi-check" class="p-button-text"></button>
+          <button pButton pRipple (click)="onUserSubmit()" label="Save" icon="pi pi-save" class="p-button-text"></button>
         </span>
       </div>
     </div>

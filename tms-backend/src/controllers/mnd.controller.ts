@@ -16,6 +16,7 @@ import {MESSAGES} from "../constants/messages";
 import {MNDRequest} from "../models/mnd.request";
 import {MndReq, MndResult, MnqReq, MnqResult} from "../models";
 import {PageRequest} from "../models/page.request";
+import DataUtils from "../utils/data";
 
 @authenticate('jwt')
 export class MNDController {
@@ -45,7 +46,7 @@ export class MNDController {
             }
         }
     })
-    async query(
+    async disconnect(
         @requestBody({
             content: {
                 'application/json': {
@@ -107,26 +108,14 @@ export class MNDController {
         }
     })
     async count(
-        @requestBody({
-            content: {
-                'application/json': {
-                    schema: {
-                        type: "object",
-                        properties: {
-                        },
-                        required: []
-                    },
-                },
-            },
-        })
-        req: PageRequest,
         @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+        @param.query.string('value') value: string,
     ): Promise<Count> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.MND))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.mndReqRepository.count({});
+        return this.mndReqRepository.count(DataUtils.getWhere(value, ['request_desc', "ro_id", 'message', 'status', 'start_eff_dt_tm', 'end_intercept_dt'], 'num_list', undefined));
     }
 
     @get('/MND/data', {
@@ -146,33 +135,26 @@ export class MNDController {
         }
     })
     async find(
-        @requestBody({
-            content: {
-                'application/json': {
-                    schema: {
-                        type: "object",
-                        properties: {
-                        },
-                        required: []
-                    },
-                },
-            },
-        })
-            req: PageRequest,
         @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+        @param.query.number('limit') limit: number,
+        @param.query.number('skip') skip: number,
+        @param.query.string('order') order: string,
+        @param.query.string('value') value: string,
     ): Promise<MnqReq[]> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.MND))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.mndReqRepository.find(req.getFilter([], undefined, undefined, [
+        let include = [
             {
                 relation: 'user',
                 scope: {
                     fields: { username: true, email: true, first_name: true, last_name: true }
                 }
             }
-        ]));
+        ];
+        return this.mndReqRepository.find(DataUtils.getFilter(limit, skip, order, value,
+            ['request_desc', "ro_id", 'message', 'status', 'start_eff_dt_tm', 'end_intercept_dt'], 'num_list', undefined, include));
     }
 
     @get('/MND/{id}', {

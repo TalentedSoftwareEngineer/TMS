@@ -2,19 +2,19 @@
 
 <p-panel header="Multi Dial Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
-        <div class="p-fluid">
+        <div class="p-fluid field">
             <span class="p-float-label">
-                <input type="text" id="request_name" name="request_name" pInputText [(ngModel)]="inputRequestName" (input)="validRequestName = true"> 
+                <input type="text" id="request_name" name="request_name" pInputText [(ngModel)]="inputRequestName" (input)="validRequestName = true">
                 <label for="request_name">Request Name</label>
             </span>
             <strong *ngIf="!validRequestName" class="p-error">The string length of the request name must be 1 ~ 60.</strong>
         </div>
 
-        <div class="grid mt-3">
+        <div class="grid mt-4">
             <div class="col-3">
-                <p class="mb-2">CSV or XLS file :</p>
+                <p class="mb-2">CSV File: </p>
                 <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
-                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
+                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
             </div>
             <div class="col-9 p-fluid">
                 <span class="p-float-label">
@@ -24,15 +24,6 @@
                 <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
             </div>
         </div>
-        <!-- <div class="mt-3"></div>
-        <p-panel styleClass="custom_panel_style header-none">
-            <div class="p-fluid pt-2">
-                <span class="p-float-label">
-                    <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="5" cols="30" pInputTextarea></textarea>
-                    <label for="message">Message</label>
-                </span>
-            </div>
-        </p-panel> -->
     </div>
 
     <ng-template pTemplate="footer">
@@ -42,88 +33,59 @@
                 <button pButton pRipple (click)="onClear()" label="Clear"  icon="pi pi-eraser" class="p-button-text p-button-danger"></button>
             </span>
         </div>
-    </ng-template>    
+    </ng-template>
 </p-panel>
 
 <div class="mt-3"></div>
 <p-panel header="Activity Log" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
         <div class="card">
+            <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
             <p-table
-                #activityLogTable
                 [value]="activityLogs"
                 dataKey="id"
-                [rowHover]="true"
-                [rows]="10"
-                [showCurrentPageReport]="true"
-                [rowsPerPageOptions]="[10,25,50]"
                 [loading]="activityLogsLoading"
-                responsiveLayout="stack" 
+                responsiveLayout="stack"
                 [responsive]="true"
-                [paginator]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-                [filterDelay]="0" 
-                [globalFilterFields]="['request_desc','user.username','sub_dt_tm','total','completed','message','status']"
             >
                 <ng-template pTemplate="caption">
                     <div class="table-header flex justify-content-end">
                         <span class="p-input-icon-left">
                             <i class="pi pi-search"></i>
-                            <input pInputText type="text" (input)="activityLogTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                            <input pInputText type="text" [(ngModel)]="filterValue" (keyup.enter)="onClickFilter()" placeholder="Search..." />
                         </span>
                     </div>
                 </ng-template>
-    
+
                 <ng-template pTemplate="header">
                     <tr>
-                        <th pSortableColumn="name">
-                            <div class="flex justify-content-center align-items-center">
-                                Name
-                                <p-sortIcon field="name"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'request_desc' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('request_desc')">Name</a>
                         </th>
-                        <th pSortableColumn="user.username">
-                            <div class="flex justify-content-center align-items-center">
-                                Created By
-                                <p-sortIcon field="user.username"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center">
+                            Created By
                         </th>
-                        <th pSortableColumn="date">
-                            <div class="flex justify-content-center align-items-center">
-                                Date
-                                <p-sortIcon field="date"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('sub_dt_tm')">Date</a>
                         </th>
-                        <th pSortableColumn="total">
-                            <div class="flex justify-content-center align-items-center">
-                                Total
-                                <p-sortIcon field="total"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'total' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('total')">Total</a>
                         </th>
-                        <th pSortableColumn="completed">
-                            <div class="flex justify-content-center align-items-center">
-                                Completed
-                                <p-sortIcon field="completed"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'completed' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('completed')">Completed</a>
                         </th>
-                        <th pSortableColumn="message">
-                            <div class="flex justify-content-center align-items-center">
-                                Message
-                                <p-sortIcon field="message"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'message' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('message')">Message</a>
                         </th>
-                        <th pSortableColumn="status">
-                            <div class="flex justify-content-center align-items-center">
-                                Progress Status
-                                <p-sortIcon field="status"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center">
+                            Progress Status
                         </th>
                         <th class="text-align-center w-100px">
                             Action
                         </th>
                     </tr>
                 </ng-template>
-    
+
                 <ng-template pTemplate="body" let-result>
                     <tr class="p-selectable-row text-align-center">
                         <td class="text-align-center">
@@ -164,43 +126,52 @@
                                 <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
                                 <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
                             </span>
-                        </td>                                                            
+                        </td>
                     </tr>
                 </ng-template>
-                
+
                 <ng-template pTemplate="emptymessage">
                     <tr>
                         <td colspan="8">No Result found.</td>
                     </tr>
                 </ng-template>
             </p-table>
+
+            <div class="flex justify-content-center align-items-center gap-3">
+                <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+                <div class="p-fluid">
+                    <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getData()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+                </div>
+            </div>
         </div>
     </div>
 </p-panel>
 
 <p-dialog header="View Numbers" styleClass="c-modal pt-2" [(visible)]="flagOpenModal" (onHide)="closeModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
-    <div class="card">
+    <div class="card pt-0">
         <p-table
             #numbersTable
             [value]="numberList"
             dataKey="id"
             [rows]="10"
-            [showCurrentPageReport]="true"
             [rowsPerPageOptions]="[10,25,50]"
             [loading]="numberListLoading"
             responsiveLayout="scroll"
+            [responsive]="true"
             [scrollable]="true"
             scrollDirection="both"
             [paginator]="true"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-            [filterDelay]="0" 
+            [filterDelay]="0"
             [globalFilterFields]="['num','resp_org_id','eff_dt','status','last_act_dt','res_until_dt','disc_until_dt','con_name','con_phone','message','short_notes']"
             styleClass="p-datatable-lg"
         >
             <ng-template pTemplate="caption">
-                <div class="flex justify-content-between align-items-center">
+              <div class="flex justify-content-end align-items-center">
+                <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
+              </div>
+              <div class="flex align-items-center" [ngClass]="resultTotal>0 ? 'justify-content-between' : 'justify-content-end'">
                     <p class="mb-0" *ngIf="resultTotal>0">Total <span style="font-size: 16px;">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
-                    <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
                     <div class="table-header">
                         <span class="p-input-icon-left">
                             <i class="pi pi-search"></i>
@@ -212,124 +183,124 @@
 
             <ng-template pTemplate="header">
                 <tr>
-                    <th pSortableColumn="num">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="num" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Number
                             <p-sortIcon field="num"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="resp_org_id">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="resp_org_id" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Resp Org
                             <p-sortIcon field="resp_org_id"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="status">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="status" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Status
                             <p-sortIcon field="status"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="eff_dt">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="eff_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Effective Date
                             <p-sortIcon field="eff_dt"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="last_act_dt">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="last_act_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Last Active
                             <p-sortIcon field="last_act_dt"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="res_until_dt">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="res_until_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Reserved Until
                             <p-sortIcon field="res_until_dt"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="disc_until_dt">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="disc_until_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Disconnect Until
                             <p-sortIcon field="disc_until_dt"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="con_name">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="con_name" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Contact Person
                             <p-sortIcon field="con_name"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="con_phone">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="con_phone" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Contact Number
                             <p-sortIcon field="con_phone"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="message">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="message" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Message
                             <p-sortIcon field="message"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
-                    <th pSortableColumn="short_notes">
-                        <div class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="short_notes" style="width: 200px;" class="flex justify-content-center align-items-center">
+                      <div>
                             Notes
                             <p-sortIcon field="short_notes"></p-sortIcon>
-                        </div>
+                      </div>
                     </th>
                 </tr>
             </ng-template>
 
             <ng-template pTemplate="body" let-number>
-                <tr class="p-selectable-row text-align-center">
-                    <td class="text-align-center">
-                        <span class="p-column-title">Number</span>
+                <tr>
+                  <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <!-- <span class="p-column-title">Number</span> -->
                         {{number.num | phoneFormat}}
                     </td>
-                    <td class="text-align-center">
-                        <span class="p-column-title">Resp Org</span>
+                  <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <!-- <span class="p-column-title">Resp Org</span> -->
                         {{number.resp_org_id}}
                     </td>
-                    <td class="text-align-center">
-                        <span class="p-column-title">Status</span>
-                        {{number.status}}
-                    </td>
-                    <td class="text-align-center">
-                        <span class="p-column-title">Effective Date</span>
+                  <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <!-- <span class="p-column-title">Status</span> -->
+                    {{number.status}}
+                  </td>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Effective Date</span> -->
                         {{number.eff_dt}}
                     </td>
-                    <td class="text-align-center">
-                        <span class="p-column-title">Last Active</span>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Last Active</span> -->
                         {{number.last_act_dt}}
-                    </td>  
-                    <td class="text-align-center">
-                        <span class="p-column-title">Reserved Until</span>
+                    </td>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Reserved Until</span> -->
                         {{number.res_until_dt}}
-                    </td>  
-                    <td class="text-align-center">
-                        <span class="p-column-title">Disconnect Until</span>
+                    </td>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Disconnect Until</span> -->
                         {{number.disc_until_dt}}
-                    </td>  
-                    <td class="text-align-center">
-                        <span class="p-column-title">Contact Person</span>
+                    </td>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Contact Person</span> -->
                         {{number.con_name}}
-                    </td>  
-                    <td class="text-align-center">
-                        <span class="p-column-title">Contact Number</span>
+                    </td>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Contact Number</span> -->
                         {{number.con_phone}}
-                    </td>  
-                    <td class="text-align-center">
-                        <span class="p-column-title">Message</span>
+                    </td>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Message</span> -->
                         {{number.message}}
-                    </td>  
-                    <td class="text-align-center">
-                        <span class="p-column-title">Notes</span>
+                    </td>
+                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                        <!-- <span class="p-column-title">Notes</span> -->
                         {{number.short_notes}}
-                    </td>                                                        
+                    </td>
                 </tr>
             </ng-template>
-            
+
             <ng-template pTemplate="emptymessage">
                 <tr>
                     <td colspan="12">No Number List found.</td>

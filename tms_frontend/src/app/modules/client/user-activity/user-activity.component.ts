@@ -1,10 +1,21 @@
 import { Component, OnInit } from '@angular/core';
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, SUPER_ADMIN_ID, PAGES } from '../../constants';
+import {
+  PERMISSION_TYPE_ALL,
+  PERMISSION_TYPE_READONLY,
+  ALL_FILTER_VALUE,
+  SUPER_ADMIN_ID,
+  PAGES,
+  ROWS_PER_PAGE_OPTIONS
+} from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IUserActivities, IUser} from "../../../models/user";
+import { MessageService } from 'primeng/api';
+import { Router } from '@angular/router';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-user-activity',
@@ -26,18 +37,14 @@ export class UserActivityComponent implements OnInit {
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  statusFilterValue = {name: 'All', value: ALL_FILTER_VALUE}
-  userIdFilterValue = {name: 'All', value: ALL_FILTER_VALUE}
+  statusFilterValue = {name: 'All', value: ''}
+  userIdFilterValue = {name: 'All', value: ''}
   sortActive = 'sub_dt_tm'
   sortDirection = 'DESC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any = [
-    {name: '10', value: 10},
-    {name: '25', value: 25},
-    {name: '50', value: 50}
-  ]
+  rowsPerPageOptions: any = ROWS_PER_PAGE_OPTIONS
   noNeedRemoveColumn = true
 
   noNeedEditColumn = false
@@ -46,7 +53,7 @@ export class UserActivityComponent implements OnInit {
 
   users: any[] = [];
   status: any[] = [
-    {name: 'All', value: ALL_FILTER_VALUE},
+    {name: 'All', value: ''},
     {name: 'SUCCESS', value: 'SUCCESS'},
     {name: 'FAILED', value: 'FAILED'},
     {name: 'CANCELED', value: 'CANCELED'}
@@ -57,6 +64,8 @@ export class UserActivityComponent implements OnInit {
   constructor(
     public api: ApiService,
     public store: StoreService,
+    private messageService: MessageService,
+    public router: Router
   ) { }
 
   async ngOnInit() {
@@ -69,6 +78,18 @@ export class UserActivityComponent implements OnInit {
         }
       }, 100)
     })
+
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.USER_ACTIVITY)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+    })
+
     this.authenticatedUserId = this.store.getUser().id;
     this.getTotalUserActivitiesCount();
     this.getUserActivitiesList();
@@ -89,10 +110,12 @@ export class UserActivityComponent implements OnInit {
       await this.api.getUserActivitiesList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.statusFilterValue.value, this.authenticatedUserId==SUPER_ADMIN_ID ? this.userIdFilterValue.value : this.authenticatedUserId)
         .pipe(tap(async (res: IUserActivities[]) => {
           this.user_activities = [];
-          res.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          res.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
-          res.map(u => u.page = u.page ? PAGES[u.page.toUpperCase() as keyof typeof PAGES] : '');
+          res.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : ''
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : ''
+            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : ''
+            u.page = u.page ? PAGES[u.page.toUpperCase() as keyof typeof PAGES] : ''
+          })
 
           let allNotEditable = true
           for (let item of res) {
@@ -103,12 +126,9 @@ export class UserActivityComponent implements OnInit {
 
         })).toPromise();
 
-      
+
       this.filterResultLength = -1;
-      await this.api.getUserActivitiesCount(filterValue, {
-        "user_id": this.authenticatedUserId==SUPER_ADMIN_ID ? this.userIdFilterValue.value : this.authenticatedUserId,
-        "status": this.statusFilterValue.value
-      }).pipe(tap( res => {
+      await this.api.getUserActivitiesCount(filterValue, this.statusFilterValue.value, this.authenticatedUserId==SUPER_ADMIN_ID ? this.userIdFilterValue.value : this.authenticatedUserId).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -119,17 +139,14 @@ export class UserActivityComponent implements OnInit {
 
   getTotalUserActivitiesCount = async () => {
     this.resultsLength = -1;
-    await this.api.getUserActivitiesCount('', {
-      "user_id": undefined,
-      "status": undefined
-    }).pipe(tap( res => {
+    await this.api.getUserActivitiesCount('', '', '').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }
 
   getUsersList = async () => {
     try {
-      await this.api.getUsersList('', '', this.pageIndex, 400, '', undefined, undefined)
+      await this.api.getUsersListForFilter()
         .pipe(tap(async (res: IUser[]) => {
           let tmp = res.map(item=>{
             return this.createData(
@@ -137,7 +154,7 @@ export class UserActivityComponent implements OnInit {
               item.id
             );
           });
-          this.users = [{name: 'All', value: ALL_FILTER_VALUE}, ...tmp];
+          this.users = [{name: 'All', value: ''}, ...tmp];
         })).toPromise();
     } catch (e) {
     }
@@ -169,5 +186,18 @@ export class UserActivityComponent implements OnInit {
   paginate = (event: any) => {
     this.onPagination(event.page+1);
   }
+
+  showWarn = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'warn', summary: 'Warning', detail: msg });
+  }
+  showError = (msg: string, summary: string) => {
+    this.messageService.add({ key: 'tst', severity: 'error', summary: summary, detail: msg });
+  }
+  showSuccess = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'success', summary: 'Success', detail: msg });
+  };
+  showInfo = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
+  };
 
 }

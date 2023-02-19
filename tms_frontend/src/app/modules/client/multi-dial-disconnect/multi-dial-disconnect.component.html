@@ -2,84 +2,79 @@
 
 <p-panel header="Multi Dial Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
-        <div>
-            <div class="p-fluid">
-                <span class="field p-float-label">
-                    <input type="text" id="request_name" name="request_name" pInputText [(ngModel)]="inputRequestName"> 
-                    <label for="request_name">Request Name</label>
+        <div class="p-fluid field">
+          <span class="p-float-label">
+              <input type="text" id="request_name" name="request_name" pInputText [(ngModel)]="inputRequestName" (input)="validRequestName = true">
+              <label for="request_name">Request Name</label>
+          </span>
+          <strong *ngIf="!validRequestName" class="p-error">The string length of the request name must be 1 ~ 60.</strong>
+        </div>
+        <div class="grid field">
+            <div class="p-fluid col-6">
+                <span class="p-float-label">
+                    <p-calendar
+                        inputId="effDateTime"
+                        [(ngModel)]="inputEffDateTime"
+                        dateFormat="mm/dd/yy"
+                        [minDate]="minEffDateTime"
+                        [showButtonBar]="true"
+                        [numberOfMonths]="1"
+                        [showTime]="true"
+                        hourFormat="12"
+                        [stepMinute]="15"
+                        [disabled]="inputNow"
+                    ></p-calendar>
+                    <label for="effDateTime">Start Effective Date/Time*</label>
                 </span>
             </div>
-            <div class="grid field">
-                <div class="p-fluid col-9">
-                    <span class="p-float-label">
-                        <p-calendar 
-                            inputId="effDateTime" 
-                            [(ngModel)]="inputEffDateTime" 
-                            dateFormat="mm/dd/yy" 
-                            [minDate]="minEffDateTime"
-                            [showButtonBar]="true" 
-                            [numberOfMonths]="3" 
-                            [showTime]="true"
-                            hourFormat="12" 
-                            [disabled]="inputNow"
-                        ></p-calendar>
-                        <label for="effDateTime">Start Effective Date/Time*</label>
-                    </span>
-                    <p *ngIf="effDateErr" class="p-error">Request Name field is required</p>
-                </div>
-                <div class="col-3 flex align-items-center">
-                    <label class="ml-3" for="now">
-                        <p-inputSwitch
-                            id="now" 
-                            name="now" 
-                            [(ngModel)]="inputNow"
-                        ></p-inputSwitch>
-                        Now
-                    </label>
-                </div>
-            </div>
-
-            <div class="grid">
-                <div class="col-9 p-fluid">
-                    <span class="p-float-label">
-                        <p-calendar 
-                            inputId="interDate"
-                            [(ngModel)]="inputInterDate" 
-                            dateFormat="mm/dd/yy" 
-                            [minDate]="minEffDateTime"
-                            [showButtonBar]="true" 
-                            [numberOfMonths]="3" 
-                        ></p-calendar>
-                        <label for="interDate">End Intercept Date*</label>
-                    </span>
-                    <p *ngIf="interDateErr" class="p-error">Intercept Date field is required</p>
-                </div>
-                <div class="col-3 p-fluid">
-                    <span class="p-float-label">
-                        <p-dropdown 
-                            [options]="yes_no" 
-                            id="referral" 
-                            name="referral" 
-                            [(ngModel)]="inputYesNo" 
-                            optionLabel="name" 
-                            optionValue="value"
-                            scrollHeight="150px" 
-                        ></p-dropdown>
-                        <label for="referral">Referral</label>
-                    </span>
-                </div>
+            <div class="col-6 flex align-items-center">
+                <label class="ml-3" for="now">
+                    <p-inputSwitch
+                        id="now"
+                        name="now"
+                        [(ngModel)]="inputNow"
+                    ></p-inputSwitch>
+                    Now
+                </label>
             </div>
         </div>
 
-        <div class="grid mt-3">
+        <div class="grid field">
+            <div class="col-6 p-fluid">
+                <span class="p-float-label">
+                    <p-calendar
+                        inputId="interDate"
+                        [(ngModel)]="inputInterDate"
+                        dateFormat="mm/dd/yy"
+                        [minDate]="minEffDateTime"
+                        [showButtonBar]="true"
+                        [numberOfMonths]="1"
+                    ></p-calendar>
+                    <label for="interDate">End Intercept Date*</label>
+                </span>
+                <p *ngIf="interDateErr" class="p-error">Intercept Date field is required</p>
+            </div>
+          <div class="col-6 flex align-items-center">
+            <label class="ml-3" for="referral">
+                    <p-inputSwitch
+                      id="referral"
+                      name="referral"
+                      [(ngModel)]="inputYesNo"
+                    ></p-inputSwitch>
+                    Referral
+            </label>
+          </div>
+        </div>
+
+        <div class="grid mt-4">
             <div class="col-3">
-                <p class="mb-2">CSV or XLS file :</p>
+                <p class="mb-2">CSV File: </p>
                 <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
-                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".xlsx,.xls,.csv"/>
+                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
             </div>
             <div class="col-9 p-fluid">
                 <span class="p-float-label">
-                    <textarea class="pt-4" id="dial_numbers" name="dial_numbers" [(ngModel)]="inputDialNumbers" rows="7" cols="30" pInputTextarea></textarea>
+                    <textarea class="pt-4" id="dial_numbers" name="dial_numbers" [(ngModel)]="inputDialNumbers" (blur)="onNumFieldFocusOut()" rows="7" cols="30" pInputTextarea></textarea>
                     <label for="dial_numbers">Dial Numbers</label>
                 </span>
                 <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
@@ -108,149 +103,221 @@
 <p-panel header="Activity Log" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
         <div class="card">
+            <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
             <p-table
-                #activityLogTable
                 [value]="activityLogs"
                 dataKey="id"
-                [rowHover]="true"
-                [rows]="10"
-                [showCurrentPageReport]="true"
-                [rowsPerPageOptions]="[10,25,50]"
                 [loading]="activityLogsLoading"
-                responsiveLayout="stack" 
+                responsiveLayout="stack"
                 [responsive]="true"
-                [paginator]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-                [filterDelay]="0" 
-                [globalFilterFields]="['name','createdBy','date','effDateTime','interceptDate','total','completed','message','progressStatus']"
             >
                 <ng-template pTemplate="caption">
                     <div class="table-header flex justify-content-end">
                         <span class="p-input-icon-left">
                             <i class="pi pi-search"></i>
-                            <input pInputText type="text" (input)="activityLogTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
+                            <input pInputText type="text" [(ngModel)]="filterValue" (keyup.enter)="onClickFilter()" placeholder="Search..." />
                         </span>
                     </div>
                 </ng-template>
-    
+
                 <ng-template pTemplate="header">
                     <tr>
-                        <th pSortableColumn="name">
-                            <div class="flex justify-content-center align-items-center">
-                                Name
-                                <p-sortIcon field="name"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'user.username' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('user.username')">Created By</a>
                         </th>
-                        <th pSortableColumn="createdBy">
-                            <div class="flex justify-content-center align-items-center">
-                                Created By
-                                <p-sortIcon field="createdBy"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('sub_dt_tm')">Date</a>
                         </th>
-                        <th pSortableColumn="date">
-                            <div class="flex justify-content-center align-items-center">
-                                Date
-                                <p-sortIcon field="date"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'request_desc' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                          <a (click)="onSortChange('request_desc')">Name</a>
                         </th>
-                        <th pSortableColumn="effDateTime">
-                            <div class="flex justify-content-center align-items-center">
-                                Effective Date/Time
-                                <p-sortIcon field="effDateTime"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'start_eff_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('start_eff_dt_tm')">Effective Date/Time</a>
                         </th>
-                        <th pSortableColumn="interceptDate">
-                            <div class="flex justify-content-center align-items-center">
-                                Intercept Date
-                                <p-sortIcon field="interceptDate"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'end_intercept_dt' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('end_intercept_dt')">Intercept Date</a>
                         </th>
-                        <th pSortableColumn="total">
-                            <div class="flex justify-content-center align-items-center">
-                                Total
-                                <p-sortIcon field="total"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'total' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('total')">Total</a>
                         </th>
-                        <th pSortableColumn="completed">
-                            <div class="flex justify-content-center align-items-center">
-                                Completed
-                                <p-sortIcon field="completed"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'completed' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('completed')">Completed</a>
                         </th>
-                        <th pSortableColumn="message">
-                            <div class="flex justify-content-center align-items-center">
-                                Message
-                                <p-sortIcon field="message"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'message' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('message')">Message</a>
                         </th>
-                        <th pSortableColumn="progressStatus">
-                            <div class="flex justify-content-center align-items-center">
-                                Progress Status
-                                <p-sortIcon field="progressStatus"></p-sortIcon>
-                            </div>
+                        <th class="text-align-center">
+                            Progress Status
                         </th>
                         <th class="text-align-center w-100px">
                             Action
                         </th>
                     </tr>
                 </ng-template>
-    
+
                 <ng-template pTemplate="body" let-result>
                     <tr class="p-selectable-row text-align-center">
                         <td class="text-align-center">
-                            <span class="p-column-title">Name</span>
-                            {{result.name}}
-                        </td>
-                        <td class="text-align-center">
                             <span class="p-column-title">Created By</span>
-                            {{result.createdBy}}
+                            {{result.user?.username}}
                         </td>
                         <td class="text-align-center">
-                            <span class="p-column-title">Date</span>
-                            {{result.date}}
+                          <span class="p-column-title">Date</span>
+                          {{result.sub_dt_tm}}
+                        </td>
+                        <td class="text-align-center">
+                          <span class="p-column-title">Name</span>
+                          {{result.request_desc}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Effective Date/Time</span>
-                            {{result.effDateTime}}
+                            {{result.start_eff_dt_tm}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Intercept Date</span>
-                            {{result.interceptDate}}
+                            {{result.end_intercept_dt}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Total</span>
-                            <p-badge [value]="result.total" size="large" severity="success" styleClass="mr-2"></p-badge>
+                            <p-tag styleClass="mr-2" severity="success" [value]="result.total"></p-tag>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Completed</span>
-                            <p-badge [value]="result.completed" size="large" severity="success" styleClass="mr-2"></p-badge>
+                            <p-tag styleClass="mr-2" [severity]="getCompletedTagColor(result)" [value]="getCompleted(result)"></p-tag>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Message</span>
-                            {{result.message}}
+                            {{ getMessage(result) }}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Progress Status</span>
-                            <i *ngIf="result.progressStatus" class="pi pi-check"></i>
-                            <i *ngIf="!result.progressStatus" class="pi pi-times"></i>
+                            <div *ngIf="isProgressing(result)">
+                                <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
+                            </div>
+                            <p-tag *ngIf="!isProgressing(result)" styleClass="mr-2" [severity]="getStatusTagColor(result)" [value]="getStatus(result)"></p-tag>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Action</span>
                             <span class="p-buttonset">
-                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined"></button>
-                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined"></button>
-                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined"></button>
+                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
+                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
+                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
                             </span>
-                        </td>                                                            
+                        </td>
                     </tr>
                 </ng-template>
-                
+
                 <ng-template pTemplate="emptymessage">
                     <tr>
                         <td colspan="8">No Result found.</td>
                     </tr>
                 </ng-template>
             </p-table>
+
+            <div class="flex justify-content-center align-items-center gap-3">
+                <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
+                <div class="p-fluid">
+                    <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getData()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
+                </div>
+            </div>
         </div>
     </div>
 </p-panel>
+
+<p-dialog header="View Numbers" styleClass="c-modal pt-2" [(visible)]="flagOpenModal" (onHide)="closeModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <div class="card pt-0">
+        <p-table
+            #numbersTable
+            [value]="numberList"
+            dataKey="id"
+            [rows]="10"
+            [rowsPerPageOptions]="[10,25,50]"
+            [loading]="numberListLoading"
+            responsiveLayout="scroll"
+            [responsive]="true"
+            [paginator]="true"
+            [scrollable]="true"
+            scrollDirection="both"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            [filterDelay]="0"
+            [globalFilterFields]="[ 'template_name', 'eff_dt_tm', 'message','status' ]"
+            styleClass="p-datatable-lg"
+        >
+            <ng-template pTemplate="caption">
+              <div class="flex justify-content-end align-items-center">
+                <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
+              </div>
+                <div class="flex align-items-center" [ngClass]="resultTotal>0 ? 'justify-content-between' : 'justify-content-end'">
+                  <p class="mb-0" *ngIf="resultTotal>0">Total <span style="font-size: 16px;">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
+                    <div class="table-header">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
+                        </span>
+                    </div>
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="num" style="width: 200px;" class="justify-content-center align-items-center">
+                        <div>
+                            Number
+                            <p-sortIcon field="num"></p-sortIcon>
+                        </div>
+                    </th>
+                  <th pSortableColumn="template_name" style="width: 200px;" class="justify-content-center align-items-center">
+                    <div>
+                      Template
+                      <p-sortIcon field="template_name"></p-sortIcon>
+                    </div>
+                  </th>
+                  <th pSortableColumn="eff_dt_tm" style="width: 200px;" class="justify-content-center align-items-center">
+                    <div>
+                      Effective Date/Time
+                      <p-sortIcon field="eff_dt_tm"></p-sortIcon>
+                    </div>
+                  </th>
+                    <th pSortableColumn="status" style="width: 200px;" class="justify-content-center align-items-center">
+                      <div>
+                            Status
+                            <p-sortIcon field="status"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="message" style="width: 300px;" class="justify-content-center align-items-center">
+                      <div>
+                            Message
+                            <p-sortIcon field="message"></p-sortIcon>
+                        </div>
+                    </th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-number>
+                <tr>
+                  <td style="width: 200px;" class="justify-content-center align-items-center">
+                    {{number.num | phoneFormat}}
+                  </td>
+                  <td style="width: 200px;" class="justify-content-center align-items-center">
+                    {{number.template_name}}
+                  </td>
+                  <td style="width: 200px;" class="justify-content-center align-items-center">
+                    {{number.eff_dt_tm}}
+                  </td>
+                  <td style="width: 200px;" class="justify-content-center align-items-center">
+                    {{number.status}}
+                  </td>
+                  <td style="width: 300px;" class="justify-content-center align-items-center">
+                    {{number.message}}
+                  </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr style="flex: 1;">
+                    <td colspan="12">No Number List found.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</p-dialog>

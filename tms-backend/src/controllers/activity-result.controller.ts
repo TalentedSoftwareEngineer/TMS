@@ -24,6 +24,7 @@ import {inject} from "@loopback/core";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
+import DataUtils from '../utils/data';
 
 @authenticate('jwt')
 export class ActivityResultController {
@@ -43,13 +44,19 @@ export class ActivityResultController {
   })
   async count(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-    @param.where(ActivityResult) where?: Where<ActivityResult>,
+      @param.query.string('value') value: string,
+      @param.query.string('userIdFilter') userIdFilter: string
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.TASK_TRACKING))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.activityResultRepository.count(where);
+      let tmpUserIdFilter = userIdFilter=='' ? undefined : userIdFilter;
+
+      let fields = ['type','action','src_num','src_tmpl_name','email','src_eff_dt_tm','tgt_num','tgt_tmpl_name','tgt_eff_dt_tm','resp_org','status'];
+      let num_fields = 'src_num, tgt_num';
+      let custom = [{user_id: tmpUserIdFilter}];
+    return this.activityResultRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
   }
 
   @get('/activity-result', {
@@ -70,33 +77,36 @@ export class ActivityResultController {
   })
   async find(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-    @param.filter(ActivityResult) filter?: Filter<ActivityResult>,
+      @param.query.number('limit') limit: number,
+      @param.query.number('skip') skip: number,
+      @param.query.string('order') order: string,
+      @param.query.string('value') value: string,
+      @param.query.string('userIdFilter') userIdFilter: string
   ): Promise<ActivityResult[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.TASK_TRACKING))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    if (!filter)
-      filter = {}
+    let tmpUserIdFilter = userIdFilter=='' ? undefined : userIdFilter;
 
-    if (!filter.include)
-      filter.include = []
-
-    filter.include.push({
-      relation: 'user',
-      scope: {
-        fields: { username: true, email: true, first_name: true, last_name: true }
+    let fields = ['type','action','src_num','src_tmpl_name','email','src_eff_dt_tm','tgt_num','tgt_tmpl_name','tgt_eff_dt_tm','resp_org','status'];
+    let num_fields = 'src_num, tgt_num';
+    let custom = [{user_id: tmpUserIdFilter}];
+    let include = [
+      {
+        relation: 'user',
+        scope: {
+          fields: { username: true, email: true, first_name: true, last_name: true }
+        }
+      },
+      {
+        relation: 'activity',
+        scope: {
+          fields: { page: true, operation: true }
+        }
       }
-    });
-
-    filter.include.push({
-      relation: 'activity',
-      scope: {
-        fields: { page: true, operation: true }
-      }
-    });
-
-    return this.activityResultRepository.find(filter);
+    ];
+    return this.activityResultRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
   }
 
   @get('/activity-result/{id}', {

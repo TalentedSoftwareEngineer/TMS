@@ -25,6 +25,7 @@ import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import AuditionedUtils from "../utils/audition";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
+import DataUtils from '../utils/data';
 
 @authenticate('jwt')
 export class SomosUserController {
@@ -80,13 +81,16 @@ export class SomosUserController {
     })
     async count(
         @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-        @param.where(SomosUser) where?: Where<SomosUser>,
+        @param.query.string('value') value: string
     ): Promise<Count> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.READ_SOMOS_USER))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.somosUserRepository.count(where);
+        let fields = ['username', 'password'];
+        let num_fields = undefined;
+        let custom = undefined;
+        return this.somosUserRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
     }
 
     @get('/somos-users', {
@@ -107,13 +111,20 @@ export class SomosUserController {
     })
     async find(
         @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-        @param.filter(SomosUser) filter?: Filter<SomosUser>,
+        @param.query.number('limit') limit: number,
+        @param.query.number('skip') skip: number,
+        @param.query.string('order') order: string,
+        @param.query.string('value') value: string
     ): Promise<SomosUser[]> {
         const profile = JSON.parse(currentUserProfile[securityId]);
         if (!profile.permissions.includes(PERMISSIONS.READ_SOMOS_USER))
             throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-        return this.somosUserRepository.find(AuditionedUtils.includeAuditionedFilter(filter));
+        let fields = ['username', 'password'];
+        let num_fields = undefined;
+        let custom = undefined;
+        let include = [{relation: 'created'}, {relation: 'updated'}];
+        return this.somosUserRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
     }
 
     @get('/somos-users/{id}', {
@@ -190,5 +201,28 @@ export class SomosUserController {
             throw new HttpErrors.BadRequest("Someone is using this user. It cannot be deleted.")
 
         await this.somosUserRepository.deleteById(id);
+    }
+
+    @get('/somos-users/for_filter', {
+        description: 'Get all somos users without checking permission',
+        responses: {
+            '200': {
+                description: 'Array of SomosUser model instances',
+                content: {
+                    'application/json': {
+                        schema: {
+                            type: 'array',
+                            items: getModelSchemaRef(SomosUser, {includeRelations: true}),
+                        },
+                    },
+                },
+            }
+        }
+    })
+    async forFilter(
+        @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+    ): Promise<SomosUser[]> {
+        const profile = JSON.parse(currentUserProfile[securityId]);
+        return this.somosUserRepository.find({});
     }
 }

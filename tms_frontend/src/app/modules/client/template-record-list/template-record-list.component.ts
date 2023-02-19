@@ -6,6 +6,8 @@ import {ApiService} from "../../../services/api/api.service";
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {closeEventSource, SseClient} from "angular-sse-client";
 import Cookies from 'universal-cookie';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-template-record-list',
@@ -56,6 +58,17 @@ export class TemplateRecordListComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.TRL)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this._router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+    })
+
     this.entityList = ENTITY_LIST;
     this.selectEntity = ENTITY_LIST[0];
 

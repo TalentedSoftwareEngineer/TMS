@@ -8,6 +8,8 @@ import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IUser, ICompany, IRole, ISomosUser} from "../../../models/user";
 import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-users',
@@ -26,8 +28,8 @@ export class UsersComponent implements OnInit {
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  roleFilterValue = {name: 'All', value: ALL_FILTER_VALUE}
-  statusFilterValue = {name: 'All', value: ALL_FILTER_VALUE}
+  roleFilterValue = {name: 'All', value: ''}
+  statusFilterValue = {name: 'All', value: ''}
   sortActive = 'id' //sortActive = {table field name}
   sortDirection = 'ASC'
   resultsLength = -1
@@ -41,7 +43,7 @@ export class UsersComponent implements OnInit {
   roles: any[] = []
   filter_roles: any[] = []
   filter_status: any[] = [
-    {name: 'All', value: ALL_FILTER_VALUE},
+    {name: 'All', value: ''},
     {name: '✔︎ Active', value: true},
     {name: '✖︎ Inactive', value: false}
   ]
@@ -85,17 +87,19 @@ export class UsersComponent implements OnInit {
   required = true;
 
   write_permission: boolean = false;
+  authUserId = -1;
 
   constructor(
     public api: ApiService,
     public store: StoreService,
     private messageService: MessageService,
     private location: Location,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    public router: Router
   ) { }
 
   async ngOnInit() {
-    
+
     await new Promise<void>(resolve => {
       let mainUserInterval = setInterval(() => {
         if (this.store.getUser()) {
@@ -106,10 +110,23 @@ export class UsersComponent implements OnInit {
       }, 100)
     })
 
-    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_USER) == -1)
-      this.write_permission = false;
-    else
-      this.write_permission = true;
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.READ_USER)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
+      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_USER) == -1)
+        this.write_permission = false;
+      else
+        this.write_permission = true;
+
+      this.authUserId = state.user.id;
+    })
 
     this.getUsersList();
     this.getTotalUsersCount();
@@ -134,11 +151,12 @@ export class UsersComponent implements OnInit {
       await this.api.getUsersList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.roleFilterValue.value, this.statusFilterValue.value)
         .pipe(tap(async (usersRes: IUser[]) => {
           this.users = [];
-          usersRes.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          usersRes.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-
-          usersRes.map(u => u.created_by = u.created_by ? this.getAuditionedUsername(u.created_by, username=>{u.created_by=username}) : '');
-          usersRes.map(u => u.updated_by = u.updated_by ? this.getAuditionedUsername(u.updated_by, username=>u.updated_by=username) : '');
+          usersRes.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.created_by = u.created_by ? this.getAuditionedUsername(u.created_by, username=>{u.created_by=username}) : '';
+            u.updated_by = u.updated_by ? this.getAuditionedUsername(u.updated_by, username=>u.updated_by=username) : '';
+          });
 
           let allNotEditable = true
           for (let user of usersRes) {
@@ -149,11 +167,9 @@ export class UsersComponent implements OnInit {
 
         })).toPromise();
 
+      this.getTotalUsersCount();
       this.filterResultLength = -1
-      await this.api.getUserCount(filterValue, ['username','first_name','last_name','email'], {
-        "role_id": this.roleFilterValue.value,
-        "status": this.statusFilterValue.value
-      }).pipe(tap( res => {
+      await this.api.getUserCount(filterValue, this.roleFilterValue.value, this.statusFilterValue.value).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -164,14 +180,14 @@ export class UsersComponent implements OnInit {
 
   getTotalUsersCount = async () => {
     this.resultsLength = -1
-    await this.api.getUserCount('', [], {}).pipe(tap( res => {
+    await this.api.getUserCount('', '', '').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }
 
   getCompaniesList = async () => {
     try {
-      await this.api.getCompaniesList(this.sortActive, this.sortDirection, this.pageIndex, 100, '', undefined)
+      await this.api.getCompaniesListForFilter()
         .pipe(tap(async (companiesRes: ICompany[]) => {
           this.companies = companiesRes.map(item=>{
             return this.createData(
@@ -179,7 +195,6 @@ export class UsersComponent implements OnInit {
               item.id
             );
           });
-          console.log('companies: ', this.companies);
         })).toPromise();
     } catch (e) {
     }
@@ -187,7 +202,7 @@ export class UsersComponent implements OnInit {
 
   getRolesList = async () => {
     try {
-      await this.api.getRolesList(this.sortActive, this.sortDirection, this.pageIndex, 100, '')
+      await this.api.getRolesListForFilter()
         .pipe(tap(async (rolesRes: IRole[]) => {
           this.roles = rolesRes.map(item=>{
             return this.createData(
@@ -195,7 +210,7 @@ export class UsersComponent implements OnInit {
               item.id
             );
           });
-          this.filter_roles = [{name: 'All', value: ALL_FILTER_VALUE}, ...this.roles];
+          this.filter_roles = [{name: 'All', value: ''}, ...this.roles];
         })).toPromise();
     } catch (e) {
     }
@@ -203,7 +218,7 @@ export class UsersComponent implements OnInit {
 
   getSMSUserList = async () => {
     try {
-      await this.api.getSMSUserList(this.sortActive, this.sortDirection, this.pageIndex, 100, '')
+      await this.api.getSMSUserListForFilter()
         .pipe(tap(async (SMSUsersRes: ISomosUser[]) => {
           this.sms_users = SMSUsersRes.map(item=>{
             return this.createData(
@@ -211,7 +226,6 @@ export class UsersComponent implements OnInit {
               item.id
             );
           });
-          console.log('sms_users: ', this.sms_users);
         })).toPromise();
     } catch (e) {
     }
@@ -281,7 +295,7 @@ export class UsersComponent implements OnInit {
     if(first_name=='') this.validFirstName = false;
     if(last_name=='') this.validLastName = false;
     if(password=='') this.validPassword = false;
-    
+
     if(username==''||company_id==undefined||role_id==undefined||email==''||first_name==''||last_name==''||somos_id==undefined||password=='') {
       return;
     }
@@ -334,7 +348,6 @@ export class UsersComponent implements OnInit {
   onOpenEditModal = async (event: Event, user_id: number) => {
     this.clickedId = user_id;
     this.api.getUser(user_id).subscribe(async res => {
-      console.log(res)
       this.input_username = res.username;
       this.input_company_id = {name: res.company?.name, value: res.company?.id};
       this.input_role_id = {name: res.role?.name, value: res.role?.id};
@@ -428,7 +441,7 @@ export class UsersComponent implements OnInit {
     if(email=='') this.validEmail = false;
     if(first_name=='') this.validFirstName = false;
     if(last_name=='') this.validLastName = false;
-    
+
     if(username==''||company_id==undefined||role_id==undefined||email==''||first_name==''||last_name=='') {
       return;
     }
@@ -556,5 +569,5 @@ export class UsersComponent implements OnInit {
   };
   showInfo = (msg: string) => {
     this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
-  };  
+  };
 }

@@ -1,15 +1,17 @@
 <h4 class="page_title">Number Query and Update</h4>
 
 <p-panel header="Retrieve" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-    <div class="p-fluid pt-2">
-        <span class="field p-float-label">
-            <input type="text" id="tollFreeNumber" name="tollFreeNumber" pInputText [(ngModel)]="inputTollFreeNumber"> 
+  <div class="pt-2">
+    <div class="p-fluid field">
+        <span class="p-float-label">
+            <input type="text" id="tollFreeNumber" name="tollFreeNumber" pInputText [(ngModel)]="inputTollFreeNumber">
             <label for="tollFreeNumber">Toll-Free Number *</label>
         </span>
-        <p *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_TENDIGIT" class="p-error">Starting Toll Free Number: Must be 10 digits</p>
-        <p *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_NPA" class="p-error">Must be an existing 3-digit 8xx Toll-Free NPA code known to the TFN Registry (e.g., 800).</p>
+      <p *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_TENDIGIT" class="p-error">Starting Toll Free Number: Must be 10 digits</p>
+      <p *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_NPA" class="p-error">Must be an existing 3-digit 8xx Toll-Free NPA code known to the TFN Registry (e.g., 800).</p>
     </div>
-    
+  </div>
+
     <!-- <div class="p-fluid">
         <span class="field p-float-label">
             <textarea class="pt-4" id="description" name="description" (input)="onInputDescription()" [(ngModel)]="inputDescription" rows="5" cols="30" pInputTextarea></textarea>
@@ -27,103 +29,104 @@
 
 <div class="mt-5 mb-5"></div>
 <p-panel header="Result" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-    <!-- <ng-template pTemplate="icons">
-        <button id="btn_contactInformation"><span>&#9990;</span>Contact Information *</button>
-    </ng-template> -->
     <ng-container *ngIf="isResult">
-        <div class="grid pt-2">
-            <div class="col-6 p-fluid">
-                <span class="field p-float-label">
-                    <input type="text" id="respOrg" name="respOrg" pInputText [(ngModel)]="inputRespOrg" [disabled]="disabled"> 
-                    <label for="respOrg">Resp Org</label>
-                </span>
-                <p *ngIf="!validRespOrg" class="p-error">Resp Org is required. Enter 5 alphanumeric like 'BANJ1'</p>
-            </div>
-            <div class="col-6 p-fluid">
-                <span *ngIf="retreivedStatus === gConst.TFNUM_STATE_RESERVED || retreivedStatus === gConst.TFNUM_STATE_TRANSITIONAL" class="field p-float-label">
-                    <p-dropdown 
-                        [options]="statusOptions" 
-                        id="status" 
-                        name="status" 
-                        [(ngModel)]="selectStatus" 
-                        optionLabel="name" 
-                        optionValue="value"
-                        [showClear]="true" 
-                        scrollHeight="150px" 
-                        [filter]="true" 
-                        filterBy="name"
-                        [virtualScroll]="true" 
-                        [itemSize]="40"
-                        [disabled]="disabled"
-                    ></p-dropdown>
-                    <label for="resp_org_id">Status</label>
-                </span>
-                <span *ngIf="!(retreivedStatus === gConst.TFNUM_STATE_RESERVED || retreivedStatus === gConst.TFNUM_STATE_TRANSITIONAL)" class="field p-float-label">
-                    <input type="text" id="status" name="status" pInputText [(ngModel)]="inputStatus" disabled> 
-                    <label for="status">Status</label>
-                </span>
-            </div>
-            <div class="col-6 p-fluid">
-                <span class="field p-float-label">
-                    <input type="text" id="effDate" name="effDate" pInputText [(ngModel)]="inputEffDate" disabled>
-                    <label for="effDate">Effective Date</label>
-                </span>
-            </div>
-            <div class="col-6 p-fluid">
-                <span class="p-float-label">
-                    <p-calendar 
-                        inputId="reservedUntil"
-                        [(ngModel)]="inputReservedUntil" 
-                        dateFormat="mm/dd/yy" 
-                        [showButtonBar]="true" 
-                        [numberOfMonths]="3" 
-                        [disabled]="disabled"
-                    ></p-calendar>
-                    <label for="interDate">Reserved Until</label>
-                </span>
-            </div>
-            <div class="col-6 p-fluid">
-                <span class="field p-float-label">
-                    <input type="text" id="lastActiveDate" name="lastActiveDate" pInputText [(ngModel)]="inputLastActiveDate" disabled>
-                    <label for="lastActiveDate">Last Active</label>
-                </span>
-            </div>
-        </div>
-
-        <p-panel header="Contact Information" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-            <span style="flex: 1;"></span>
-            <div class="grid pt-2">
-                <div class="col">
-                    <div class="p-fluid">
+        <div class="pt-2">
+            <p-panel>
+                <div class="grid pt-2">
+                    <div class="col-6 p-fluid">
                         <span class="field p-float-label">
-                            <input type="text" id="contactName" name="contactName" pInputText (input)="onInputContactName()" [(ngModel)]="inputContactName"> 
-                            <label for="contactName">Contact Name</label>
+                            <input type="text" id="respOrg" name="respOrg" pInputText [(ngModel)]="inputRespOrg" [disabled]="disabled">
+                            <label for="respOrg">Resp Org</label>
                         </span>
-                        <p *ngIf="!validInputContactName" class="p-error">Invalid Input</p>
+                        <p *ngIf="!validRespOrg" class="p-error">Resp Org is required. Enter 5 alphanumeric like 'BANJ1'</p>
+                    </div>
+                    <div class="col-6 p-fluid">
+                        <span *ngIf="retreivedStatus === gConst.TFNUM_STATE_RESERVED || retreivedStatus === gConst.TFNUM_STATE_TRANSITIONAL" class="field p-float-label">
+                            <p-dropdown
+                                [options]="statusOptions"
+                                id="status"
+                                name="status"
+                                [(ngModel)]="selectStatus"
+                                optionLabel="name"
+                                optionValue="value"
+                                [showClear]="true"
+                                scrollHeight="150px"
+                                [filter]="true"
+                                filterBy="name"
+                                [virtualScroll]="true"
+                                [itemSize]="40"
+                                [disabled]="disabled"
+                            ></p-dropdown>
+                            <label for="resp_org_id">Status</label>
+                        </span>
+                        <span *ngIf="!(retreivedStatus === gConst.TFNUM_STATE_RESERVED || retreivedStatus === gConst.TFNUM_STATE_TRANSITIONAL)" class="field p-float-label">
+                            <input type="text" id="status" name="status" pInputText [(ngModel)]="inputStatus" disabled>
+                            <label for="status">Status</label>
+                        </span>
+                    </div>
+                    <div class="col-6 p-fluid">
+                        <span class="field p-float-label">
+                            <input type="text" id="effDate" name="effDate" pInputText [(ngModel)]="inputEffDate" disabled>
+                            <label for="effDate">Effective Date</label>
+                        </span>
+                    </div>
+                    <div class="col-6 p-fluid">
+                        <span class="p-float-label">
+                            <p-calendar
+                                inputId="reservedUntil"
+                                [(ngModel)]="inputReservedUntil"
+                                dateFormat="mm/dd/yy"
+                                [showButtonBar]="true"
+                                [numberOfMonths]="3"
+                                [disabled]="disabled"
+                            ></p-calendar>
+                            <label for="interDate">Reserved Until</label>
+                        </span>
+                    </div>
+                    <div class="col-6 p-fluid">
+                        <span class="field p-float-label">
+                            <input type="text" id="lastActiveDate" name="lastActiveDate" pInputText [(ngModel)]="inputLastActiveDate" disabled>
+                            <label for="lastActiveDate">Last Active</label>
+                        </span>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="p-fluid">
-                        <span class="field p-float-label">
-                            <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="onInputContactNumber()" [(ngModel)]="inputContactNumber"> 
-                            <label for="contactNumber">Contact Number</label>
-                        </span>
-                        <p *ngIf="!validInputContactNumber" class="p-error">Invalid Input</p>
+            </p-panel>
+
+            <p-panel header="Contact Information" styleClass="mt-5" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                <span style="flex: 1;"></span>
+                <div class="grid pt-2">
+                    <div class="col">
+                        <div class="p-fluid">
+                            <span class="field p-float-label">
+                                <input type="text" id="contactName" name="contactName" pInputText (input)="onInputContactName()" [(ngModel)]="inputContactName">
+                                <label for="contactName">Contact Name</label>
+                            </span>
+                            <p *ngIf="!validInputContactName" class="p-error">Invalid Input</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-fluid">
+                            <span class="field p-float-label">
+                                <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="onInputContactNumber()" [(ngModel)]="inputContactNumber">
+                                <label for="contactNumber">Contact Number</label>
+                            </span>
+                            <p *ngIf="!validInputContactNumber" class="p-error">Invalid Input</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="p-fluid">
-                <span class="field p-float-label">
-                    <textarea class="pt-4" id="notes" name="notes" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea></textarea>
-                    <label for="notes">Notes</label>
-                </span>
-            </div>
-        </p-panel>
+                <div class="p-fluid">
+                    <span class="field p-float-label">
+                        <textarea class="pt-4" id="notes" name="notes" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea></textarea>
+                        <label for="notes">Notes</label>
+                    </span>
+                </div>
+            </p-panel>
 
-        <div class="p-buttonset flex justify-content-end">
-            <button pButton pRipple type="button" (click)="onSave()" label="Save" class="p-button-text"></button>
-            <button pButton pRipple type="button" (click)="onCancel()" label="Cancel" class="p-button-text p-button-danger"></button>
+            <div class="p-buttonset flex justify-content-end mt-3">
+                <button pButton pRipple type="button" (click)="onSave()" icon="pi pi-save" label="Save" class="p-button-text"></button>
+                <button pButton pRipple type="button" (click)="onCancel()" icon="pi pi-times" label="Cancel" class="p-button-text p-button-danger"></button>
+            </div>
         </div>
     </ng-container>
 </p-panel>

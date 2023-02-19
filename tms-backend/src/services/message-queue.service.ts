@@ -1,7 +1,8 @@
 import {injectable, /* inject, */ BindingScope} from '@loopback/core';
 import {Message, Producer, QueueManager} from "redis-smq";
 import {RSMQ_CONFIG, RSMQ_QUEUE} from "../index";
-import {Activity, MnqReq, NsrReq, TrqReq} from "../models";
+import {Activity, MndReq, MnqReq, MnsReq, NsrReq, TrqReq} from "../models";
+import {MroReq} from "../models/mro-req.model";
 
 @injectable({scope: BindingScope.TRANSIENT})
 export class MessageQueueService {
@@ -50,4 +51,17 @@ export class MessageQueueService {
   pushMNQ(activity: Activity, req: MnqReq) {
     this.push(activity, req)
   }
+
+  pushMND(activity: Activity, req: MndReq) {
+    this.push(activity, req)
+  }
+
+  pushMNS(activity: Activity, req: MnsReq) {
+    this.push(activity, req)
+  }
+
+  pushMRO(activity: Activity, req: MroReq) {
+    this.push(activity, req)
+  }
+
 }

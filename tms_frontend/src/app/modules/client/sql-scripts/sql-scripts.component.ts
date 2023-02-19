@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import {Router} from "@angular/router";
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
@@ -7,6 +8,7 @@ import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ROWS_PER_PAGE_OPTIONS } 
 import moment from 'moment';
 import { ISqlScript, ISqlUser } from "../../../models/user";
 import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-sql-scripts',
@@ -26,8 +28,8 @@ export class SqlScriptsComponent implements OnInit {
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  sortActive = ''
-  sortDirection = ''
+  sortActive = 'id'
+  sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -57,6 +59,7 @@ export class SqlScriptsComponent implements OnInit {
   binary: boolean = true;
 
   constructor(
+    public router: Router,
     public api: ApiService,
     public store: StoreService,
     private messageService: MessageService,
@@ -74,10 +77,21 @@ export class SqlScriptsComponent implements OnInit {
       }, 100)
     })
 
-    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_SQL_SCRIPT) == -1)
-      this.write_permission = false;
-    else
-      this.write_permission = true;
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.READ_SQL_SCRIPT)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
+      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_SQL_SCRIPT) == -1)
+        this.write_permission = false;
+      else
+        this.write_permission = true;
+    })
 
     this.getSqlScriptsList();
     this.getTotalSqlScriptsCount();
@@ -100,8 +114,10 @@ export class SqlScriptsComponent implements OnInit {
       await this.api.getSqlScriptsList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue)
         .pipe(tap(async (sql_scriptsRes: ISqlScript[]) => {
           this.sql_scripts = [];
-          sql_scriptsRes.map(u => u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '');
-          sql_scriptsRes.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
+          sql_scriptsRes.map(u => {
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          });
 
           let allNotEditable = true
           for (let sql_script of sql_scriptsRes) {
@@ -112,8 +128,9 @@ export class SqlScriptsComponent implements OnInit {
 
         })).toPromise();
 
+      this.getTotalSqlScriptsCount();
       this.filterResultLength = -1
-      await this.api.getSqlScriptsCount(filterValue, {}).pipe(tap( res => {
+      await this.api.getSqlScriptsCount(filterValue).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -124,7 +141,7 @@ export class SqlScriptsComponent implements OnInit {
   
   getTotalSqlScriptsCount = async () => {
     this.resultsLength = -1
-    await this.api.getSqlScriptsCount('', {}).pipe(tap( res => {
+    await this.api.getSqlScriptsCount('').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }

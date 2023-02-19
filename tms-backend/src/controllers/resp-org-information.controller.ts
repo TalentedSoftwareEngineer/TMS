@@ -45,7 +45,27 @@ export class RespOrgInformationController {
     if (!profile.permissions.includes(PERMISSIONS.RESP_ORG_INFORMATION))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return await this.tfnRegistryApiService.listRespOrgEntity(profile)
+    let response = await this.tfnRegistryApiService.listRespOrgEntity(profile)
+    if (response==null) {
+      throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
+
+    } else if (response.errList!=null) {
+      let message = "";
+
+      if (response.errList.length>0) {
+        const error: any = response.errList[0];
+        message = error.errMsg + " Code: " + error.errCode
+      } else
+        message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      throw new HttpErrors.BadRequest(message)
+    } else if (response.reqId!=null) {
+      throw new HttpErrors.BadRequest("Request is in progress. ReqID: " + response.reqId)
+
+    } else if (response.respOrgList!=null)
+      return response.respOrgList;
+
+    throw new HttpErrors.InternalServerError
   }
 
   @get('/resp_org/units', {
@@ -81,7 +101,27 @@ export class RespOrgInformationController {
     if (!profile.permissions.includes(PERMISSIONS.RESP_ORG_INFORMATION))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return await this.tfnRegistryApiService.listRespOrgUnit(profile)
+    let response = await this.tfnRegistryApiService.listRespOrgUnit(profile)
+    if (response==null) {
+      throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
+
+    } else if (response.errList!=null) {
+      let message = "";
+
+      if (response.errList.length>0) {
+        const error: any = response.errList[0];
+        message = error.errMsg + " Code: " + error.errCode
+      } else
+        message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      throw new HttpErrors.BadRequest(message)
+    } else if (response.reqId!=null) {
+      throw new HttpErrors.BadRequest("Request is in progress. ReqID: " + response.reqId)
+
+    } else if (response.respOrgList!=null)
+      return response.respOrgList;
+
+    throw new HttpErrors.InternalServerError
   }
 
   @get('/resp_org/retrieve/{by}', {
@@ -145,14 +185,35 @@ export class RespOrgInformationController {
     if (!profile.permissions.includes(PERMISSIONS.RESP_ORG_INFORMATION))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
+    let response = null;
     if (by=="unit")
-      return await this.tfnRegistryApiService.retrieveRespOrgByUnit(value, profile)
+      response = await this.tfnRegistryApiService.retrieveRespOrgByUnit(value, profile)
 
     if (by=="entity")
-      return await this.tfnRegistryApiService.retrieveRespOrgByEntity(value, profile)
+      response = await this.tfnRegistryApiService.retrieveRespOrgByEntity(value, profile)
 
     if (by=="number")
-      return await this.tfnRegistryApiService.retrieveRespOrgByNumber(value, profile)
+      response = await this.tfnRegistryApiService.retrieveRespOrgByNumber(value, profile)
+
+    if (response==null) {
+      throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
+
+    } else if (response.errList!=null) {
+      let message = "";
+
+      if (response.errList.length>0) {
+        const error: any = response.errList[0];
+        message = error.errMsg + " Code: " + error.errCode
+      } else
+        message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      throw new HttpErrors.BadRequest(message)
+
+    } else if (response.reqId!=null) {
+      throw new HttpErrors.BadRequest("Request is in progress. ReqID: " + response.reqId)
+    }
+
+    return response;
   }
 
 }

@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { ROUTES } from 'src/app/app.routes';
+import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ApiService } from 'src/app/services/api/api.service';
 import { StoreService } from 'src/app/services/store/store.service';
 import * as gFunc from 'src/app/utils/utils';
@@ -46,15 +50,49 @@ export class RocRsbComponent implements OnInit {
   ];
   selectAttachmentType: string = 'LoaN';
 
+  flagOpenModal: boolean = false;
+  inputFirstName: string = '';
+  validFirstName: boolean = true;
+  inputLastName: string = '';
+  validLastName: boolean = true;
+  inputCmpyAddress1: string = '';
+  validCmpyAddress1: boolean = true;
+  inputCmpyAddress2: string = '';
+  inputCity: string = '';
+  validCity: boolean = true;
+  inputZipCode: string = '';
+  validZipCode: boolean = true;
+  inputState: string = '';
+  validState: boolean = true;
+  inputAuthCusContact: string = '';
+  validAuthCusContact: boolean = true;
+  inputAuthCusTitle: string = '';
+  validAuthCusTitle: boolean = true;
+  inputAuthCusPhone: string = '';
+  validAuthCusPhone: boolean = true;
+  inputAuthCusExt: string = '';
+  inputEmail: string = '';
+  inputRespOrgInst: string = '';
+  inputEndUsrInf: string = '';
+
   constructor(
     public api: ApiService,
     public store: StoreService,
+    private messageService: MessageService,
+    public router: Router
   ) { }
 
   async ngOnInit() {
-    // this.inputContactName = this.store.getContactInformation()?.name;
-    // this.inputContactNumber = this.store.getContactInformation()?.number;
     this.store.state$.subscribe(async (state) => {
+      if(state.user.permissions?.includes(PERMISSIONS.RSB)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+
       this.inputContactName = state.contactInformation.name;
       this.inputContactNumber = state.contactInformation.number;
     })
@@ -93,7 +131,6 @@ export class RocRsbComponent implements OnInit {
       let specificNumReg = SPECIFICNUM_REG_EXP
       let isValid = true
       for (let el of nums) {
-        console.log("el: " + el)
         if (!specificNumReg.test(el)) {   // if anyone among the number list is invalid, the number list is invalid.
           isValid = false
           break
@@ -119,7 +156,7 @@ export class RocRsbComponent implements OnInit {
   }
 
   onClickGenerate = () => {
-
+    this.flagOpenModal = true;
   }
 
   onUploadDocFile = () => {
@@ -127,10 +164,31 @@ export class RocRsbComponent implements OnInit {
   }
 
   onCancel = () => {
-    
+
   }
 
   onSubmit = () => {
-    
+
   }
+
+  closeModal = () => {
+    this.flagOpenModal = false;
+  }
+
+  onModalSubmit = () => {
+
+  }
+
+  showWarn = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'warn', summary: 'Warning', detail: msg });
+  }
+  showError = (msg: string, summary: string) => {
+    this.messageService.add({ key: 'tst', severity: 'error', summary: summary, detail: msg });
+  }
+  showSuccess = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'success', summary: 'Success', detail: msg });
+  };
+  showInfo = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
+  };
 }

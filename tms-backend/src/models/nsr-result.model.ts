@@ -1,5 +1,4 @@
 import {Entity, model, property, belongsTo} from '@loopback/repository';
-import {NsrReq} from './nsr-req.model';
 
 @model({
   name: 'nsr_result'
@@ -55,8 +54,8 @@ export class NsrResult extends Entity {
   }
 }
 
-export interface NSRResultRelations {
+export interface NsrResultRelations {
   // describe navigational properties here
 }
 
-export type NSRResultWithRelations = NsrResult & NSRResultRelations;
+export type NSRResultWithRelations = NsrResult & NsrResultRelations;

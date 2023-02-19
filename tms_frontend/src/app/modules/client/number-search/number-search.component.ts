@@ -21,13 +21,16 @@ import {
   NUS_SUBMIT_TYPE_SEARCH,
   NUS_SUBMIT_TYPE_RESERVE,
   NUS_SUBMIT_TYPE_SRCHRES,
-  PHONE_NUMBER_WITH_HYPHEN_REG_EXP
- } from '../../constants';
+  PHONE_NUMBER_WITH_HYPHEN_REG_EXP, ROWS_PER_PAGE_OPTIONS
+} from '../../constants';
 import { tap } from "rxjs/operators";
 import * as gFunc from 'src/app/utils/utils';
 import {closeEventSource, SseClient} from "angular-sse-client";
 import {environment} from "../../../../environments/environment";
 import moment from 'moment';
+import { Router } from '@angular/router';
+import { PERMISSIONS } from 'src/app/consts/permissions';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'app-number-search',
@@ -62,17 +65,15 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
 
   pageSize = 10
   pageIndex = 1
-  filterName = ''
   filterValue = ''
   sortActive = 'sub_dt_tm'
   sortDirection = 'DESC'
+
+  totalCount = -1
   resultsLength = -1
   isLoading = true
-  rowsPerPageOptions: any = [
-    {name: '10', value: 10},
-    {name: '25', value: 25},
-    {name: '50', value: 50}
-  ]
+
+  rowsPerPageOptions: any = ROWS_PER_PAGE_OPTIONS
   noNeedRemoveColumn = true
   noNeedEditColumn = false
 
@@ -116,6 +117,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   resultWildCardNum: string = '';
   resultLine: string = '';
   resultTotal: number = -1;
+  filterResultLength = -1
 
   numberList: any[] = [];
   filterNumberList: any[] = [];
@@ -147,6 +149,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     private sseClient: SseClient,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
+    private router: Router
   ) { }
 
   async ngOnInit() {
@@ -160,7 +163,19 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
         }
       }, 100)
     })
-    this.getNSRData();
+
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user.permissions?.includes(PERMISSIONS.SEARCH_NUMBER)) {
+      } else {
+        // no permission
+        this.showWarn("You have no permission for this page")
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
+      }
+    })
+
+    this.getData();
     this.userId = this.store.getUser().id;
 
     this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
@@ -248,18 +263,26 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     }
   }
 
-  getNSRData = async () => {
-    let filterValue = this.filterValue.replace('(', '').replace('-', '').replace(') ', '').replace(')', '')
-    await this.api.getNSRData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex)
+  async getTotalCount() {
+    await this.api.getNSRCount("")
+      .pipe(tap( res => {
+        this.resultsLength = res.count
+      })).toPromise();
+  }
+
+  getData = async () => {
+    this.getTotalCount()
+
+    await this.api.getNSRData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue)
       .pipe(tap(async (res: any[])=>{
         res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
         this.results = res;
       })).toPromise();
-    
-    this.resultsLength = -1;
-    await this.api.getNSRCount(filterValue, {})
+
+    this.filterResultLength = -1;
+    await this.api.getNSRCount(this.filterValue)
     .pipe(tap( res => {
-      this.resultsLength = res.count
+      this.filterResultLength = res.count
     })).toPromise();
   }
 
@@ -269,12 +292,10 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     if (num !== null && num !== "") {
 
       let nums = gFunc.retrieveNumListWithHyphen(num)
-      console.log("gFunc.retrieveNumListWithHyphen: " + nums.join(","))
       this.inputNumberMaskEntry = nums.join(",");
 
       if (num.includes('*') || num.includes('&')) { // to wildcard mode
 
-        console.log("Wildcard")
         this.numType = OCA_NUM_TYPE_WILDCARD;
         this.inputNpa = {name: 'Toll-Free NPA', value: ''};
         this.inputNxx = ''
@@ -329,26 +350,22 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
         this.validNxx = true;
         this.inputLine = '';
         this.validLine = true;
-        console.log("Specific")
 
         // check if the number list is valid
         let specificNumReg = SPECIFICNUM_REG_EXP
         let isValid = true
         let isNpaInvalid = false
         for (let el of nums) {
-          console.log("el: " + el)
           if (!specificNumReg.test(el)) {   // if anyone among the number list is invalid, the number list is invalid.
             isValid = false
 
             if (!TFNPA_WILDCAD_REG_EXP.test(el))
               isNpaInvalid = true
 
-            console.log("Valid is false ")
             break
           }
         }
 
-        console.log("Specific: " + isValid)
 
         if (!isValid) {
           if (!isNpaInvalid)
@@ -534,9 +551,12 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
         break
     }
 
-    console.log("Body: " + JSON.stringify(body));
     this.api.searchAndReserve(body).subscribe(res=>{
-      this.getNSRData();
+      setTimeout(()=>{
+        this.sortActive = 'sub_dt_tm'
+        this.sortDirection = 'DESC'
+        this.getData();
+      }, 100)
     });
   };
 
@@ -555,13 +575,13 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     this.resultWildCardNum = result.wild_card_num;
     this.resultLine = result.line;
     this.resultTotal = parseInt(result.completed);
-    
+
     await this.api.getNSRById(result.id)
       .pipe(tap((response: any[])=>{
         this.numberList = [];
         response.forEach((item, index) => {
           this.numberList = [
-            ...this.numberList, 
+            ...this.numberList,
             {
               tollFreeNumber: item.num,
               status: item.status,
@@ -569,7 +589,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
               suggestions: item.suggested_num
             }
           ];
-          this.csvNumbersContent += `\n${item.num}, ${item.status}, ${item.message==null?'':item.message}, ${item.suggested_num==null?'':item.suggested_num}`;
+          this.csvNumbersContent += `\n${item.num},${item.status},${item.message==null?'':item.message},${item.suggested_num==null?'':item.suggested_num}`;
         });
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
@@ -580,17 +600,17 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
 
   onDownloadCsv = async (event: Event, result: any) => {
     let numsContent = '';
-    
+
     await this.api.getNSRById(result.id).pipe(tap((response: any[])=>{
       response.forEach((item, index) => {
         numsContent += `\n${item.num}, ${item.status}, ${item.message==null?'':item.message}, ${item.suggested_num==null?'':item.suggested_num}`;
       });
 
-      let data = `Type, ${result.type} \nSubmitType, ${result.submit_type} \nQuantity, ${result.total} \nConsecutive, ${result.consecutive} \nWildCardNum, ${result.wild_card_num==null?'':result.wild_card_num} \nNpa, ${result.npa==null?'':result.npa} \nNxx, ${result.nxx==null?'':result.nxx} \nLine, ${result.line==null?'':result.line} \nSubmit Date Time, ${result.sub_dt_tm} \nTotal, ${result.failed+result.completed} \nCompleted, ${result.completed} \nFailed, ${result.failed} \n\nNumber, Status, Message, Suggestions${numsContent}\n`
+      let data = `Type,${result.type}\nSubmitType,${result.submit_type}\nQuantity,${result.total}\nConsecutive,${result.consecutive} \nWildCardNum, ${result.wild_card_num==null?'':result.wild_card_num} \nNpa, ${result.npa==null?'':result.npa} \nNxx, ${result.nxx==null?'':result.nxx} \nLine, ${result.line==null?'':result.line} \nSubmit Date Time, ${result.sub_dt_tm} \nTotal, ${result.failed+result.completed}\nCompleted,${result.completed}\nFailed, ${result.failed}\n\nNumber,Status,Message,Suggestions${numsContent}\n`
       const csvContent = 'data:text/csv;charset=utf-8,' + data;
       const url = encodeURI(csvContent);
       let fileName = 'Search_Reserve_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
-  
+
       const tempLink = document.createElement('a');
       tempLink.href = url;
       tempLink.setAttribute('download', fileName);
@@ -606,7 +626,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
       accept: () => {
         this.api.deleteNSR(id).subscribe(async res=>{
           this.showSuccess('Successfully deleted!');
-          await this.getNSRData();
+          await this.getData();
         });
       },
       reject: (type: any) => {
@@ -641,13 +661,13 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
       this.numModalRespOrg = res.ctrlRespOrgId;
       this.numModalEffDate = res.effDt;
       this.numModalLastActive = res.lastActDt==undefined?'':res.lastActDt;
+      this.flagNumberOpenModal = true;
     })).toPromise();
-    this.flagNumberOpenModal = true;
   }
 
   onSearchReserveResultDownload = () => {
-    let data = `Type, ${this.viewedResult.type} \nSubmitType, ${this.viewedResult.submit_type} \nQuantity, ${this.viewedResult.total} \nConsecutive, ${this.viewedResult.consecutive} \nWildCardNum, ${this.viewedResult.wild_card_num==null?'':this.viewedResult.wild_card_num} \nNpa, ${this.viewedResult.npa==null?'':this.viewedResult.npa} \nNxx, ${this.viewedResult.nxx==null?'':this.viewedResult.nxx} \nLine, ${this.viewedResult.line==null?'':this.viewedResult.line} \nSubmit Date Time, ${this.viewedResult.sub_dt_tm} \nTotal, ${this.viewedResult.failed+this.viewedResult.completed} \nCompleted, ${this.viewedResult.completed} \nFailed, ${this.viewedResult.failed} \n\nNumber, Status, Message, Suggestions${this.csvNumbersContent}\n`
-    
+    let data = `Type,${this.viewedResult.type}\nSubmitType,${this.viewedResult.submit_type}\nQuantity,${this.viewedResult.total}\nConsecutive,${this.viewedResult.consecutive}\nWildCardNum,${this.viewedResult.wild_card_num==null?'':this.viewedResult.wild_card_num}\nNpa,${this.viewedResult.npa==null?'':this.viewedResult.npa}\nNxx,${this.viewedResult.nxx==null?'':this.viewedResult.nxx}\nLine,${this.viewedResult.line==null?'':this.viewedResult.line}\nSubmit Date Time,${this.viewedResult.sub_dt_tm}\nTotal,${this.viewedResult.failed+this.viewedResult.completed}\nCompleted,${this.viewedResult.completed}\nFailed,${this.viewedResult.failed}\n\nNumber,Status,Message,Suggestions${this.csvNumbersContent}\n`
+
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);
     let fileName = 'Search_Reserve_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
@@ -704,23 +724,22 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     this.sortActive = name;
     this.sortDirection = this.sortDirection === 'ASC' ? 'DESC' : 'ASC';
     this.pageIndex = 1;
-    await this.getNSRData();
+    await this.getData();
   }
 
   onFilter = (event: Event) => {
     this.pageIndex = 1;
-    this.filterName = (event.target as HTMLInputElement).name;
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getNSRData();
+  onClickFilter = () => this.getData();
 
   onPagination = async (pageIndex: any) => {
     const totalPageCount = Math.ceil(this.resultsLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
     if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
-    await this.getNSRData();
+    await this.getData();
   }
 
   paginate = (event: any) => {
@@ -738,5 +757,5 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   };
   showInfo = (msg: string) => {
     this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
-  };  
+  };
 }

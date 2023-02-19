@@ -130,14 +130,14 @@
 
         <div *ngIf="modalTitle.toLowerCase()=='add'" class="flex justify-content-end mt-5">
             <span class="p-buttonset">
-                <button pButton pRipple type="submit" label="Save" icon="pi pi-check" class="p-button-text"></button>
+                <button pButton pRipple type="submit" label="Save" icon="pi pi-save" class="p-button-text"></button>
                 <button pButton pRipple type="button" (click)="closeSqlScriptModal()" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
             </span>
         </div>
     </form>
     <div *ngIf="modalTitle.toLowerCase()=='edit'" class="flex justify-content-end mt-5">
       <span class="p-buttonset">
-        <button pButton pRipple (click)="editSqlScript()" label="Save" icon="pi pi-pencil" class="p-button-text p-button-warning"></button>
+        <button pButton pRipple (click)="editSqlScript()" label="Save" icon="pi pi-save" class="p-button-text p-button-warning"></button>
         <button pButton pRipple (click)="closeSqlScriptModal()" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
       </span>
     </div>

@@ -38,9 +38,8 @@ export class MndReq extends Entity {
 
   @property({
     type: 'string',
-    required: true,
   })
-  request_desc: string;
+  request_desc?: string;
 
   @property({
     type: 'number',

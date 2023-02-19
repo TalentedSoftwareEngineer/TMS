@@ -9,7 +9,7 @@ import {inject, service} from "@loopback/core";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
-import {NQU_TYPE, NSR_SUBMIT_TYPE, NSR_TYPE, PROGRESSING_STATUS} from "../constants/number_adminstration";
+import {NSR_SUBMIT_TYPE, NSR_TYPE, PROGRESSING_STATUS} from "../constants/number_adminstration";
 import {NsrReq} from "../models";
 import {authenticate} from "@loopback/authentication";
 import {NQURequest} from "../models/nqu.request";
@@ -114,8 +114,11 @@ export class NQUController {
                 shortNotes: {
                   type: "string",
                 },
+                recVersionId: {
+                  type: "string",
+                },
               },
-              required: ["ro", "num", "status"]
+              required: ["ro", "num", "recVersionId", "contactName", "contactNumber"]
             },
           },
         },
