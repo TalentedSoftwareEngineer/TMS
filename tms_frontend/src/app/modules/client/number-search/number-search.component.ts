@@ -21,7 +21,7 @@ import {
   NUS_SUBMIT_TYPE_SEARCH,
   NUS_SUBMIT_TYPE_RESERVE,
   NUS_SUBMIT_TYPE_SRCHRES,
-  PHONE_NUMBER_WITH_HYPHEN_REG_EXP, ROWS_PER_PAGE_OPTIONS
+  PHONE_NUMBER_WITH_HYPHEN_REG_EXP, ROWS_PER_PAGE_OPTIONS, SUPER_ADMIN_ROLE_ID, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions
 } from '../../constants';
 import { tap } from "rxjs/operators";
 import * as gFunc from 'src/app/utils/utils';
@@ -31,6 +31,7 @@ import moment from 'moment';
 import { Router } from '@angular/router';
 import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ROUTES } from 'src/app/app.routes';
+import { IUser } from 'src/app/models/user';
 
 @Component({
   selector: 'app-number-search',
@@ -73,7 +74,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   resultsLength = -1
   isLoading = true
 
-  rowsPerPageOptions: any = ROWS_PER_PAGE_OPTIONS
+  rowsPerPageOptions: any = rowsPerPageOptions
   noNeedRemoveColumn = true
   noNeedEditColumn = false
 
@@ -143,6 +144,10 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   progressingReq: any[] = [];
   completedReq: any[] = [];
 
+  isSuperAdmin: boolean = false;
+  userOptions: any[] = [];
+  selectUser: string|number = '';
+
   constructor(
     public store: StoreService,
     public api: ApiService,
@@ -168,14 +173,18 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
       if(state.user.permissions?.includes(PERMISSIONS.SEARCH_NUMBER)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
       }
+
+      this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
 
-    this.getData();
+    await this.getData();
+    this.getUsersList();
+
     this.userId = this.store.getUser().id;
 
     this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
@@ -273,7 +282,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   getData = async () => {
     this.getTotalCount()
 
-    await this.api.getNSRData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue)
+    await this.api.getNSRData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
         res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
         this.results = res;
@@ -284,6 +293,16 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     .pipe(tap( res => {
       this.filterResultLength = res.count
     })).toPromise();
+  }
+
+  getUsersList = async () => {
+    try {
+      await this.api.getUsersListForFilter()
+        .pipe(tap(async (res: IUser[]) => {
+          this.userOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: item.username, value: item.id}))];
+        })).toPromise();
+    } catch (e) {
+    }
   }
 
   onNumFieldFocusOut = () => {
@@ -574,27 +593,23 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     this.resultNxx = result.nxx;
     this.resultWildCardNum = result.wild_card_num;
     this.resultLine = result.line;
-    this.resultTotal = parseInt(result.completed);
 
     await this.api.getNSRById(result.id)
       .pipe(tap((response: any[])=>{
-        this.numberList = [];
+        response.map(u => {
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+        });
+
+        this.numberList = response;
         response.forEach((item, index) => {
-          this.numberList = [
-            ...this.numberList,
-            {
-              tollFreeNumber: item.num,
-              status: item.status,
-              message: item.message,
-              suggestions: item.suggested_num
-            }
-          ];
           this.csvNumbersContent += `\n${item.num},${item.status},${item.message==null?'':item.message},${item.suggested_num==null?'':item.suggested_num}`;
         });
+
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
         this.onInputNumListFilterKey();
         this.flagOpenModal = true;
+        this.resultTotal = this.numberList.length
       })).toPromise();
   }
 
@@ -679,20 +694,19 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   }
 
   onInputNumListFilterKey = () => {
-    // let dkdk = this.inputNumListFilterKey.replace(/^[A-Za-z0-9]$/g, '');
-    // this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/^[A-Za-z0-9]$/g, ''), 'contains');
-    let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
-    this.filterNumberList = this.numberList.filter(item=>{
-      let a = item.tollFreeNumber?.includes(omittedPhoneNumber);
-      let b = item.status?.includes(this.inputNumListFilterKey);
-      let c = item.message?.includes(this.inputNumListFilterKey);
-      let d = item.suggestions?.includes(this.inputNumListFilterKey);
-      if (omittedPhoneNumber=='') {
-        return b || c || d;
-      } else {
-        return a || b || c || d;
-      }
-    });
+    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    // let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
+    // this.filterNumberList = this.numberList.filter(item=>{
+    //   let a = item.tollFreeNumber?.includes(omittedPhoneNumber);
+    //   let b = item.status?.includes(this.inputNumListFilterKey);
+    //   let c = item.message?.includes(this.inputNumListFilterKey);
+    //   let d = item.suggestions?.includes(this.inputNumListFilterKey);
+    //   if (omittedPhoneNumber=='') {
+    //     return b || c || d;
+    //   } else {
+    //     return a || b || c || d;
+    //   }
+    // });
   }
 
   getStatusTagColor = (result: any): string => {
@@ -732,18 +746,21 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getData();
+  onClickFilter = () => {
+    this.pageIndex = 1
+    this.getData()
+  };
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.resultsLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getData();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   showWarn = (msg: string) => {

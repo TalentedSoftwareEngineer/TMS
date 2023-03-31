@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {ConfirmationService, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IScriptResults, ISqlUser, ISqlScript} from "../../../models/user";
@@ -34,7 +34,7 @@ export class ScriptExeRecordsComponent implements OnInit {
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any[] = ROWS_PER_PAGE_OPTIONS;
+  rowsPerPageOptions: any[] = rowsPerPageOptions;
   noNeedRemoveColumn = true
 
   noNeedEditColumn = false
@@ -73,7 +73,7 @@ export class ScriptExeRecordsComponent implements OnInit {
       if(state.user.permissions?.includes(PERMISSIONS.SQL_SCRIPT_EXECUTION_RECORD)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
@@ -174,18 +174,21 @@ export class ScriptExeRecordsComponent implements OnInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getScriptResultsList();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getScriptResultsList()
+  };
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getScriptResultsList();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   showWarn = (msg: string) => {

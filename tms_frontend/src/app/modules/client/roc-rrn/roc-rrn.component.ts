@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import * as gFunc from 'src/app/utils/utils';
 import {
   SPECIFICNUM_REG_EXP,
-  PHONE_NUMBER_WITH_HYPHEN_REG_EXP
+  PHONE_NUMBER_WITH_HYPHEN_REG_EXP,
+  PAGE_NO_PERMISSION_MSG
  } from '../../constants';
  import { MessageService } from 'primeng/api';
  import { Router } from '@angular/router';
@@ -36,10 +37,10 @@ export class RocRrnComponent implements OnInit {
 
   async ngOnInit() {
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.RRN)) {
+      if(state.user.permissions?.includes(PERMISSIONS.ROC_RESEND_SUBSCRIBER_NOTIFICATIONS)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return

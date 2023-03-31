@@ -44,12 +44,12 @@ export class HeaderComponent implements OnInit {
   // input_ro: any = {name: 'All', value: ALL_FILTER_VALUE}
 
   constructor(
-    private route: Router, 
-    private routerdata: ActivatedRoute, 
-    public store: StoreService, 
-    private api: ApiService, 
-    private messageService: MessageService, 
-    public layoutService: LayoutService, 
+    private route: Router,
+    private routerdata: ActivatedRoute,
+    public store: StoreService,
+    private api: ApiService,
+    private messageService: MessageService,
+    public layoutService: LayoutService,
     private confirmationService: ConfirmationService
   ) {
     this.title = route.url
@@ -128,7 +128,7 @@ export class HeaderComponent implements OnInit {
         ];
       }
     })
-    
+
     this.getRos();
     this.getContactInformation();
   }
@@ -152,7 +152,7 @@ export class HeaderComponent implements OnInit {
     this.input_ro = this.createData(loggedUser_ros[0], 0);
     this.store.storeCurrentRo(loggedUser_ros[0]);
   }
-  
+
   getContactInformation = () => {
     this.api.getContactInformationApi().subscribe(res=>{
       this.store.storeContactInformation({
@@ -270,6 +270,9 @@ export class HeaderComponent implements OnInit {
         icon: 'pi pi-exclamation-triangle',
         accept: () => {
           this.store.storeCurrentRo(seleted_ro.name);
+          // setTimeout(() => {
+          //   location.reload();
+          // }, 300)
         },
         reject: (type: any) => {
             switch(type) {

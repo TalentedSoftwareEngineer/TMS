@@ -6,7 +6,6 @@ import {
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
   UrlTree,
-  Router,
   CanActivate,
   CanDeactivate
 } from '@angular/router';

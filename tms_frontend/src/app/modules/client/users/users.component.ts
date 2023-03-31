@@ -3,7 +3,7 @@ import {Location} from '@angular/common';
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, EMAIL_REG_EXP, rowsPerPageOptions } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IUser, ICompany, IRole, ISomosUser} from "../../../models/user";
@@ -34,13 +34,18 @@ export class UsersComponent implements OnInit {
   sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
-  rowsPerPageOptions: any[] = ROWS_PER_PAGE_OPTIONS
+  rowsPerPageOptions: any[] = rowsPerPageOptions
   isLoading = true
   noNeedRemoveColumn = true
 
   users: any[] = []
   companies: any[] = []
   roles: any[] = []
+  timezones: any[] = [
+    {name: 'Auto Detect', value: 0},
+    {name: 'CST', value: -6},
+    {name: 'EST', value: -5}
+  ]
   filter_roles: any[] = []
   filter_status: any[] = [
     {name: 'All', value: ''},
@@ -58,6 +63,7 @@ export class UsersComponent implements OnInit {
   validUsername: boolean = true;
   input_company_id: any = ''
   input_role_id: any = ''
+  input_timezone: any = 0
   input_email: string|number|undefined|null = ''
   validEmail: boolean = true;
   input_first_name: string|number|undefined|null = ''
@@ -67,6 +73,7 @@ export class UsersComponent implements OnInit {
   input_password: string|number|undefined|null = ''
   validPassword: boolean = true;
   input_confirm_password: string|number|undefined|null = ''
+  validConfirmPassword: boolean = true;
   input_somos_id: any = ''
   input_country: string|number|undefined|null = ''
   input_address: string|number|undefined|null = ''
@@ -114,7 +121,7 @@ export class UsersComponent implements OnInit {
       if(state.user.permissions?.includes(PERMISSIONS.READ_USER)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
@@ -167,7 +174,6 @@ export class UsersComponent implements OnInit {
 
         })).toPromise();
 
-      this.getTotalUsersCount();
       this.filterResultLength = -1
       await this.api.getUserCount(filterValue, this.roleFilterValue.value, this.statusFilterValue.value).pipe(tap( res => {
         this.filterResultLength = res.count
@@ -244,18 +250,21 @@ export class UsersComponent implements OnInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getUsersList();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getUsersList();
+  }
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getUsersList();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   openUserModal = (modal_title: string) => {
@@ -272,6 +281,7 @@ export class UsersComponent implements OnInit {
     let username = this.input_username;
     let company_id = this.input_company_id?.value;
     let role_id = this.input_role_id?.value;
+    let timezone = this.input_timezone;
     let email = this.input_email;
     let first_name = this.input_first_name;
     let last_name = this.input_last_name;
@@ -300,8 +310,13 @@ export class UsersComponent implements OnInit {
       return;
     }
 
+    if(!EMAIL_REG_EXP.test(String(this.input_email))) {
+      this.validEmail = false;
+      return;
+    }
+
     if(password != confirm_password) {
-      this.showInfo('Please confirm password');
+      this.showWarn('Please confirm password');
       return;
     }
 
@@ -334,6 +349,7 @@ export class UsersComponent implements OnInit {
     this.showSuccess('Successfully created!');
     this.closeUserModal();
     this.getUsersList();
+    this.getTotalUsersCount();
   }
 
   viewUser = (event: Event, user_id: number) => {
@@ -351,6 +367,7 @@ export class UsersComponent implements OnInit {
       this.input_username = res.username;
       this.input_company_id = {name: res.company?.name, value: res.company?.id};
       this.input_role_id = {name: res.role?.name, value: res.role?.id};
+      this.input_timezone = res.timezone;
       this.input_email = res.email;
       this.input_first_name = res.first_name;
       this.input_last_name = res.last_name;
@@ -381,6 +398,7 @@ export class UsersComponent implements OnInit {
           this.api.deleteUserById(user_id).subscribe(res => {
             this.showSuccess('Successfully deleted!')
             this.getUsersList();
+            this.getTotalUsersCount();
           })
         },
         reject: (type: any) => {
@@ -398,6 +416,7 @@ export class UsersComponent implements OnInit {
     this.input_username = ''
     this.input_company_id = undefined
     this.input_role_id = undefined
+    this.input_timezone = 0
     this.input_email = ''
     this.input_first_name = ''
     this.input_last_name = ''
@@ -420,6 +439,7 @@ export class UsersComponent implements OnInit {
     this.validFirstName = true;
     this.validLastName = true;
     this.validPassword = true;
+    this.validConfirmPassword = true
   }
 
   // get created_by username and updated_by username
@@ -429,10 +449,19 @@ export class UsersComponent implements OnInit {
     })
   }
 
+  onInputEmail = () => {
+    if(this.input_email!='' && EMAIL_REG_EXP.test(String(this.input_email))) {
+      this.validEmail=true;
+    } else {
+      this.validEmail = false;
+    }
+  }
+
   onMainUpdate = async () => {
     let username = this.input_username;
     let company_id = this.input_company_id?.value;
     let role_id = this.input_role_id?.value;
+    let timezone = this.input_timezone;
     let email = this.input_email;
     let first_name = this.input_first_name;
     let last_name = this.input_last_name;
@@ -443,6 +472,11 @@ export class UsersComponent implements OnInit {
     if(last_name=='') this.validLastName = false;
 
     if(username==''||company_id==undefined||role_id==undefined||email==''||first_name==''||last_name=='') {
+      return;
+    }
+
+    if(!EMAIL_REG_EXP.test(String(this.input_email))) {
+      this.validEmail = false;
       return;
     }
 
@@ -465,6 +499,7 @@ export class UsersComponent implements OnInit {
       this.input_username = res.username;
       this.input_company_id = {name: res.company?.name, value: res.company?.id};
       this.input_role_id = {name: res.role?.name, value: res.role?.id};
+      this.input_timezone = res.timezone;
       this.input_email = res.email;
       this.input_first_name = res.first_name;
       this.input_last_name = res.last_name;
@@ -477,6 +512,22 @@ export class UsersComponent implements OnInit {
       this.validPassword = false;
       return;
     }
+
+    if(password != this.input_confirm_password) {
+      this.showWarn('Please confirm password');
+      return;
+    }
+
+    if (this.input_confirm_password=="") {
+      this.validConfirmPassword = false
+      return
+    }
+
+    if (this.input_password!=this.input_confirm_password) {
+      this.showWarn("Please confirm password.")
+      return
+    }
+
     await this.api.updateUserPassword(this.clickedId, {
       old_password: "",
       new_password: password
@@ -490,6 +541,9 @@ export class UsersComponent implements OnInit {
   passwordReset = () => {
     this.input_password = ''
     this.input_confirm_password = ''
+
+    this.validConfirmPassword = true
+    this.validPassword = true
   }
 
   onSomosUpdate = async () => {

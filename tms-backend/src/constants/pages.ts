@@ -7,4 +7,14 @@ export const PAGES = {
     MultiDialNumberSpare: "MNS",
     MultiDialNumberRespOrgChange: "MRO",
     MultiConversionToPointerRecord: "MCP",
+    AutoReserveNumbers: "NAR",
+    OneClickActivate: "OCA",
+    ReservedNumberList: "MNA",
+
+    TemplateRecordList: 'TRL',
+    TemplateAdminData: 'TAD',
+    CustomerAdminData: 'CAD',
+    PointAdminData: 'PAD',
+
+    SQLScriptExecutionResult: 'SER',
 }

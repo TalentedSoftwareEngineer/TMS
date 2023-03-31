@@ -1,6 +1,6 @@
-import {createQueue, PRIVATE_KEY, PUBLIC_KEY, RSMQ_CONFIG, RSMQ_QUEUE, SERVER} from "./index";
 import {Consumer} from "redis-smq";
 import {ConsumerError} from "redis-smq/dist/src/lib/consumer/errors/consumer.error";
+import {RSMQ_CONFIG, RSMQ_QUEUE} from "./config";
 
 export const startEventStreamServer = (env: any, options: any) => {
     console.log("Starting EventStream Server .......")
@@ -20,6 +20,7 @@ export const startEventStreamServer = (env: any, options: any) => {
 
     const events = require('events')
     const em = new events.EventEmitter()
+    em.setMaxListeners(env=='production' ? 100 : 10)
 
     const consumer = new Consumer(RSMQ_CONFIG)
     let users: any[] = [];

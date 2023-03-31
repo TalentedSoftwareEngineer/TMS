@@ -27,6 +27,11 @@ export class McpResult extends Entity {
   @property({
     type: 'string',
   })
+  eff_dt_tm?: string;
+
+  @property({
+    type: 'string',
+  })
   status?: string;
 
   @property({

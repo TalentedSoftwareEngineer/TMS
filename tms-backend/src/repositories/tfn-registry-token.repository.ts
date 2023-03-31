@@ -15,7 +15,7 @@ export class TfnRegistryTokenRepository extends DefaultCrudRepository<
     super(TfnRegistryToken, dataSource);
   }
 
-  async saveFromTfnRegistry(id: number, res: any): Promise<TfnRegistryToken> {
+  async saveFromTfnRegistry(id: number, res: any, somos?: any): Promise<TfnRegistryToken> {
     let isNew = false;
     let token = await this.findOne({ where: {id: id}})
     if (!token) {
@@ -43,9 +43,13 @@ export class TfnRegistryTokenRepository extends DefaultCrudRepository<
 
     if (res.clientKey)
       token.client_key = res.clientKey
+    else if (somos)
+      token.client_key = somos.client_key
 
     if (res.clientSecret)
       token.client_secret = res.clientSecret
+    else if (somos)
+      token.client_secret = somos.client_secret
 
     const now = DateTimeUtils.getCurrentTimestamp();
     token.created_at = now

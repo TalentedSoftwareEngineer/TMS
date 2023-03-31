@@ -1,33 +1,38 @@
 <h4 class="page_title">Auto Reserve Numbers</h4>
 
 <p-panel header="Retrieve" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons">
+        <button id="btn_contactInformation"><span>&#9990;</span>Contact Information *</button>
+    </ng-template>
     <div class="pt-2">
         <div class="grid">
             <div class="col-12 lg:col-5">
                 <div class="grid">
                     <div class="col-8 p-fluid">
                         <span class="p-float-label">
-                            <p-calendar 
-                                inputId="startDateTime" 
-                                [(ngModel)]="inputStartDateTime" 
-                                dateFormat="mm/dd/yy" 
-                                [minDate]="minStartDateTime"
-                                [showButtonBar]="true" 
-                                [showTime]="true"
-                                hourFormat="12" 
-                                (onBlur)="onTimeFieldFocusOut()"
-                                [disabled]="inputStartNow"
-                            ></p-calendar>
-                            <label for="startDateTime">Starting Date Time *</label>
+                          <p-calendar
+                            inputId="startDateTime"
+                            [(ngModel)]="inputStartDateTime"
+                            dateFormat="mm/dd/yy"
+                            [minDate]="minStartDateTime"
+                            [showButtonBar]="true"
+                            [showTime]="true"
+                            hourFormat="12"
+                            [stepMinute]="15"
+                            (onSelect)="onTimeFieldFocusOut();onStartIntervalFifteenMin();"
+                            [disabled]="inputStartNow"
+                          ></p-calendar>
+                          <label>Starting Date Time *</label>
                         </span>
                         <p *ngIf="invalidStartTime === gConst.INVALID_TIME_PAST && !inputStartNow" class="p-error">Please input future time</p>
                         <p *ngIf="invalidStartTime === gConst.INVALID_TIME_ORDER && !inputStartNow" class="p-error">Start time must be before than end time</p>
                     </div>
                     <div class="col-3 flex align-items-center">
-                        <label class="ml-3" for="startNow">
+                        <label class="ml-3">
                             <p-inputSwitch
-                                id="startNow" 
-                                name="startNow" 
+                                id="startNow"
+                                name="startNow"
+                                (onChange)="onTimeFieldFocusOut()"
                                 [(ngModel)]="inputStartNow"
                             ></p-inputSwitch>
                             Now
@@ -39,34 +44,35 @@
                 <div class="grid">
                     <div class="md:col-7 col-12 p-fluid">
                         <span class="p-float-label">
-                            <p-calendar 
-                                inputId="endDateTime" 
-                                [(ngModel)]="inputEndDateTime" 
-                                dateFormat="mm/dd/yy" 
+                            <p-calendar
+                                inputId="endDateTime"
+                                [(ngModel)]="inputEndDateTime"
+                                dateFormat="mm/dd/yy"
                                 [minDate]="minEndDateTime"
-                                [showButtonBar]="true" 
+                                [showButtonBar]="true"
                                 [showTime]="true"
-                                hourFormat="12" 
-                                (onBlur)="onTimeFieldFocusOut()"
+                                hourFormat="12"
+                                [stepMinute]="15"
+                                (onSelect)="onTimeFieldFocusOut();onEndIntervalFifteenMin();"
                                 [disabled]="inputEndNow"
                             ></p-calendar>
-                            <label for="endDateTime">End Date Time *</label>
+                            <label>End Date Time *</label>
                         </span>
                         <p *ngIf="invalidEndTime === gConst.INVALID_TIME_PAST && !inputEndNow" class="p-error">Please input future time</p>
                         <p *ngIf="invalidEndTime === gConst.INVALID_TIME_ORDER && !inputEndNow" class="p-error">End time must be after than start time</p>
                     </div>
                     <div class="md:col-5 col-12 flex justify-content-center align-items-center">
-                        <label class="ml-3" for="endNow">
+                        <label class="ml-3">
                             <p-inputSwitch
-                                id="endNow" 
-                                name="endNow" 
+                                id="endNow"
+                                name="endNow"
                                 [(ngModel)]="inputEndNow"
                             ></p-inputSwitch>
-                            Now + 
-                        </label>  
+                            Now +
+                        </label>
                         <div class="ml-2">
                             <span class="p-float-label">
-                                <input type="number" id="afterMin" name="afterMin" pInputText [(ngModel)]="inputAfterMin" (input)="onInputAfterMin()" [disabled]="!inputEndNow"> 
+                                <input type="number" id="afterMin" name="afterMin" pInputText [(ngModel)]="inputAfterMin" (input)="onInputAfterMin()" [disabled]="!inputEndNow">
                                 <label for="afterMin">Mins</label>
                             </span>
                             <p *ngIf="afterMinErr" class="p-error">The value must be greater than 0</p>
@@ -77,27 +83,9 @@
         </div>
 
         <div class="grid mt-2">
-            <div class="col-12 md:col-6 p-fluid">
+            <div class="col-12 md:col-12 p-fluid">
                 <span class="p-float-label">
-                    <p-dropdown 
-                        [options]="roIds" 
-                        id="roId" 
-                        name="roId" 
-                        [(ngModel)]="inputRoId" 
-                        optionLabel="name" 
-                        [showClear]="true" 
-                        scrollHeight="150px" 
-                        [filter]="true" 
-                        filterBy="name"
-                        [virtualScroll]="true" 
-                        [itemSize]="40"
-                    ></p-dropdown>
-                    <label for="roId">Ro Id</label>
-                </span>
-            </div>
-            <div class="col-12 md:col-6 p-fluid">
-                <span class="p-float-label">
-                    <input type="number" id="requestsAtATime" name="requestsAtATime" pInputText [(ngModel)]="inputRequestsAtATime" (input)="onInputRequestsAtATime()"> 
+                    <input type="number" id="requestsAtATime" name="requestsAtATime" pInputText [(ngModel)]="inputRequestsAtATime" (input)="onInputRequestsAtATime()">
                     <label for="requestsAtATime">Requests at a time *</label>
                 </span>
                 <p *ngIf="!validRequestsAtATime" class="p-error">Must be between 1 and {{gConst.MAX_REQUESTS_AT_A_TIME_LIMIT}}.</p>
@@ -120,185 +108,196 @@
     <ng-template pTemplate="footer">
         <div class="flex justify-content-end">
             <span class="p-buttonset">
-                <button pButton pRipple type="button" (click)="onSubmit()" icon="pi pi-send" label="Submit" class="p-button-text"></button>
+                <button pButton pRipple type="button" (click)="onSubmit()" [disabled]="disableSubmit" icon="pi pi-send" label="Submit" class="p-button-text"></button>
                 <button pButton pRipple type="button" (click)="onClear()" icon="pi pi-eraser" label="Clear" class="p-button-text p-button-danger"></button>
             </span>
         </div>
     </ng-template>
 </p-panel>
 
-<div class="mt-5 mb-5"></div>
-<p-panel header="Auto Reserve Numbers" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
 
-    <div class="pt-2">
-        <div class="card">
-            <p-table
-                #autoReserveNumbersTable
-                [value]="autoReserveNumbers"
-                [(selection)]="selectedAutoReserveNumbers"
-                dataKey="id"
-                [rowHover]="true"
-                [rows]="10"
-                [showCurrentPageReport]="true"
-                [rowsPerPageOptions]="[10,25,50]"
-                [loading]="autoReserveNumbersLoading"
-                responsiveLayout="stack" 
-                [responsive]="true"
-                [paginator]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-                [filterDelay]="0" 
-                [globalFilterFields]="['startTime','endTime','submitTime','Wildcard','requestsAtATime','status','roId','requestCount','reservedCount','note']"
-            >
-                <ng-template pTemplate="caption">
-                    <div class="table-header flex justify-content-end">
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-search"></i>
-                            <input pInputText type="text" (input)="autoReserveNumbersTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
-                        </span>
-                    </div>
-                </ng-template>
-    
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 3rem">
-                            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
-                        </th>
-                        <th pSortableColumn="startTime">
-                            <div class="flex justify-content-center align-items-center">
-                                Start Time
-                                <p-sortIcon field="startTime"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="endTime">
-                            <div class="flex justify-content-center align-items-center">
-                                End Time
-                                <p-sortIcon field="endTime"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="submitTime">
-                            <div class="flex justify-content-center align-items-center">
-                                Submit Time
-                                <p-sortIcon field="submitTime"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="Wildcard">
-                            <div class="flex justify-content-center align-items-center">
-                                Wildcard
-                                <p-sortIcon field="Wildcard"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="requestsAtATime">
-                            <div class="flex justify-content-center align-items-center">
-                                Requests at a Time
-                                <p-sortIcon field="requestsAtATime"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="status">
-                            <div class="flex justify-content-center align-items-center">
-                                Status
-                                <p-sortIcon field="status"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="roId">
-                            <div class="flex justify-content-center align-items-center">
-                                Ro Id
-                                <p-sortIcon field="roId"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="requestCount">
-                            <div class="flex justify-content-center align-items-center">
-                                Request Count
-                                <p-sortIcon field="requestCount"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="reservedCount">
-                            <div class="flex justify-content-center align-items-center">
-                                Reserved Count
-                                <p-sortIcon field="reservedCount"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th pSortableColumn="note">
-                            <div class="flex justify-content-center align-items-center">
-                                Note
-                                <p-sortIcon field="note"></p-sortIcon>
-                            </div>
-                        </th>
-                        <th class="text-align-center w-100px">
-                            Action
-                        </th>
-                    </tr>
-                </ng-template>
-    
-                <ng-template pTemplate="body" let-autoReserveNumber>
-                    <tr class="p-selectable-row text-align-center">
-                        <td>
-                            <p-tableCheckbox [value]="autoReserveNumber"></p-tableCheckbox>
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Start Time</span>
-                            {{autoReserveNumber.startTime}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">End Time</span>
-                            {{autoReserveNumber.endTime}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Submit Time</span>
-                            {{autoReserveNumber.submitTime}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Wildcard</span>
-                            {{autoReserveNumber.Wildcard}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Requests at a time</span>
-                            {{autoReserveNumber.requestsAtATime}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Status</span>
-                            {{autoReserveNumber.status}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Ro Id</span>
-                            {{autoReserveNumber.roId}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Request Count</span>
-                            {{autoReserveNumber.requestCount}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Reserved Count</span>
-                            {{autoReserveNumber.reservedCount}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Note</span>
-                            {{autoReserveNumber.note}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Action</span>
-                            <span class="p-buttonset">
-                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined"></button>
-                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined"></button>
-                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined"></button>
-                            </span>
-                        </td>                                                            
-                    </tr>
-                </ng-template>
-                
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="8">No Auto Reserve Number found.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
+<p-panel header="Activity Log" styleClass="mt-3" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+  <div class="pt-2">
+    <div class="card">
+      <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+      <p-table
+        [value]="activityLogs"
+        dataKey="id"
+        [loading]="activityLogsLoading"
+        responsiveLayout="stack"
+        [responsive]="true"
+      >
+        <ng-template pTemplate="caption">
+          <div class="grid p-fluid">
+            <div *ngIf="isSuperAdmin" class="lg:col-3 md:col-5 col-12 pr-0 pl-0">
+              <p-dropdown [options]="userOptions" [(ngModel)]="selectUser" placeholder="Search..." [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="150px"></p-dropdown>
+            </div>
+            <div class="lg:col-4 md:col-7 col-12 pr-0 pl-0">
+              <div class="p-inputgroup">
+                  <input pInputText type="text" [(ngModel)]="filterValue" (keyup.enter)="onClickFilter()" placeholder="Search..." />
+                  <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="onClickFilter()"></button>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th *ngIf="isSuperAdmin" class="text-align-center">
+              Created By
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('sub_dt_tm')">Submit Time</a>
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'start_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('start_at')">Start Time</a>
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'end_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('end_at')">End Time</a>
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'wild_card_num' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('wild_card_num')">Wild Card</a>
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'max_request' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('max_request')">Max Request</a>
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'total' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('total')">Requested</a>
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'completed' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('completed')">Completed</a>
+            </th>
+            <th class="text-align-center" [ngClass]="sortActive === 'message' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+              <a (click)="onSortChange('message')">Message</a>
+            </th>
+            <th class="text-align-center">
+              Progress Status
+            </th>
+            <th class="text-align-center w-100px">
+              Action
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-result>
+          <tr class="p-selectable-row text-align-center">
+            <td *ngIf="isSuperAdmin" class="text-align-center">
+              <span class="p-column-title">Created By</span>
+              {{result.user.username}}
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Submit Time</span>
+              {{result.sub_dt_tm}}
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Start Time</span>
+              {{result.start_at}}
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">End Time</span>
+              {{result.end_at}}
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Wild Card</span>
+              {{ result.wild_card_num }}
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Max Request</span>
+              {{ result.max_request }}
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Total</span>
+              <p-tag styleClass="mr-2" severity="success" [value]="getTotal(result)"></p-tag>
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Completed</span>
+              <p-tag styleClass="mr-2" [severity]="getCompletedTagColor(result)" [value]="getCompleted(result)"></p-tag>
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Message</span>
+              {{ getMessage(result) }}
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Progress Status</span>
+              <div *ngIf="isProgressing(result)">
+                <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
+              </div>
+              <p-tag *ngIf="!isProgressing(result)" styleClass="mr-2" [severity]="getStatusTagColor(result)" [value]="getStatus(result)"></p-tag>
+            </td>
+            <td class="text-align-center">
+              <span class="p-column-title">Action</span>
+              <span class="p-buttonset">
+                <button pButton pRipple title="Detail" type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
+                <button pButton pRipple title="Download" *ngIf="result.status!='IN PROGRESS'" type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
+                <button pButton pRipple title="Cancel" *ngIf="result.status=='IN PROGRESS'" type="button" icon="pi pi-stop" class="p-button-rounded p-button-warning p-button-outlined" (click)="cancel($event, result.id)"></button>
+                <button pButton pRipple title="Delete" type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
+              </span>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8">No Result found.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+      <div class="flex justify-content-center align-items-center gap-3">
+        <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
+      </div>
     </div>
-
-    <ng-template pTemplate="footer">
-        <div class="flex justify-content-end">
-            <span class="p-buttonset">
-                <button pButton pRipple type="button" (click)="onDelete()" icon="pi pi-trash" label="Delete" class="p-button-text p-button-danger" ></button>
-            </span>
-        </div>
-    </ng-template>
+  </div>
 </p-panel>
+
+<p-dialog header="View Numbers" styleClass="c-modal pt-2" [(visible)]="flagOpenModal" (onHide)="closeModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+  <div class="card pt-0">
+    <p-table
+      #numbersTable
+      [value]="numberList"
+      [loading]="numberListLoading"
+      responsiveLayout="scroll"
+      [responsive]="true"
+      [scrollable]="true"
+      scrollDirection="both"
+      styleClass="p-datatable-lg"
+    >
+      <ng-template pTemplate="caption">
+        <div class="flex justify-content-end align-items-center">
+        </div>
+        <div class="flex align-items-center" [ngClass]="resultTotal>0 ? 'justify-content-between' : 'justify-content-end'">
+          <p class="mb-0" *ngIf="resultTotal>0">Total <span class="dialog_total_count">{{resultTotal}}</span> Number<span *ngIf="resultTotal>1">s</span></p>
+          <div class="table-header">
+            <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-number>
+        <tr>
+          <td style="flex: 1;" class="flex justify-content-center align-items-center">
+            {{number.num1 | phoneFormat}}
+          </td>
+          <td style="flex: 1;" class="flex justify-content-center align-items-center">
+            {{number.num2 | phoneFormat}}
+          </td>
+          <td style="flex: 1;" class="flex justify-content-center align-items-center">
+            {{number.num3 | phoneFormat}}
+          </td>
+          <td style="flex: 1;" class="flex justify-content-center align-items-center">
+            {{number.num4 | phoneFormat}}
+          </td>
+          <td style="flex: 1;" class="flex justify-content-center align-items-center">
+            {{number.num5 | phoneFormat}}
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="3" style="flex: 1;">No Numbers found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</p-dialog>

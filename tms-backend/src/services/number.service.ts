@@ -7,7 +7,19 @@ import {
   Numbers,
   ActivityResult,
   TrqReq,
-  TrqResult, MnqResult, MnqReq, MndReq, MndResult, MnsReq, MnsResult, MCPRequest
+  TrqResult,
+  MnqResult,
+  MnqReq,
+  MndReq,
+  MndResult,
+  MnsReq,
+  MnsResult,
+  MCPRequest,
+  McpReq,
+  McpResult,
+  OCARequest,
+  OcaReq,
+  OcaResult, MNARequest, MnaReq, MnaResult, ScriptResult
 } from "../models";
 import {TfnRegistryApiService} from "./tfn-registry-api.service";
 import {repository} from "@loopback/repository";
@@ -23,7 +35,13 @@ import {
   MnqResultRepository,
   MndResultRepository,
   MndReqRepository,
-  MnsReqRepository, MnsResultRepository, MroReqRepository, MroResultRepository
+  MnsReqRepository,
+  MnsResultRepository,
+  MroReqRepository,
+  MroResultRepository,
+  McpReqRepository,
+  McpResultRepository,
+  OcaReqRepository, OcaResultRepository, MnaReqRepository, MnaResultRepository, ScriptResultRepository
 } from "../repositories";
 import {HttpErrors} from "@loopback/rest";
 import DataUtils from "../utils/data";
@@ -33,9 +51,8 @@ import {
   NSR_SUBMIT_TYPE,
   NSR_TYPE,
   NUMBER_STATUS, PAGE_OPERATION,
-  PROGRESSING_STATUS, TASK_ACTION, TASK_TYPE
+  PROGRESSING_STATUS, SCRIPT_TYPE, TASK_ACTION, TASK_TYPE
 } from "../constants/number_adminstration";
-import {Producer} from "redis-smq";
 import {MessageQueueService} from "./message-queue.service";
 import {PAGES} from "../constants/pages";
 import {NQURequest} from "../models/nqu.request";
@@ -47,6 +64,11 @@ import {MNSRequest} from "../models/mns.request";
 import {MRORequest} from "../models/mro.request";
 import {MroReq} from "../models/mro-req.model";
 import {MroResult} from "../models/mro-result.model";
+import {MailService} from "./mail.service";
+import {Secure382ApiService} from "./secure-382-api.service";
+import {FtpService} from "./ftp.service";
+import * as fs from "fs";
+import {TEMPORARY} from "../config";
 
 @injectable({scope: BindingScope.TRANSIENT})
 export class NumberService {
@@ -55,6 +77,12 @@ export class NumberService {
       public tfnRegistryApiService: TfnRegistryApiService,
       @service(MessageQueueService)
       public messageQueueService: MessageQueueService,
+      @service(MailService)
+      public mailService: MailService,
+      @service(Secure382ApiService)
+      public secure382ApiService: Secure382ApiService,
+      @service(FtpService)
+      public ftpService: FtpService,
       @repository(NsrReqRepository)
       public nsrReqRepository: NsrReqRepository,
       @repository(NsrResultRepository)
@@ -79,8 +107,22 @@ export class NumberService {
       public mroReqRepository: MroReqRepository,
       @repository(MroResultRepository)
       public mroResultRepository: MroResultRepository,
+      @repository(McpReqRepository)
+      public mcpReqRepository: McpReqRepository,
+      @repository(McpResultRepository)
+      public mcpResultRepository: McpResultRepository,
+      @repository(OcaReqRepository)
+      public ocaReqRepository: OcaReqRepository,
+      @repository(OcaResultRepository)
+      public ocaResultRepository: OcaResultRepository,
+      @repository(MnaReqRepository)
+      public mnaReqRepository: MnaReqRepository,
+      @repository(MnaResultRepository)
+      public mnaResultRepository: MnaResultRepository,
       @repository(NumbersRepository)
       public numbersRepository: NumbersRepository,
+      @repository(ScriptResultRepository)
+      public scriptResultRepository: ScriptResultRepository,
       @repository(ActivityRepository)
       public activityRepository: ActivityRepository,
       @repository(ActivityResultRepository)
@@ -88,9 +130,12 @@ export class NumberService {
   ) {}
 
   private appendErrorMessage(error_message: string, new_msg: string): string {
-    const errors: string[] = error_message.split("\n\n");
-    if (errors.includes(new_msg))
-      return error_message
+    if (error_message!=null) {
+      const errors: string[] = error_message.split("\n\n");
+      if (errors.includes(new_msg))
+        return error_message
+    } else
+      error_message = ""
 
     if (error_message!="")
       error_message += "\n\n"
@@ -99,12 +144,28 @@ export class NumberService {
     return error_message
   }
 
-  private async saveNumber(profile: AuthorizedUserProfile, num: string, status: string, sub_dt_tm: string, resp_org?: string) {
+  private async saveNumber(profile: AuthorizedUserProfile, num: string, status?: string, sub_dt_tm?: string, resp_org?: string, template_name?: string, eff_dt_tm?: string, last_act_dt?: string, res_until_dt?: string, disc_until_dt?: string) {
     let created_by = profile.user.id
     let created_at = new Date().toISOString()
 
     let numObj: any = await this.numbersRepository.findOne({where: {num: num}})
     if (numObj) {
+      if (numObj.status!=null && status==null) {
+        status = numObj.status
+      }
+
+      if (numObj.sub_dt_tm!=null && sub_dt_tm==null) {
+        sub_dt_tm = numObj.sub_dt_tm
+      }
+
+      if (numObj.resp_org!=null && resp_org==null) {
+        resp_org = numObj.resp_org
+      }
+
+      if (numObj.template_name!=null && template_name==null) {
+        template_name = numObj.template_name
+      }
+
       created_by = numObj.created_by
       created_at = numObj.created_at
       await this.numbersRepository.deleteById(numObj.id)
@@ -112,14 +173,30 @@ export class NumberService {
 
     numObj = new Numbers()
     numObj.num = num
+    numObj.user_id = profile.user.id
 
     if (resp_org!=null) {
       numObj.entity = resp_org.substring(0, 2)
       numObj.resp_org = resp_org
     }
 
-    numObj.sub_dt_tm = sub_dt_tm
-    numObj.status = status
+    if (template_name!=null)
+      numObj.template_name = template_name;
+
+    if (eff_dt_tm!=null)
+      numObj.eff_dt_tm = eff_dt_tm
+    if (last_act_dt!=null)
+      numObj.last_act_dt = last_act_dt
+    if (res_until_dt!=null)
+      numObj.res_until_dt = res_until_dt
+    if (disc_until_dt!=null)
+      numObj.disc_until_dt = disc_until_dt
+
+    if (sub_dt_tm!=null)
+      numObj.sub_dt_tm = sub_dt_tm
+
+    if (status!=null)
+      numObj.status = status
 
     numObj.created_at = created_at
     numObj.created_by = created_by
@@ -168,7 +245,7 @@ export class NumberService {
     let total = 0, completed = 0, failed = 0;
     let error_message = "";
     let specificNums = null
-    let success_responses: any[] = []
+    let apiResult: any
 
     let nsr_req: NsrReq = new NsrReq()
     nsr_req.user_id = profile.user.id!
@@ -264,6 +341,7 @@ export class NumberService {
         }
       }
 
+      apiResult = null
       let response: any = null;
 
       if (req.submitType == NSR_SUBMIT_TYPE.SEARCH) {
@@ -291,7 +369,7 @@ export class NumberService {
           response = await this.tfnRegistryApiService.searchAndReserveSpecificNumbers(req.ro, payload, profile)
       }
 
-      console.log(response)
+      console.log("NSR", response)
 
       if (response==null) {
         failed += payload.qty
@@ -316,7 +394,7 @@ export class NumberService {
         let reqId = response.reqId
 
         while (response==null || response.numList==null) {
-          await DataUtils.sleep(1000)
+          await DataUtils.sleep(100)
 
           response = null
           if (req.submitType == NSR_SUBMIT_TYPE.SEARCH) {
@@ -331,21 +409,19 @@ export class NumberService {
 
           } else if (req.submitType == NSR_SUBMIT_TYPE.SEARCH_RESERVE) {
             if (req.type == NSR_TYPE.RANDOM)
-              response = await this.tfnRegistryApiService.retrieveSearchAndReserveRandomNumbers(req.ro, payload, profile)
+              response = await this.tfnRegistryApiService.retrieveSearchAndReserveRandomNumbers(req.ro, reqId, profile)
 
             if (req.type == NSR_TYPE.WILDCARD)
-              response = await this.tfnRegistryApiService.retrieveSearchAndReserveWildcardNumbers(req.ro, payload, profile)
+              response = await this.tfnRegistryApiService.retrieveSearchAndReserveWildcardNumbers(req.ro, reqId, profile)
 
             if (req.type == NSR_TYPE.SPECIFIC)
-              response = await this.tfnRegistryApiService.retrieveSearchAndReserveSpecificNumbers(req.ro, payload, profile)
+              response = await this.tfnRegistryApiService.retrieveSearchAndReserveSpecificNumbers(req.ro, reqId, profile)
           }
 
-          console.log(response)
+          console.log("NSR Req", response)
         }
 
-        completed += payload.qty; // response.numList.length
-
-        success_responses.push(response)
+        apiResult = response
 
       } else if (response.blkId!=null) {
         failed += payload.qty
@@ -353,13 +429,21 @@ export class NumberService {
         error_message = this.appendErrorMessage(error_message, "Request is in progress. " + "blkId: " + response.blkId)
 
       } else if (response.numList!=null) {
-        completed += payload.qty; // response.numList.length
+        apiResult = response
 
-        success_responses.push(response)
       } else {
         failed += payload.qty
 
         error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+      }
+
+      if (apiResult!=null) {
+        let result = await this.saveNSRResult(nsr_req, apiResult, activity, profile)
+        console.log("NSR Result", result)
+
+        failed += result.code
+        completed += payload.qty - result.code
+        error_message = this.appendErrorMessage(error_message, result.message)
       }
 
       // save progress to nsr_req
@@ -378,7 +462,7 @@ export class NumberService {
       await this.activityRepository.save(activity)
 
       this.messageQueueService.pushNSR(activity, nsr_req)
-      await DataUtils.sleep(1000)
+      await DataUtils.sleep(100)
     }
 
     nsr_req.status = PROGRESSING_STATUS.COMPLETED
@@ -393,47 +477,43 @@ export class NumberService {
     activity.updated_at = new Date().toISOString()
     await this.activityRepository.save(activity)
 
-    await this.saveNSRResult(nsr_req, success_responses, activity, profile)
-
     this.messageQueueService.pushNSR(activity, nsr_req)
 
     return nsr_req
   }
 
-  private async saveNSRResult(nsr_req: NsrReq, responses: any[], activity: Activity, profile: AuthorizedUserProfile): Promise<void> {
-    for (const response of responses) {
-      if (response.numList == null)
-        continue
+  private async saveNSRResult(nsr_req: NsrReq, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let failed = 0, error_message = "";
+    let index = 0
+    for (const item of response.numList) {
+      let nsr_result = new NsrResult()
+      nsr_result.req_id = nsr_req.id
+      nsr_result.sub_dt_tm = nsr_req.sub_dt_tm
+      nsr_result.num = item
+      nsr_result.status = nsr_req.submit_type == NSR_SUBMIT_TYPE.SEARCH ? NUMBER_STATUS.SPARE : NUMBER_STATUS.RESERVED
 
-      let index = 0
-      for (const item of response.numList) {
-        let nsr_result = new NsrResult()
-        nsr_result.req_id = nsr_req.id
-        nsr_result.sub_dt_tm = nsr_req.sub_dt_tm
-        nsr_result.num = item
-        nsr_result.status = nsr_req.submit_type == NSR_SUBMIT_TYPE.SEARCH ? NUMBER_STATUS.SPARE : NUMBER_STATUS.RESERVED
-
-        if (response.suggestdNumList!=null && response.suggestdNumList.length>index) {
-          if (response.suggestdNumList[index]!=null && response.suggestdNumList[index].sggestedNum!=null) {
-            nsr_result.suggested_num = response.suggestdNumList[index].sggestedNum
-            nsr_result.message = MESSAGES.HAVE_SUGGESTED_NUMBER
-          }
+      if (response.suggestdNumList!=null && response.suggestdNumList.length>index) {
+        if (response.suggestdNumList[index]!=null && response.suggestdNumList[index].sggestedNum!=null) {
+          nsr_result.suggested_num = response.suggestdNumList[index].sggestedNum
+          nsr_result.message = MESSAGES.HAVE_SUGGESTED_NUMBER
         }
-
-        nsr_result.updated_at = new Date().toISOString()
-        await this.nsrResultRepository.create(nsr_result)
-
-        await this.saveNumber(profile, item,
-            nsr_req.submit_type==NSR_SUBMIT_TYPE.SEARCH ? NUMBER_STATUS.SPARE : NUMBER_STATUS.RESERVED,
-            nsr_req.sub_dt_tm!, NSR_SUBMIT_TYPE.SEARCH_RESERVE ? nsr_req.ro_id : "")
-
-        // TODO - adjust task's type, action
-        await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, nsr_req.submit_type==NSR_SUBMIT_TYPE.SEARCH ? TASK_ACTION.SEARCH : TASK_ACTION.RESERVE,
-            item, nsr_result.sub_dt_tm!, nsr_result.status, nsr_req.ro_id, nsr_result.message)
-
-        index++
       }
+
+      nsr_result.updated_at = new Date().toISOString()
+      await this.nsrResultRepository.create(nsr_result)
+
+      await this.saveNumber(profile, item,
+          nsr_req.submit_type==NSR_SUBMIT_TYPE.SEARCH ? NUMBER_STATUS.SPARE : NUMBER_STATUS.RESERVED,
+          nsr_req.sub_dt_tm!, NSR_SUBMIT_TYPE.SEARCH_RESERVE ? nsr_req.ro_id : "")
+
+      // TODO - adjust task's type, action
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, nsr_req.submit_type==NSR_SUBMIT_TYPE.SEARCH ? TASK_ACTION.SEARCH : TASK_ACTION.RESERVE,
+          item, nsr_result.sub_dt_tm!, nsr_result.status, nsr_req.ro_id, nsr_result.message)
+
+      index++
     }
+
+    return { code: failed, message: error_message };
   }
 
 
@@ -441,8 +521,10 @@ export class NumberService {
     let result = null
     let message = ""
 
+    let sub_dt_tm = new Date().toISOString()
+
     let response = await this.tfnRegistryApiService.queryNumberData(req.ro, { numList: [ req.num ] }, profile)
-    console.log(response)
+    console.log("NQU", response)
 
     if (response==null) {
       message = MESSAGES.EMPTY_RESPONSE
@@ -464,10 +546,10 @@ export class NumberService {
       let reqId = response.reqId
 
       while (response==null || response.errList!=null || response.queryResult==null) {
-        await DataUtils.sleep(1000)
+        await DataUtils.sleep(100)
 
-        response = await this.tfnRegistryApiService.retrieveNumberData(req.ro, reqId, profile)
-        console.log(response)
+        response = await this.tfnRegistryApiService.queryNumberDataByReqId(req.ro, reqId, profile)
+        console.log("NQU Req", response)
       }
 
       result = response.queryResult[0]
@@ -480,6 +562,8 @@ export class NumberService {
     }
 
     if (result!=null) {
+      // TODO - save number from Query Result.
+      // await this.saveNumber(profile, req.num, req.status!, sub_dt_tm, req.ro)
       // await this.saveResultFromNQU(type, req, activity, result, profile)
       return result
     }
@@ -488,7 +572,7 @@ export class NumberService {
   }
 
   async numberUpdate(req: NQURequest, profile: AuthorizedUserProfile) {
-    let result = null
+    let apiResult: any
     let activity: Activity = new Activity()
     activity.user_id = profile.user.id!
     activity.page = PAGES.NumberQueryAndUpdate
@@ -507,8 +591,10 @@ export class NumberService {
       tfNumList: [{num: req.num, recVersionId: req.recVersionId}],
       conName: req.contactName, conPhone: req.contactNumber, shrtNotes: req.shortNotes
     }
+
+    apiResult = null
     let response = await this.tfnRegistryApiService.updateNumber(req.ro, payload, profile)
-    console.log(response)
+    console.log("NQU", response)
 
     if (response==null) {
       activity.message = MESSAGES.EMPTY_RESPONSE
@@ -541,24 +627,21 @@ export class NumberService {
       let reqId = response.reqId
 
       while (response==null || response.errList!=null || response.updateResult==null) {
-        await DataUtils.sleep(1000)
+        await DataUtils.sleep(100)
 
-        response = await this.tfnRegistryApiService.retrieveUpdateNumber(req.ro, reqId, profile)
-
-        console.log(response)
+        response = await this.tfnRegistryApiService.updateNumberByReqId(req.ro, reqId, profile)
+        console.log("NQU Req", response)
       }
 
       // TODO - confirm response.  maybe api document is wrong.
-      result = response.updateResult[0]
+      apiResult = response.updateResult[0]
 
       activity.status = PROGRESSING_STATUS.SUCCESS
       activity.completed = 1
     }
-    else if (response.updateResult!=null && response.updateResult.length>0) {
-      result = response.updateResult[0]
+    else if (response.updateResult!=null) {
+      apiResult = response.updateResult[0]
 
-      activity.status = PROGRESSING_STATUS.SUCCESS
-      activity.completed = 1
     }
     else {
       activity.message = MESSAGES.INTERNAL_SERVER_ERROR
@@ -566,32 +649,54 @@ export class NumberService {
       activity.failed = 1
     }
 
+    if (apiResult!=null) {
+      let result = await this.saveNQUResult(req, activity, apiResult, profile)
+      console.log("NQU Result", result)
+
+      if (result.code>0)
+        activity.failed = 1
+      else
+        activity.completed = 1
+
+      activity.message = result.message
+    }
+
     activity.updated_at = new Date().toISOString()
     await this.activityRepository.save(activity)
 
     this.messageQueueService.pushNQU(activity, {})
 
-    if (result!=null) {
-      await this.saveNQUResult(req, activity, result, profile)
-      return result
-    }
+    if (activity.completed>0)
+      return apiResult;
 
     throw new HttpErrors.BadRequest(activity.message)
   }
 
   private async saveNQUResult(req: NQURequest, activity: Activity, result: any, profile: AuthorizedUserProfile) {
-    await this.saveNumber(profile, result.num, req.status!, activity.sub_dt_tm!, req.ro)
+    let failed = 0, error_message = "";
 
     let message = ""
-    if (result.errList!=null) {
-      if (result.errList.length>0) {
+    if (result.failReason!=null || result.errList!=null) {
+      if (result.failReason!=null && result.failReason.length>0) {
+        const error: any = result.failReason[0];
+        message = error.errMsg + " Code: " + error.errCode
+
+      } else if (result.errList!=null && result.errList.length>0) {
         const error: any = result.errList[0];
         message = error.errMsg + " Code: " + error.errCode
+
       } else
         message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      failed++
+      error_message = this.appendErrorMessage(error_message, message)
     }
+    else
+      await this.saveNumber(profile, result.num, req.status!, activity.sub_dt_tm!, req.ro)
 
     await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.UPDATE, result.num, activity.sub_dt_tm!, req.status!, req.ro, message)
+
+    return { code: failed, message: error_message };
   }
 
 
@@ -599,8 +704,8 @@ export class NumberService {
     let total = 0, completed = 0, failed = 0;
     let error_message = "";
     let numList = req.numList
-    let success_responses: any[] = []
     let payload: any = {}
+    let apiResult: any
 
     total = req.numList.length
 
@@ -641,6 +746,7 @@ export class NumberService {
 
       payload.qty = payload.numList.length
 
+      apiResult = null
       let response = await this.tfnRegistryApiService.queryTroubleReferralNumber(req.ro, payload.numList.join(","), profile)
       console.log(response)
 
@@ -675,13 +781,21 @@ export class NumberService {
         error_message = this.appendErrorMessage(error_message, "Request is in progress. " + "blkId: " + response.blkId)
 
       } else if (response.TRQResult!=null) {
-        completed += payload.qty; // response.numList.length
+        apiResult = response
 
-        success_responses.push(response)
       } else {
         failed += payload.qty
 
         error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+      }
+
+      if (apiResult!=null) {
+        let result = await this.saveTRQResult(trq_req, apiResult, activity, profile)
+        console.log("TRQ Result", result)
+
+        failed += result.code
+        completed += payload.qty - result.code
+        error_message = this.appendErrorMessage(error_message, result.message)
       }
 
       // save progress to nsr_req
@@ -700,7 +814,7 @@ export class NumberService {
       await this.activityRepository.save(activity)
 
       this.messageQueueService.pushTRQ(activity, trq_req)
-      await DataUtils.sleep(1000)
+      await DataUtils.sleep(100)
     }
 
     trq_req.status = PROGRESSING_STATUS.COMPLETED
@@ -715,49 +829,58 @@ export class NumberService {
     activity.updated_at = new Date().toISOString()
     await this.activityRepository.save(activity)
 
-    await this.saveTRQResult(trq_req, success_responses, activity, profile)
-
     this.messageQueueService.pushTRQ(activity, trq_req)
 
     return trq_req
   }
 
-  private async saveTRQResult(trq_req: TrqReq, responses: any[], activity: Activity, profile: AuthorizedUserProfile): Promise<void> {
-    for (const response of responses) {
-      if (response.TRQResult == null)
-        continue
+  private async saveTRQResult(trq_req: TrqReq, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let result: any[] = []
+    let failed = 0, error_message = "";
+    if (response.TRQResult!=null)
+      result = response.TRQResult
 
-      for (const item of response.TRQResult) {
-        let trq_result = new TrqResult()
-        trq_result.req_id = trq_req.id
-        trq_result.num = item.num
+    for (const item of result) {
+      let trq_result = new TrqResult()
+      trq_result.req_id = trq_req.id
+      trq_result.num = item.num
 
-        if (item.respOrgId!=null)
-          trq_result.resp_org_id = item.respOrgId
+      if (item.respOrgId!=null)
+        trq_result.resp_org_id = item.respOrgId
 
-        if (item.respOrgName!=null)
-          trq_result.resp_org_name = item.respOrgName
+      if (item.respOrgName!=null)
+        trq_result.resp_org_name = item.respOrgName
 
-        if (item.refNum!=null)
-          trq_result.ref_num = item.refNum
+      if (item.refNum!=null)
+        trq_result.ref_num = item.refNum
 
-        if (item.errList!=null) {
-          if (item.errList.length>0) {
-            const error: any = item.errList[0];
-            trq_result.message = error.errMsg + " Code: " + error.errCode
-          } else
-            trq_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+      if (item.failReason!=null || item.errList!=null) {
+        if (item.failReason!=null && item.failReason.length>0) {
+          const error: any = item.failReason[0];
+          trq_result.message = error.errMsg + " Code: " + error.errCode
 
-          trq_result.status = PROGRESSING_STATUS.FAILED
+        } else if (item.errList!=null && item.errList.length>0) {
+          const error: any = item.errList[0];
+          trq_result.message = error.errMsg + " Code: " + error.errCode
+
         } else
-          trq_result.status = PROGRESSING_STATUS.SUCCESS
+          trq_result.message = MESSAGES.INTERNAL_SERVER_ERROR
 
-        trq_result.updated_at = new Date().toISOString()
-        await this.trqResultRepository.create(trq_result)
+        trq_result.status = PROGRESSING_STATUS.FAILED
 
-        await this.saveActivityResult(profile, activity.id, TASK_TYPE.OTHER, TASK_ACTION.RETRIEVE, trq_result.num!, trq_req.sub_dt_tm!, trq_result.status, trq_result.resp_org_id, trq_result.message)
+        failed++
+        error_message = this.appendErrorMessage(error_message, trq_result.message)
+      } else {
+        trq_result.status = PROGRESSING_STATUS.COMPLETED
       }
+
+      trq_result.updated_at = new Date().toISOString()
+      await this.trqResultRepository.create(trq_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.OTHER, TASK_ACTION.RETRIEVE, trq_result.num!, trq_req.sub_dt_tm!, trq_result.status, trq_result.resp_org_id, trq_result.message)
     }
+
+    return { code: failed, message: error_message };
   }
 
 
@@ -765,8 +888,8 @@ export class NumberService {
     let total = 0, completed = 0, failed = 0;
     let error_message = "";
     let numList = req.numList
-    let success_responses: any[] = []
     let payload: any = {}
+    let apiResult: any
 
     total = req.numList.length
 
@@ -801,17 +924,20 @@ export class NumberService {
     payload.requestDesc = req.requestDesc
     payload.email = profile.user.email
 
+    const req_size = 500
+
     while (total>0) {
-      if (numList.length>REQ_SIZE) {
-        payload.numList = numList.splice(0, REQ_SIZE)
-        total -= REQ_SIZE
+      if (numList.length>req_size) {
+        payload.numList = numList.splice(0, req_size)
+        total -= req_size
       } else {
         payload.numList = numList
-        total -= REQ_SIZE
+        total -= req_size
       }
 
       payload.qty = payload.numList.length
 
+      apiResult = null
       let response = await this.tfnRegistryApiService.queryNumberData(req.ro, payload, profile)
       console.log("MNQ", response)
 
@@ -838,35 +964,40 @@ export class NumberService {
       else if (response.reqId!=null) {
         let reqId = response.reqId
         while (response==null || response.queryResult==null) {
-          await DataUtils.sleep(1000)
+          await DataUtils.sleep(100)
 
-          response = await this.tfnRegistryApiService.retrieveNumberData(req.ro, reqId, profile)
-          console.log(response)
+          response = await this.tfnRegistryApiService.queryNumberDataByReqId(req.ro, reqId, profile)
+          console.log("MNQ Req", response)
         }
 
-        completed += payload.qty; // response.numList.length
+        apiResult = response
 
-        success_responses.push(response)
       } else if (response.blkId!=null) {
         let blkId = response.blkId
         while (response==null || response.queryResult==null) {
-          await DataUtils.sleep(1000)
+          await DataUtils.sleep(100)
 
-          response = await this.tfnRegistryApiService.queryNumberDataByBulkID(req.ro, blkId, profile)
-          console.log(response)
+          response = await this.tfnRegistryApiService.queryNumberDataByBlkID(req.ro, blkId, profile)
+          console.log("MNQ Blk", response)
         }
 
-        completed += payload.qty; // response.numList.length
-
-        success_responses.push(response)
+        apiResult = response
       } else if (response.queryResult!=null) {
-        completed += payload.qty; // response.numList.length
+        apiResult = response
 
-        success_responses.push(response)
       } else {
         failed += payload.qty
 
         error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+      }
+
+      if (apiResult!=null) {
+        let result = await this.saveMNQResult(mnq_req, apiResult, activity, profile)
+        console.log("MNQ Result", result)
+
+        failed += result.code
+        completed += payload.qty - result.code
+        error_message = this.appendErrorMessage(error_message, result.message)
       }
 
       // save progress to nsr_req
@@ -885,7 +1016,7 @@ export class NumberService {
       await this.activityRepository.save(activity)
 
       this.messageQueueService.pushMNQ(activity, mnq_req)
-      await DataUtils.sleep(1000)
+      await DataUtils.sleep(100)
     }
 
     mnq_req.status = PROGRESSING_STATUS.COMPLETED
@@ -900,65 +1031,75 @@ export class NumberService {
     activity.updated_at = new Date().toISOString()
     await this.activityRepository.save(activity)
 
-    await this.saveMNQResult(mnq_req, success_responses, activity, profile)
-
     this.messageQueueService.pushMNQ(activity, mnq_req)
 
     return mnq_req
   }
 
-  private async saveMNQResult(mnq_req: MnqReq, responses: any[], activity: Activity, profile: AuthorizedUserProfile): Promise<void> {
-    for (const response of responses) {
-      if (response.queryResult == null)
-        continue
+  private async saveMNQResult(mnq_req: MnqReq, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let result: any[] = []
+    let failed = 0, error_message = "";
+    if (response.queryResult!=null)
+      result = response.queryResult
 
-      for (const item of response.queryResult) {
-        let mnq_result = new MnqResult()
-        mnq_result.req_id = mnq_req.id
-        mnq_result.num = item.num
-        mnq_result.status = item.status
+    for (const item of result) {
+      let mnq_result = new MnqResult()
+      mnq_result.req_id = mnq_req.id
+      mnq_result.num = item.num
+      mnq_result.status = item.status
 
-        if (item.ctrlRespOrgId!=null)
-          mnq_result.resp_org_id = item.ctrlRespOrgId
+      if (item.ctrlRespOrgId!=null)
+        mnq_result.resp_org_id = item.ctrlRespOrgId
 
-        if (item.lastActDt!=null)
-          mnq_result.last_act_dt = item.lastActDt
+      if (item.lastActDt!=null)
+        mnq_result.last_act_dt = item.lastActDt
 
-        if (item.resUntilDt!=null)
-          mnq_result.res_until_dt = item.resUntilDt
+      if (item.resUntilDt!=null)
+        mnq_result.res_until_dt = item.resUntilDt
 
-        if (item.discUntilDt!=null)
-          mnq_result.disc_until_dt = item.discUntilDt
+      if (item.discUntilDt!=null)
+        mnq_result.disc_until_dt = item.discUntilDt
 
-        if (item.effDt!=null)
-          mnq_result.eff_dt = item.effDt
+      if (item.effDt!=null)
+        mnq_result.eff_dt = item.effDt
 
-        if (item.conName!=null)
-          mnq_result.con_name = item.conName
+      if (item.conName!=null)
+        mnq_result.con_name = item.conName
 
-        if (item.conPhone!=null)
-          mnq_result.con_phone = item.conPhone
+      if (item.conPhone!=null)
+        mnq_result.con_phone = item.conPhone
 
-        if (item.shrtNotes!=null)
-          mnq_result.short_notes = item.shrtNotes
+      if (item.shrtNotes!=null)
+        mnq_result.short_notes = item.shrtNotes
 
-        if (item.errList!=null) {
-          if (item.errList.length>0) {
-            const error: any = item.errList[0];
-            mnq_result.message = error.errMsg + " Code: " + error.errCode
-          } else
-            mnq_result.message = MESSAGES.INTERNAL_SERVER_ERROR
-        }
+      if (item.failReason!=null || item.errList!=null) {
+        if (item.failReason!=null && item.failReason.length>0) {
+          const error: any = item.failReason[0];
+          mnq_result.message = error.errMsg + " Code: " + error.errCode
 
-        mnq_result.updated_at = new Date().toISOString()
-        await this.mnqResultRepository.create(mnq_result)
+        } else if (item.errList!=null && item.errList.length>0) {
+          const error: any = item.errList[0];
+          mnq_result.message = error.errMsg + " Code: " + error.errCode
 
-        // TODO - do not saved in java version
-        await this.saveNumber(profile, mnq_result.num!, mnq_result.status!, mnq_req.sub_dt_tm!, mnq_result.resp_org_id)
+        } else
+          mnq_result.message = MESSAGES.INTERNAL_SERVER_ERROR
 
-        await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.RETRIEVE, mnq_result.num!, mnq_req.sub_dt_tm!, mnq_result.status!, mnq_result.resp_org_id, mnq_result.message, mnq_result.eff_dt)
+        mnq_result.status = PROGRESSING_STATUS.FAILED
+
+        failed++
+        error_message = this.appendErrorMessage(error_message, mnq_result.message)
       }
+      else
+        // TODO - do not saved in java version
+        await this.saveNumber(profile, mnq_result.num!, mnq_result.status!, mnq_req.sub_dt_tm!, mnq_result.resp_org_id, undefined, mnq_result.eff_dt, mnq_result.last_act_dt, mnq_result.res_until_dt, mnq_result.disc_until_dt)
+
+      mnq_result.updated_at = new Date().toISOString()
+      await this.mnqResultRepository.create(mnq_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.RETRIEVE, mnq_result.num!, mnq_req.sub_dt_tm!, mnq_result.status!, mnq_result.resp_org_id, mnq_result.message, mnq_result.eff_dt)
     }
+
+    return { code: failed, message: error_message };
   }
 
 
@@ -966,8 +1107,8 @@ export class NumberService {
     let total = 0, completed = 0, failed = 0;
     let error_message = "";
     let numList = req.numList
-    let success_responses: any[] = []
     let payload: any = {}
+    let apiResult: any
 
     total = req.numList.length
 
@@ -1022,8 +1163,9 @@ export class NumberService {
 
       payload.qty = payload.numList.length
 
+      apiResult = null
       let response = await this.tfnRegistryApiService.createMultiNumberDisconnectForNumber(req.ro, payload, profile)
-      console.log(response)
+      console.log("MND", response)
 
       if (response==null) {
         failed += payload.qty
@@ -1053,22 +1195,29 @@ export class NumberService {
       } else if (response.blkId!=null) {
         let blkId = response.blkId
         while (response==null || response.disconnectResult==null) {
-          await DataUtils.sleep(1000)
+          await DataUtils.sleep(100)
 
           response = await this.tfnRegistryApiService.createMultiNumberDisconnectForNumberByBlkID(req.ro, blkId, profile)
-          console.log(response)
+          console.log("MND Blk", response)
         }
 
-        completed += payload.qty; // response.numList.length
-        success_responses.push(response)
+        apiResult = response
       } else if (response.disconnectResult!=null) {
-        completed += payload.qty; // response.numList.length
+        apiResult = response
 
-        success_responses.push(response)
       } else {
         failed += payload.qty
 
         error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+      }
+
+      if (apiResult!=null) {
+        let result = await this.saveMNDResult(mnd_req, apiResult, activity, profile)
+        console.log("MND Result", result)
+
+        failed += result.code
+        completed += payload.qty - result.code
+        error_message = this.appendErrorMessage(error_message, result.message)
       }
 
       // save progress to nsr_req
@@ -1087,7 +1236,7 @@ export class NumberService {
       await this.activityRepository.save(activity)
 
       this.messageQueueService.pushMND(activity, mnd_req)
-      await DataUtils.sleep(1000)
+      await DataUtils.sleep(100)
     }
 
     mnd_req.status = PROGRESSING_STATUS.COMPLETED
@@ -1102,46 +1251,59 @@ export class NumberService {
     activity.updated_at = new Date().toISOString()
     await this.activityRepository.save(activity)
 
-    await this.saveMNDResult(mnd_req, success_responses, activity, profile)
-
     this.messageQueueService.pushMND(activity, mnd_req)
 
     return mnd_req
   }
 
-  private async saveMNDResult(mnd_req: MndReq, responses: any[], activity: Activity, profile: AuthorizedUserProfile): Promise<void> {
-    for (const response of responses) {
-      if (response.disconnectResult == null)
-        continue
+  private async saveMNDResult(mnd_req: MndReq, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let result: any[] = []
+    let failed = 0, error_message = "";
+    if (response.disconnectResult!=null)
+      result = response.disconnectResult
 
-      for (const item of response.disconnectResult) {
-        let mnd_result = new MndResult()
-        mnd_result.req_id = mnd_req.id
-        mnd_result.num = item.num
-        mnd_result.status = item.status
+    for (const item of result) {
+      let mnd_result = new MndResult()
+      mnd_result.req_id = mnd_req.id
+      mnd_result.num = item.num
+      mnd_result.status = item.status
 
-        if (item.tmplName!=null)
-          mnd_result.template_name = item.tmplName
+      if (item.tmplName!=null)
+        mnd_result.template_name = item.tmplName
 
-        if (item.effDtTm!=null)
-          mnd_result.eff_dt_tm = item.effDtTm
+      if (item.effDtTm!=null)
+        mnd_result.eff_dt_tm = item.effDtTm
 
-        if (item.failReason!=null) {
-          if (item.failReason.length>0) {
-            const error: any = item.failReason[0];
-            mnd_result.message = error.errMsg + " Code: " + error.errCode
-          } else
-            mnd_result.message = MESSAGES.INTERNAL_SERVER_ERROR
-        }
+      if (item.failReason!=null || item.errList!=null) {
+        if (item.failReason!=null && item.failReason.length>0) {
+          const error: any = item.failReason[0];
+          mnd_result.message = error.errMsg + " Code: " + error.errCode
 
-        mnd_result.updated_at = new Date().toISOString()
-        await this.mndResultRepository.create(mnd_result)
+        } else if (item.errList!=null && item.errList.length>0) {
+          const error: any = item.errList[0];
+          mnd_result.message = error.errMsg + " Code: " + error.errCode
 
-        if (mnd_result.status!="FAILED")
-          await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.DISCONNECT, mnd_result.num!, mnd_req.sub_dt_tm!, mnd_result.status!,
-            response.respOrgId, mnd_result.message, mnd_result.eff_dt_tm, mnd_result.template_name, mnd_req.start_eff_dt_tm=="NOW")
+        } else
+          mnd_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+
+        mnd_result.status = PROGRESSING_STATUS.FAILED
+
+        failed++
+        error_message = this.appendErrorMessage(error_message, mnd_result.message)
+      } else {
+        await this.saveNumber(profile, mnd_result.num!, NUMBER_STATUS.DISCONNECT, mnd_req.sub_dt_tm!, undefined, mnd_result.template_name, mnd_result.eff_dt_tm)
       }
+
+
+      mnd_result.updated_at = new Date().toISOString()
+      await this.mndResultRepository.create(mnd_result)
+
+      // if (mnd_result.status!=PROGRESSING_STATUS.FAILED)
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.DISCONNECT, mnd_result.num!, mnd_req.sub_dt_tm!, mnd_result.status!,
+        response.respOrgId, mnd_result.message, mnd_result.eff_dt_tm, mnd_result.template_name, mnd_req.start_eff_dt_tm=="NOW")
     }
+
+    return { code: failed, message: error_message };
   }
 
 
@@ -1149,9 +1311,9 @@ export class NumberService {
     let total = 0, completed = 0, failed = 0;
     let error_message = "";
     let numList = req.numList
-    let success_responses: any[] = []
-    let queryResult = null
     let payload: any = {}
+    let recVersionId = { code: '', message: '' }
+    let apiResult: any
 
     total = req.numList.length
 
@@ -1196,66 +1358,152 @@ export class NumberService {
       }
 
       payload.qty = payload.numList.length
+      if (payload.qty==1) {
+        apiResult = null
 
-      queryResult = null
-      let response = await this.tfnRegistryApiService.queryNumberData(req.ro, payload, profile)
-      console.log("MNS", response)
+        let response = await this.tfnRegistryApiService.queryNumberData(req.ro, payload, profile)
+        console.log("MNS Query", response)
 
-      if (response==null) {
-        failed += payload.qty
+        if (response==null) {
+          failed += payload.qty
 
-        error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
-      }
-      else if (response.errList!=null) {
-        if (response.errList.length>0) {
-          const error: any = response.errList[0];
-          error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
-        } else
+          error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
+        }
+        else if (response.errList!=null) {
+          if (response.errList.length>0) {
+            const error: any = response.errList[0];
+            error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
+          } else
+            error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+
+          failed += payload.qty
+        }
+        else if (response.code!=null && response.message!=null) {
+          failed += payload.qty
+
+          error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
+        }
+        else if (response.reqId!=null) {
+          let reqId = response.reqId
+          while (response==null || response.queryResult==null) {
+            await DataUtils.sleep(100)
+
+            response = await this.tfnRegistryApiService.queryNumberDataByReqId(req.ro, reqId, profile)
+            console.log("MNS Query Req", response)
+          }
+
+          apiResult = response.queryResult[0]
+        } else if (response.blkId!=null) {
+          let blkId = response.blkId
+          while (response==null || response.queryResult==null) {
+            await DataUtils.sleep(100)
+
+            response = await this.tfnRegistryApiService.queryNumberDataByBlkID(req.ro, blkId, profile)
+            console.log("MNS Query Blk", response)
+          }
+
+          apiResult = response.queryResult[0]
+        } else if (response.queryResult!=null) {
+          apiResult = response.queryResult[0]
+
+        } else {
+          failed += payload.qty
+
           error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
-
-        failed += payload.qty
-
-      }
-      else if (response.code!=null && response.message!=null) {
-        failed += payload.qty
-
-        error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
-      }
-      else if (response.reqId!=null) {
-        let reqId = response.reqId
-        while (response==null || response.queryResult==null) {
-          await DataUtils.sleep(1000)
-
-          response = await this.tfnRegistryApiService.retrieveNumberData(req.ro, reqId, profile)
-          console.log(response)
         }
 
-        queryResult = response.queryResult
-      } else if (response.blkId!=null) {
-        let blkId = response.blkId
-        while (response==null || response.queryResult==null) {
-          await DataUtils.sleep(1000)
-
-          response = await this.tfnRegistryApiService.queryNumberDataByBulkID(req.ro, blkId, profile)
-          console.log(response)
+        if (apiResult!=null) {
+          recVersionId = await this.saveMNSResultForQuery(mns_req, apiResult, activity, profile)
+          if (recVersionId.code=='') {
+            failed++;
+            error_message = this.appendErrorMessage(error_message, recVersionId.message)
+          }
         }
-
-        queryResult = response.queryResult
-      } else if (response.queryResult!=null) {
-        queryResult = response.queryResult
-
-      } else {
-        failed += payload.qty
-
-        error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
       }
 
-      // query succeed
-      if (queryResult!=null) {
-        let queryResults = await this.getMNSResult(mns_req, queryResult, activity, profile)
-        failed += payload.qty - queryResults.length
+      let tfNumList: any[] = [];
+      if (payload.qty==1)
+        tfNumList = payload.numList.map((num: string) => {
+          return {
+            recVersionId: recVersionId.code,
+            num
+          }
+        })
+      else
+        tfNumList = payload.numList.map((num: string) => {
+          return {
+            num
+          }
+        })
 
-        success_responses = success_responses.concat(queryResults)
+      apiResult = null
+      if (payload.qty>1 || recVersionId.code!="") {
+        let response = await this.tfnRegistryApiService.updateNumber(req.ro, {
+          tfNumList,
+          status: NUMBER_STATUS.SPARE,
+          requestDesc: req.requestDesc,
+        }, profile)
+        console.log("MNS Update", response)
+
+        if (response==null) {
+          failed += payload.qty
+
+          error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
+        }
+        else if (response.errList!=null) {
+          if (response.errList.length>0) {
+            const error: any = response.errList[0];
+            error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
+          } else
+            error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+
+          failed += payload.qty
+        }
+        else if (response.code!=null && response.message!=null) {
+          failed += payload.qty
+
+          error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
+        }
+        else if (response.reqId!=null) {
+          let reqId = response.reqId
+
+          while (response==null || response.updateResult==null) {
+            await DataUtils.sleep(100)
+
+            response = await this.tfnRegistryApiService.updateNumberByReqId(req.ro, reqId, profile)
+            console.log("MNS Update Req", response)
+          }
+
+          apiResult = response;
+        } else if (response.blkId!=null) {
+          let blkId = response.blkId
+
+          while (response==null || response.spareResult==null) {
+            await DataUtils.sleep(100)
+
+            response = await this.tfnRegistryApiService.retrieveNumberSpareByBlkID(req.ro, blkId, profile)
+            console.log("MNS Update Blk", response)
+          }
+
+          apiResult = response;
+
+        } else if (response.updateResult!=null) {
+          apiResult = response;
+
+        } else {
+          failed += payload.qty
+
+          error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+        }
+      }
+
+      if (apiResult!=null) {
+        let result = await this.saveMNSResult(mns_req, apiResult, activity, profile)
+        console.log("MNS Result", result)
+
+        failed += result.code
+        completed += payload.qty - result.code
+        error_message = this.appendErrorMessage(error_message, result.message)
       }
 
       // save progress
@@ -1274,102 +1522,7 @@ export class NumberService {
       await this.activityRepository.save(activity)
 
       this.messageQueueService.pushMNS(activity, mns_req)
-      await DataUtils.sleep(1000)
-    }
-
-    for (const mns_result of success_responses) {
-      let payload: any = {
-        tfNumList: [{num: mns_result.num, recVersionId: mns_result.rec_version_id}],
-        status: NUMBER_STATUS.SPARE,
-      }
-
-      queryResult = null
-      let reason = ""
-      let response = await this.tfnRegistryApiService.updateNumber(req.ro, payload, profile)
-      console.log(response)
-
-      if (response==null) {
-        failed += 1
-
-        error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
-        reason = MESSAGES.EMPTY_RESPONSE
-      }
-      else if (response.errList!=null) {
-        reason = MESSAGES.INTERNAL_SERVER_ERROR
-        if (response.errList.length>0) {
-          const error: any = response.errList[0];
-          error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
-          reason = error.errMsg + " Code: " + error.errCode
-        } else
-          error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
-
-        failed += 1
-      }
-      else if (response.code!=null && response.message!=null) {
-        failed += 1
-
-        error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
-        reason = response.message + (response.code!="" ? " Code: " + response.code : "")
-      }
-      else if (response.reqId!=null) {
-        let reqId = response.reqId
-
-        while (response==null || response.errList!=null || response.updateResult==null) {
-          await DataUtils.sleep(1000)
-
-          response = await this.tfnRegistryApiService.retrieveUpdateNumber(req.ro, reqId, profile)
-
-          console.log(response)
-        }
-
-        queryResult = response.updateResult[0]
-
-      } else if (response.blkId!=null) {
-        failed += 1
-
-        error_message = this.appendErrorMessage(error_message, "Request is in progress. " + "blkId: " + response.blkId)
-        reason = "Request is in progress. " + "blkId: " + response.blkId
-
-      } else if (response.updateResult!=null) {
-        queryResult = response.updateResult[0]
-
-      } else {
-        failed += 1
-
-        error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
-        reason = MESSAGES.INTERNAL_SERVER_ERROR
-      }
-
-      if (queryResult!=null) {
-        completed += 1;
-
-        mns_result.status = NUMBER_STATUS.SPARE
-        mns_result.message = reason
-        mns_result.updated_at = new Date().toISOString()
-        await this.mnsResultRepository.create(mns_result)
-
-        await this.saveNumber(profile, mns_result.num!, mns_result.status!, mns_req.sub_dt_tm!, mns_result.resp_org_id)
-
-        await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.SPARE, mns_result.num, activity.sub_dt_tm!, mns_req.status!, mns_result.resp_org_id, reason)
-      }
-
-      // save progress
-      mns_req.completed = completed;
-      mns_req.failed = failed;
-      mns_req.status = PROGRESSING_STATUS.IN_PROGRESS
-      mns_req.message = error_message
-      mns_req.updated_at = new Date().toISOString()
-      await this.mnsReqRepository.save(mns_req)
-
-      activity.completed = completed
-      activity.failed = failed
-      activity.status = PROGRESSING_STATUS.IN_PROGRESS
-      activity.message = error_message
-      activity.updated_at = new Date().toISOString()
-      await this.activityRepository.save(activity)
-
-      this.messageQueueService.pushMNS(activity, mns_req)
-      await DataUtils.sleep(1000)
+      await DataUtils.sleep(100)
     }
 
     mns_req.status = PROGRESSING_STATUS.COMPLETED
@@ -1389,59 +1542,87 @@ export class NumberService {
     return mns_req
   }
 
-  private async getMNSResult(mns_req: MnsReq, queryResult: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any[]> {
-    let result: any[] = []
+  private async saveMNSResultForQuery(mns_req: MnsReq, queryResult: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let error_message = ""
 
-    for (const item of queryResult) {
+    if (queryResult.errList != null || queryResult.failReason != null || queryResult.recVersionId==null) {
+      let mns_result = new MnsResult()
+      mns_result.req_id = mns_req.id
+      mns_result.num = queryResult.num
+      mns_result.status = PROGRESSING_STATUS.FAILED; // queryResult.status
+
+      if (queryResult.errList != null && queryResult.errList.length > 0) {
+        const error: any = queryResult.errList[0];
+        mns_result.message = error.errMsg + " Code: " + error.errCode
+
+      } else if (queryResult.failReason!=null && queryResult.failReason.length>0) {
+        const error: any = queryResult.failReason[0];
+        mns_result.message = error.errMsg + " Code: " + error.errCode
+
+      } else if (queryResult.recVersionId==null) {
+        mns_result.message = "Query Result have not Timestamp(recVersionId)."
+
+      } else
+        mns_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      error_message = mns_result.message
+      mns_result.updated_at = new Date().toISOString()
+      await this.mnsResultRepository.create(mns_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.UPDATE, mns_result.num!, activity.sub_dt_tm!, mns_req.status!, undefined, mns_result.message)
+    }
+
+    return { code: queryResult.recVersionId !=null ? queryResult.recVersionId : "", message: error_message};
+  }
+
+  private async saveMNSResult(mns_req: MnsReq, response: any, activity: Activity, profile: AuthorizedUserProfile) {
+    let result: any[] = []
+    let failed = 0, error_message = "";
+    if (response.updateResult!=null)
+      result = response.updateResult
+    else if (response.spareResult!=null)
+      result = response.spareResult
+
+    let newRespOrgId = mns_req.ro_id
+    if (response.respOrgId!=null)
+      newRespOrgId = response.respOrgId
+
+    for (const item of result) {
       let mns_result = new MnsResult()
       mns_result.req_id = mns_req.id
       mns_result.num = item.num
-      mns_result.status = item.status
 
-      if (item.ctrlRespOrgId != null)
-        mns_result.resp_org_id = item.ctrlRespOrgId
+      // spareResult have "status" field. = COMPLETED
+      mns_result.status = NUMBER_STATUS.SPARE
 
-      if (item.lastActDt != null)
-        mns_result.last_act_dt = item.lastActDt
-
-      if (item.resUntilDt != null)
-        mns_result.res_until_dt = item.resUntilDt
-
-      if (item.discUntilDt != null)
-        mns_result.disc_until_dt = item.discUntilDt
-
-      if (item.effDt != null)
-        mns_result.eff_dt = item.effDt
-
-      if (item.conName != null)
-        mns_result.con_name = item.conName
-
-      if (item.conPhone != null)
-        mns_result.con_phone = item.conPhone
-
-      if (item.shrtNotes != null)
-        mns_result.short_notes = item.shrtNotes
-
-      if (item.recVersionId != null)
-        mns_result.rec_version_id = item.recVersionId
-
-      if (item.errList != null) {
-        if (item.errList.length > 0) {
+      if (item.errList!=null || item.failReason!=null) {
+        if (item.errList!=null && item.errList.length>0) {
           const error: any = item.errList[0];
           mns_result.message = error.errMsg + " Code: " + error.errCode
+
+        } else if (item.failReason!=null && item.failReason.length>0) {
+          const error: any = item.failReason[0];
+          mns_result.message = error.errMsg + " Code: " + error.errCode
+
         } else
           mns_result.message = MESSAGES.INTERNAL_SERVER_ERROR
 
-        mns_result.updated_at = new Date().toISOString()
-        await this.mnsResultRepository.create(mns_result)
+        mns_result.status = PROGRESSING_STATUS.FAILED;
 
-        await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.SPARE, mns_result.num!, activity.sub_dt_tm!, mns_req.status!, mns_result.resp_org_id, mns_result.message)
+        failed++
+        error_message = this.appendErrorMessage(error_message, mns_result.message)
       } else {
-        result.push(mns_result)
+        await this.saveNumber(profile, mns_result.num!, mns_result.status, mns_req.sub_dt_tm!, newRespOrgId)
       }
+
+      mns_result.updated_at = new Date().toISOString()
+      await this.mnsResultRepository.create(mns_result)
+
+      // if (mro_result.status!="FAILED")
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.UPDATE, mns_result.num!, mns_req.sub_dt_tm!, mns_result.status!, newRespOrgId, mns_result.message)
     }
 
-    return result
+    return { code: failed, message: error_message };
   }
 
 
@@ -1449,8 +1630,8 @@ export class NumberService {
     let total = 0, completed = 0, failed = 0;
     let error_message = "";
     let numList = req.numList
-    let success_responses: any[] = []
     let payload: any = {}
+    let apiResult: any
 
     total = req.numList.length
 
@@ -1458,9 +1639,8 @@ export class NumberService {
     mro_req.user_id = profile.user.id!
     mro_req.num_list = JSON.stringify(req.numList)
     mro_req.request_desc = req.requestDesc
-
-    mro_req.ro_id = req.ro
     mro_req.new_ro_id = req.new_ro
+    mro_req.ro_id = req.ro
     mro_req.total = total
     mro_req.status = PROGRESSING_STATUS.IN_PROGRESS
     mro_req.sub_dt_tm = new Date().toISOString()
@@ -1499,8 +1679,9 @@ export class NumberService {
 
       payload.qty = payload.numList.length
 
+      apiResult = null
       let response = await this.tfnRegistryApiService.changeRespOrgOfTollFreeNumber(req.ro, payload, profile)
-      console.log(response)
+      console.log("MRO", response)
 
       if (response==null) {
         failed += payload.qty
@@ -1530,22 +1711,30 @@ export class NumberService {
       } else if (response.blkId!=null) {
         let blkId = response.blkId
         while (response==null || response.mroResult==null) {
-          await DataUtils.sleep(1000)
+          await DataUtils.sleep(100)
 
           response = await this.tfnRegistryApiService.changeRespOrgOfTollFreeNumberByBlkId(req.ro, blkId, profile)
-          console.log(response)
+          console.log("MRO Blk", response)
         }
 
-        completed += payload.qty; // response.numList.length
-        success_responses.push(response)
-      } else if (response.mroResult!=null) {
-        completed += payload.qty; // response.numList.length
+        apiResult = response
 
-        success_responses.push(response.mroResult)
+      } else if (response.mroResult!=null) {
+        apiResult = response
+
       } else {
         failed += payload.qty
 
         error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+      }
+
+      if (apiResult!=null) {
+        let result = await this.saveMROResult(mro_req, apiResult, activity, profile)
+        console.log("MRO Result", result)
+
+        failed += result.code
+        completed += payload.qty - result.code
+        error_message = this.appendErrorMessage(error_message, result.message)
       }
 
       // save progress to nsr_req
@@ -1564,7 +1753,7 @@ export class NumberService {
       await this.activityRepository.save(activity)
 
       this.messageQueueService.pushMRO(activity, mro_req)
-      await DataUtils.sleep(1000)
+      await DataUtils.sleep(100)
     }
 
     mro_req.status = PROGRESSING_STATUS.COMPLETED
@@ -1579,44 +1768,1150 @@ export class NumberService {
     activity.updated_at = new Date().toISOString()
     await this.activityRepository.save(activity)
 
-    await this.saveMROResult(mro_req, success_responses, activity, profile)
-
     this.messageQueueService.pushMRO(activity, mro_req)
 
     return mro_req
   }
 
-  private async saveMROResult(mro_req: MroReq, responses: any[], activity: Activity, profile: AuthorizedUserProfile): Promise<void> {
-    for (const response of responses) {
-      if (response.mroResult == null)
-        continue
+  private async saveMROResult(mro_req: MroReq, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let result: any[] = []
+    let failed = 0, error_message = "";
+    if (response.mroResult!=null)
+      result = response.mroResult
 
-      for (const item of response.mroResult) {
-        let mro_result = new MroResult()
-        mro_result.req_id = mro_req.id
-        mro_result.num = item.num
-        mro_result.status = item.status
+    console.log("---------", result)
 
-        if (item.failReason!=null) {
-          if (item.failReason.length>0) {
-            const error: any = item.failReason[0];
-            mro_result.message = error.errMsg + " Code: " + error.errCode
-          } else
-            mro_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+    let newRespOrgId = mro_req.new_ro_id
+    if (response.newRespOrgId!=null)
+      newRespOrgId = response.newRespOrgId
+
+    for (const item of result) {
+      console.log("MRO Item", item)
+
+      let mro_result = new MroResult()
+      mro_result.req_id = mro_req.id
+      mro_result.num = item.num
+      mro_result.status = item.status
+
+      if (item.failReason!=null || item.errList!=null) {
+        if (item.failReason!=null && item.failReason.length>0) {
+          const error: any = item.failReason[0];
+          mro_result.message = error.errMsg + " Code: " + error.errCode
+
+        } else if (item.errList!=null && item.errList.length>0) {
+          const error: any = item.errList[0];
+          mro_result.message = error.errMsg + " Code: " + error.errCode
+
+        } else
+          mro_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+
+        mro_result.status = PROGRESSING_STATUS.FAILED
+
+        failed++
+        error_message = this.appendErrorMessage(error_message, mro_result.message)
+        console.log("MRO Result", failed, error_message)
+      } else {
+        await this.saveNumber(profile, mro_result.num!, undefined, mro_req.sub_dt_tm, newRespOrgId)
+      }
+
+      mro_result.updated_at = new Date().toISOString()
+      await this.mroResultRepository.create(mro_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.CHANGE, mro_result.num!, mro_req.sub_dt_tm!, mro_result.status!,
+          newRespOrgId, mro_result.message)
+    }
+
+    return { code: failed, message: error_message };
+  }
+
+
+  async convertToPointerRecord(req: MCPRequest, profile: AuthorizedUserProfile) {
+    let total = 0, completed = 0, failed = 0;
+    let error_message = "";
+    let numList = req.numList
+    let payload: any = {}
+    let recVersionId = { code: '', message: '' }
+    let apiResult: any
+
+    total = req.numList.length
+
+    let mcp_req = new McpReq()
+    mcp_req.user_id = profile.user.id!
+    mcp_req.num_list = JSON.stringify(req.numList)
+    mcp_req.request_desc = req.requestDesc
+    mcp_req.template_name = req.templateName
+    mcp_req.start_eff_dt_tm = req.startEffDtTm
+    mcp_req.ro_id = req.ro
+    mcp_req.total = total
+    mcp_req.status = PROGRESSING_STATUS.IN_PROGRESS
+    mcp_req.sub_dt_tm = new Date().toISOString()
+    mcp_req.updated_at = new Date().toISOString()
+
+    mcp_req = await this.mcpReqRepository.create(mcp_req)
+
+    let activity: Activity = new Activity()
+    activity.user_id = profile.user.id!
+    activity.page = PAGES.MultiConversionToPointerRecord
+    activity.operation = PAGE_OPERATION.CONVERT
+    activity.resp_org = req.ro
+    activity.status = PROGRESSING_STATUS.IN_PROGRESS
+    activity.sub_dt_tm = new Date().toISOString()
+    activity.created_at = new Date().toISOString()
+    activity.updated_at = new Date().toISOString()
+    activity.total = total
+    activity.req_id = mcp_req.id
+
+    activity = await this.activityRepository.create(activity)
+
+    this.messageQueueService.pushMCP(activity, mcp_req)
+
+    let response = await this.tfnRegistryApiService.queryTemplateRecord(req.ro, req.templateName, profile)
+    if (response==null) {
+      failed += req.numList.length
+
+      error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
+    }
+    else if (response.errList!=null) {
+      if (response.errList.length>0) {
+        const error: any = response.errList[0];
+        error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
+      } else
+        error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+
+      failed += req.numList.length
+    }
+    else if (response.code!=null && response.message!=null) {
+      failed += req.numList.length
+
+      error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
+    }
+    else if (response.reqId!=null) {
+      let reqId = response.reqId
+      while (response==null || response.lstEffDtTms==null) {
+        await DataUtils.sleep(100)
+
+        response = await this.tfnRegistryApiService.queryTemplateRecordByReqId(req.ro, reqId, profile)
+        console.log("MCP Template Req", response)
+      }
+
+      apiResult = response
+    } else if (response.blkId!=null) {
+      failed += req.numList.length
+
+      error_message = this.appendErrorMessage(error_message, "Request is in Progress. BlkId: " + response.blkId)
+
+    } else if (response.lstEffDtTms!=null) {
+      apiResult = response.lstEffDtTms
+
+    } else {
+      failed += payload.qty
+
+      error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+    }
+
+    if (apiResult!=null) {
+      payload.tmplName = req.templateName
+      payload.requestDesc = req.requestDesc
+      payload.tgtEffDtTm = req.startEffDtTm
+      payload.email = profile.user.email
+
+      while (total>0) {
+        if (numList.length>REQ_SIZE) {
+          payload.numList = numList.splice(0, REQ_SIZE)
+          total -= REQ_SIZE
+        } else {
+          payload.numList = numList
+          total -= REQ_SIZE
         }
 
-        mro_result.updated_at = new Date().toISOString()
-        await this.mroResultRepository.create(mro_result)
+        payload.qty = payload.numList.length
+        if (payload.qty==1) {
+          apiResult = null
 
-        // if (mro_result.status!="FAILED")
-          await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.CHANGE, mro_result.num!, mro_req.sub_dt_tm!, mro_result.status!,
-              response.newRespOrgId, mro_result.message)
+          let response = await this.tfnRegistryApiService.queryCustomerRecord(req.ro, payload.numList[0], payload.tgtEffDtTm, profile)
+          console.log("MCP Query", response)
+
+          if (response==null) {
+            failed += payload.qty
+
+            error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
+          }
+          else if (response.errList!=null) {
+            if (response.errList.length>0) {
+              const error: any = response.errList[0];
+              error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
+            } else
+              error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+
+            failed += payload.qty
+          }
+          else if (response.code!=null && response.message!=null) {
+            failed += payload.qty
+
+            error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
+          }
+          else if (response.reqId!=null) {
+            let reqId = response.reqId
+            while (response==null || response.lstEffDtTms==null) {
+              await DataUtils.sleep(100)
+
+              response = await this.tfnRegistryApiService.queryCustomerRecordByReqId(req.ro, reqId, profile)
+              console.log("MNS Query Req", response)
+            }
+
+            apiResult = response.lstEffDtTms
+          } else if (response.blkId!=null) {
+            failed += payload.qty
+
+            error_message = this.appendErrorMessage(error_message, "Request is in progress. BlkId: " + response.blkId)
+          } else if (response.lstEffDtTms!=null) {
+            apiResult = response.lstEffDtTms
+
+          } else {
+            failed += payload.qty
+
+            error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+          }
+
+          if (apiResult!=null) {
+            recVersionId = await this.saveMCPResultForQuery(payload.numList[0], mcp_req, apiResult, activity, profile)
+            if (recVersionId.code=='') {
+              failed++;
+              error_message = this.appendErrorMessage(error_message, recVersionId.message)
+            }
+          }
+        }
+
+        if (payload.qty==1)
+          payload.recVersionId = recVersionId.code
+
+        apiResult = null
+        if (payload.qty>1 || recVersionId.code!="") {
+          let response = await this.tfnRegistryApiService.convertCustomerRecordToPointerRecord(req.ro, payload, profile)
+          console.log("MCP Convert", response)
+
+          if (response==null) {
+            failed += payload.qty
+
+            error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
+          }
+          else if (response.errList!=null) {
+            if (response.errList.length>0) {
+              const error: any = response.errList[0];
+              error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
+            } else
+              error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+
+            failed += payload.qty
+          }
+          else if (response.code!=null && response.message!=null) {
+            failed += payload.qty
+
+            error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
+          }
+          else if (response.reqId!=null) {
+            let reqId = response.reqId
+
+            while (response==null || response.mcpResult==null) {
+              await DataUtils.sleep(100)
+
+              response = await this.tfnRegistryApiService.convertCustomerRecordToPointerRecordByReqId(req.ro, reqId, profile)
+              console.log("MCP Convert Req", response)
+            }
+
+            apiResult = response;
+          } else if (response.blkId!=null) {
+            let blkId = response.blkId
+
+            while (response==null || response.mcpResult==null) {
+              await DataUtils.sleep(100)
+
+              response = await this.tfnRegistryApiService.convertCustomerRecordToPointerRecordByBlkId(req.ro, blkId, profile)
+              console.log("MCP Conv Blk", response)
+            }
+
+            apiResult = response;
+
+          } else if (response.mcpResult!=null) {
+            apiResult = response;
+
+          } else {
+            failed += payload.qty
+
+            error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+          }
+        }
+
+        if (apiResult!=null) {
+          let result = await this.saveMCPResult(mcp_req, apiResult, activity, profile)
+          console.log("MCP Result", result)
+
+          failed += result.code
+          completed += payload.qty - result.code
+          error_message = this.appendErrorMessage(error_message, result.message)
+        }
+
+        // save progress
+        mcp_req.completed = completed;
+        mcp_req.failed = failed;
+        mcp_req.status = PROGRESSING_STATUS.IN_PROGRESS
+        mcp_req.message = error_message
+        mcp_req.updated_at = new Date().toISOString()
+        await this.mcpReqRepository.save(mcp_req)
+
+        activity.completed = completed
+        activity.failed = failed
+        activity.status = PROGRESSING_STATUS.IN_PROGRESS
+        activity.message = error_message
+        activity.updated_at = new Date().toISOString()
+        await this.activityRepository.save(activity)
+
+        this.messageQueueService.pushMNS(activity, mcp_req)
+        await DataUtils.sleep(100)
       }
+    }
+    else {
+      mcp_req.completed = completed;
+      mcp_req.failed = failed;
+      mcp_req.status = PROGRESSING_STATUS.IN_PROGRESS
+      mcp_req.message = error_message
+      mcp_req.updated_at = new Date().toISOString()
+      await this.mcpReqRepository.save(mcp_req)
+
+      activity.completed = completed
+      activity.failed = failed
+      activity.status = PROGRESSING_STATUS.IN_PROGRESS
+      activity.message = error_message
+      activity.updated_at = new Date().toISOString()
+      await this.activityRepository.save(activity)
+
+      this.messageQueueService.pushMCP(activity, mcp_req)
+      await DataUtils.sleep(100)
+
+      await this.saveMCPResultForAllFailed(req.numList, mcp_req, activity, profile)
+    }
+
+    mcp_req.status = PROGRESSING_STATUS.COMPLETED
+    if (mcp_req.total == mcp_req.failed)
+      mcp_req.status = PROGRESSING_STATUS.FAILED
+    else if (mcp_req.total == mcp_req.completed)
+      mcp_req.status = PROGRESSING_STATUS.SUCCESS
+    mcp_req.updated_at = new Date().toISOString()
+    await this.mcpReqRepository.save(mcp_req)
+
+    activity.status = mcp_req.status
+    activity.updated_at = new Date().toISOString()
+    await this.activityRepository.save(activity)
+
+    this.messageQueueService.pushMCP(activity, mcp_req)
+
+    return mcp_req
+  }
+
+  private async saveMCPResultForAllFailed(nums: string[], mcp_req: McpReq, activity: Activity, profile: AuthorizedUserProfile) {
+    for (const item of nums){
+      let mcp_result = new McpResult()
+      mcp_result.req_id = mcp_req.id
+      mcp_result.num = item
+      mcp_result.status = PROGRESSING_STATUS.FAILED
+      mcp_result.message = activity.message
+
+      mcp_result.updated_at = new Date().toISOString()
+      await this.mcpResultRepository.create(mcp_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.CONVERT, mcp_result.num!, mcp_req.sub_dt_tm!, mcp_result.status!,
+          undefined, mcp_result.message)
     }
   }
 
-  async convertToPointerRecord(req: MCPRequest, profile: AuthorizedUserProfile): Promise<any> {
+  private async saveMCPResultForQuery(num: string, mcp_req: McpReq, queryResult: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let error_message = ""
 
+    if (queryResult.errList != null || queryResult.failReason != null || queryResult.recVersionId==null) {
+      let mcp_result = new McpResult()
+      mcp_result.req_id = mcp_req.id
+      mcp_result.num = num
+      mcp_result.status = PROGRESSING_STATUS.FAILED; // queryResult.status
+
+      if (queryResult.errList != null && queryResult.errList.length > 0) {
+        const error: any = queryResult.errList[0];
+        mcp_result.message = error.errMsg + " Code: " + error.errCode
+
+      } else if (queryResult.failReason!=null && queryResult.failReason.length>0) {
+        const error: any = queryResult.failReason[0];
+        mcp_result.message = error.errMsg + " Code: " + error.errCode
+
+      } else if (queryResult.recVersionId==null) {
+        mcp_result.message = "Query Result have not Timestamp(recVersionId)."
+
+      } else
+        mcp_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      error_message = mcp_result.message
+      mcp_result.updated_at = new Date().toISOString()
+      await this.mcpResultRepository.create(mcp_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.CONVERT, mcp_result.num!, mcp_req.sub_dt_tm!, mcp_result.status!, undefined, mcp_result.message)
+    }
+
+    return { code: queryResult.recVersionId !=null ? queryResult.recVersionId : "", message: error_message};
+  }
+
+  private async saveMCPResult(mcp_req: McpReq, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let result: any[] = []
+    let failed = 0, error_message = "";
+    if (response.mcpResult!=null)
+      result = response.mcpResult
+
+    let newRespOrgId = null
+    if (response.respOrgId!=null)
+      newRespOrgId = response.respOrgId
+
+    for (const item of result) {
+      let mcp_result = new McpResult()
+      mcp_result.req_id = mcp_req.id
+      mcp_result.num = item.num
+      if (response.effDtTm!=null)
+        mcp_result.eff_dt_tm = response.effDtTm
+
+      if (item.errList!=null || item.failReason!=null) {
+        if (item.errList != null && item.errList.length > 0) {
+          const error: any = item.errList[0];
+          mcp_result.message = error.errMsg + " Code: " + error.errCode
+
+        } else if (item.failReason!=null && item.failReason.length>0) {
+          const error: any = item.failReason[0];
+          mcp_result.message = error.errMsg + " Code: " + error.errCode
+
+        } else
+          mcp_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+
+        mcp_result.status = PROGRESSING_STATUS.FAILED
+
+        failed++
+        error_message = this.appendErrorMessage(error_message, mcp_result.message)
+      } else {
+        mcp_result.status = PROGRESSING_STATUS.COMPLETED
+
+        // update number with new resp org and template name
+        // if (mcp_req.start_eff_dt_tm=="NOW") {
+          this.saveNumber(profile, mcp_result.num!, NUMBER_STATUS.WORKING, mcp_req.sub_dt_tm!, newRespOrgId, mcp_req.template_name, mcp_result.eff_dt_tm)
+        // } else {
+        //   this.saveNumber(profile, mcp_result.num!, NUMBER_STATUS.WORKING, mcp_req.sub_dt_tm!)
+        // }
+      }
+
+      mcp_result.updated_at = new Date().toISOString()
+      await this.mcpResultRepository.create(mcp_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.CONVERT, mcp_result.num!, mcp_req.sub_dt_tm!, mcp_result.status!, newRespOrgId, mcp_result.message, mcp_result.eff_dt_tm)
+    }
+
+    return { code: failed, message: error_message };
+  }
+
+
+  async oneClickActivate(req: OCARequest, profile: AuthorizedUserProfile): Promise<any> {
+    let payload: any = {}
+    let total = 0, completed = 0, failed = 0;
+    let error_message = "";
+    let specificNums = null
+    let apiResult: any
+    let activatedNumbers: any[] = []
+
+    let oca_req: OcaReq = new OcaReq()
+    oca_req.user_id = profile.user.id!
+    oca_req.ro_id = req.ro
+    oca_req.type = req.type
+    oca_req.template_name = req.templateName
+    oca_req.service_order = req.serviceOrder
+    oca_req.num_term_line = req.numTermLine
+    oca_req.eff_dt_tm = req.effDtTm
+    oca_req.completed = 0;
+    oca_req.failed = 0;
+    oca_req.status = PROGRESSING_STATUS.IN_PROGRESS
+    oca_req.sub_dt_tm = new Date().toISOString()
+    oca_req.updated_at = new Date().toISOString()
+
+    let activity: Activity = new Activity()
+    activity.user_id = profile.user.id!
+    activity.page = PAGES.OneClickActivate
+    activity.operation = PAGE_OPERATION.ACTIVATE
+    activity.resp_org = req.ro
+    activity.status = PROGRESSING_STATUS.IN_PROGRESS
+    activity.sub_dt_tm = oca_req.sub_dt_tm
+    activity.created_at = new Date().toISOString()
+    activity.updated_at = new Date().toISOString()
+
+    payload.numTermLine = req.numTermLine
+    payload.conName = req.contactName
+    payload.conTel = req.contactNumber
+    payload.tmplName = req.templateName
+    payload.svcOrderNum = req.serviceOrder
+    payload.effDtTm = req.effDtTm
+    if (req.timezone!=null && req.timezone!="") {
+      oca_req.timezone = req.timezone
+      payload.timeZone = req.timezone
+    }
+
+    if (req.type == NSR_TYPE.RANDOM || req.type == NSR_TYPE.WILDCARD) {
+      if (req.npa!=null && req.npa!="") {
+        payload.npa = req.npa
+        oca_req.npa = req.npa
+      }
+
+      if (req.nxx!=null && req.nxx!="") {
+        payload.nxx = req.nxx
+        oca_req.nxx = req.nxx
+      }
+
+      if (req.line!=null && req.line!="") {
+        payload.line = req.line
+        oca_req.line = req.line
+      }
+
+      if (req.cons!=null && req.cons!="") {
+        payload.cons = req.cons
+        oca_req.consecutive = req.cons
+      }
+
+      oca_req.total = req.qty!
+      total = req.qty!
+    }
+    else{
+      oca_req.total = req.specificNums?.length!
+      total = req.specificNums?.length!
+    }
+
+    if (req.type == NSR_TYPE.WILDCARD) {
+      payload.wildCardNum = req.wildCardNum
+      oca_req.wild_card_num = req.wildCardNum
+    }
+
+    if (req.type == NSR_TYPE.SPECIFIC) {
+      specificNums = req.specificNums
+      payload.withVanity = "N"
+      oca_req.specific_num = JSON.stringify(req.specificNums)
+    }
+
+    oca_req = await this.ocaReqRepository.create(oca_req)
+    if (!oca_req)
+      throw new HttpErrors.BadRequest("Failed to create activity")
+
+    activity.total = total
+    activity.completed = completed
+    activity.failed = failed
+    activity.req_id = oca_req.id
+
+    activity = await this.activityRepository.create(activity)
+    if (!activity)
+      throw new HttpErrors.BadRequest("Failed to create activity")
+
+    this.messageQueueService.pushOCA(activity, oca_req)
+
+    let response = await this.tfnRegistryApiService.queryTemplateRecord(req.ro, req.templateName, profile)
+    console.log("OCA Tmpl", response)
+
+    if (response==null) {
+      failed += total
+
+      error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
+    }
+    else if (response.errList!=null) {
+      if (response.errList.length>0) {
+        const error: any = response.errList[0];
+        error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
+      } else
+        error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+
+      failed += total
+    }
+    else if (response.code!=null && response.message!=null) {
+      failed += total
+
+      error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
+    }
+    else if (response.reqId!=null) {
+      let reqId = response.reqId
+      while (response==null || response.lstEffDtTms==null) {
+        await DataUtils.sleep(100)
+
+        response = await this.tfnRegistryApiService.queryTemplateRecordByReqId(req.ro, reqId, profile)
+        console.log("OCA Template Req", response)
+      }
+
+      apiResult = response
+    } else if (response.blkId!=null) {
+      failed += total
+
+      error_message = this.appendErrorMessage(error_message, "Request is in Progress. BlkId: " + response.blkId)
+
+    } else if (response.lstEffDtTms!=null) {
+      apiResult = response.lstEffDtTms
+
+    } else {
+      failed += total
+
+      error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+    }
+
+    if (apiResult!=null) {
+      while (total>0) {
+        if (req.type == NSR_TYPE.RANDOM || req.type == NSR_TYPE.WILDCARD) {
+          payload.qty = total > REQ_SIZE ? REQ_SIZE : total
+          total -= REQ_SIZE
+
+        } else {
+          if (specificNums!=null && specificNums.length>REQ_SIZE) {
+            payload.numList = specificNums.splice(0, REQ_SIZE)
+            total -= REQ_SIZE
+            payload.qty = REQ_SIZE
+
+          } else if (specificNums!=null) {
+            payload.numList = specificNums
+            total -= specificNums.length
+            payload.qty = specificNums.length
+          }
+        }
+
+        apiResult = null
+
+        if (req.type == NSR_TYPE.RANDOM)
+          response = await this.tfnRegistryApiService.oneClickActivationRandomNumbers(req.ro, payload, profile)
+
+        if (req.type == NSR_TYPE.WILDCARD)
+          response = await this.tfnRegistryApiService.oneClickActivationWildcardNumbers(req.ro, payload, profile)
+
+        if (req.type == NSR_TYPE.SPECIFIC)
+          response = await this.tfnRegistryApiService.oneClickActivationSpecificNumbers(req.ro, payload, profile)
+
+        console.log("OCA", response)
+
+        if (response==null) {
+          failed += payload.qty
+
+          error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
+        }
+        else if (response.errList!=null) {
+          if (response.errList.length>0) {
+            const error: any = response.errList[0];
+            error_message = this.appendErrorMessage(error_message, error.errMsg + " Code: " + error.errCode)
+          } else
+            error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+
+          failed += payload.qty
+        }
+        else if (response.code!=null && response.message!=null) {
+          failed += payload.qty
+
+          error_message = this.appendErrorMessage(error_message, response.message + (response.code!="" ? " Code: " + response.code : ""))
+        }
+        else if (response.reqId!=null) {
+          let reqId = response.reqId
+
+          while (response==null || response.resultList==null) {
+            await DataUtils.sleep(100)
+
+            response = null
+
+            if (req.type == NSR_TYPE.RANDOM)
+              response = await this.tfnRegistryApiService.oneClickActivationRandomNumbersByReqId(req.ro, reqId, profile)
+
+            if (req.type == NSR_TYPE.WILDCARD)
+              response = await this.tfnRegistryApiService.oneClickActivationWildcardNumbersByReqId(req.ro, reqId, profile)
+
+            if (req.type == NSR_TYPE.SPECIFIC)
+              response = await this.tfnRegistryApiService.oneClickActivationSpecificNumbersByReqId(req.ro, reqId, profile)
+
+            console.log("OCA Req", response)
+          }
+
+          apiResult = response
+
+        } else if (response.blkId!=null) {
+          let blkId = response.blkId
+
+          while (response==null || response.resultList==null) {
+            await DataUtils.sleep(100)
+
+            response = await this.tfnRegistryApiService.oneClickActivationByBlkId(req.ro, blkId, profile)
+            console.log("OCA Blk", response)
+          }
+
+          apiResult = response
+
+        } else if (response.resultList!=null) {
+          apiResult = response
+
+        } else {
+          failed += payload.qty
+
+          error_message = this.appendErrorMessage(error_message, MESSAGES.INTERNAL_SERVER_ERROR)
+        }
+
+        if (apiResult!=null) {
+          let result:any = await this.saveOCAResult(oca_req, apiResult, activity, profile)
+          console.log("OCA Result", result)
+
+          failed += result.code
+          completed += payload.qty - result.code
+          error_message = this.appendErrorMessage(error_message, result.message)
+
+          activatedNumbers = activatedNumbers.concat(result.list)
+        }
+
+        // save progress to nsr_req
+        oca_req.completed = completed;
+        oca_req.failed = failed;
+        oca_req.status = PROGRESSING_STATUS.IN_PROGRESS
+        oca_req.message = error_message
+        oca_req.updated_at = new Date().toISOString()
+        await this.ocaReqRepository.save(oca_req)
+
+        activity.completed = completed
+        activity.failed = failed
+        activity.status = PROGRESSING_STATUS.IN_PROGRESS
+        activity.message = error_message
+        activity.updated_at = new Date().toISOString()
+        await this.activityRepository.save(activity)
+
+        this.messageQueueService.pushOCA(activity, oca_req)
+        await DataUtils.sleep(100)
+      }
+    } else {
+      oca_req.message = error_message
+      activity.message = error_message
+    }
+
+    oca_req.status = PROGRESSING_STATUS.COMPLETED
+    if (oca_req.total == oca_req.failed)
+      oca_req.status = PROGRESSING_STATUS.FAILED
+    else if (oca_req.total == oca_req.completed)
+      oca_req.status = PROGRESSING_STATUS.SUCCESS
+    oca_req.updated_at = new Date().toISOString()
+    await this.ocaReqRepository.save(oca_req)
+
+    activity.status = oca_req.status
+    activity.updated_at = new Date().toISOString()
+    await this.activityRepository.save(activity)
+
+    this.messageQueueService.pushOCA(activity, oca_req)
+
+    if (activatedNumbers.length>0) {
+      // send numbers to secure382.com to route
+      await this.secure382ApiService.sendNumbers(req.ro!, activatedNumbers)
+    }
+
+    return oca_req
+  }
+
+  private async saveOCAResult(oca_req: OcaReq, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let failed = 0, error_message = "";
+    let list = []
+
+    for (const item of response.resultList) {
+      let oca_result = new OcaResult()
+      oca_result.req_id = oca_req.id
+      oca_result.sub_dt_tm = oca_req.sub_dt_tm
+      oca_result.num = item.num
+      oca_result.status = item.status
+
+      let effDtTm = ""
+
+      if (item.failReason!=null || item.errList!=null) {
+        if (item.failReason!=null && item.failReason.length>0) {
+          const error: any = item.failReason[0];
+          oca_result.message = error.errMsg + " Code: " + error.errCode
+
+        } else if (item.errList!=null && item.errList.length>0) {
+          const error: any = item.errList[0];
+          oca_result.message = error.errMsg + " Code: " + error.errCode
+
+        } else
+          oca_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+
+        oca_result.status = PROGRESSING_STATUS.FAILED
+
+        failed++
+        error_message = this.appendErrorMessage(error_message, oca_result.message)
+      } else {
+
+        // TODO - check "NOW"
+        await this.saveNumber(profile, oca_result.num!,
+            oca_result.status!,
+            oca_result.sub_dt_tm!, oca_req.ro_id, oca_req.template_name)
+
+        list.push(item.num)
+      }
+
+      let qpr: any = await this.tfnRegistryApiService.queryPointerRecord(oca_req.ro_id, oca_result.num!, oca_req.eff_dt_tm, profile)
+      console.log("OCA QPR", qpr)
+
+      if (qpr!=null && qpr.lstEffDtTms!=null) {
+        effDtTm = qpr.lstEffDtTms[0].effDtTm
+      }
+
+      if (effDtTm=="")
+        effDtTm = oca_req.eff_dt_tm
+
+
+      oca_result.updated_at = new Date().toISOString()
+      await this.ocaResultRepository.create(oca_result)
+
+      await this.saveActivityResult(profile, activity.id, TASK_TYPE.NUM, TASK_ACTION.ACTIVATE,
+          item, oca_result.sub_dt_tm!, oca_result.status!, oca_req.ro_id, oca_result.message, effDtTm, oca_req.template_name, oca_req.eff_dt_tm=="NOW")
+    }
+
+    return { code: failed, message: error_message, list };
+  }
+
+  async retrieveReservedNumberList(ro: string, profile: AuthorizedUserProfile) {
+    let response = await this.tfnRegistryApiService.retrieveReservedNumberList(ro, profile)
+    if (response==null) {
+      throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
+
+    } else if (response.errList!=null) {
+      let message = "";
+
+      if (response.errList.length>0) {
+        const error: any = response.errList[0];
+        message = error.errMsg + " Code: " + error.errCode
+      } else
+        message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      throw new HttpErrors.BadRequest(message)
+    } else if (response.reqId!=null) {
+      throw new HttpErrors.BadRequest("Request is in progress. reqId: " + response.reqId)
+
+    } else if (response.numList!=null)
+      return response.numList;
+
+    throw new HttpErrors.InternalServerError
+  }
+
+  async activate(req: MNARequest, profile: AuthorizedUserProfile): Promise<any> {
+    let payload: any = {}
+    let total = 0, completed = 0, failed = 0;
+    let error_message = "";
+    let activatedNumbers: any[] = []
+
+    let mna_req: MnaReq = new MnaReq()
+    mna_req.user_id = profile.user.id!
+    mna_req.ro_id = req.ro
+    mna_req.num_list = JSON.stringify(req.numList)
+    mna_req.template_name = req.templateName
+    mna_req.service_order = req.serviceOrder
+    mna_req.num_term_line = req.numTermLine
+    mna_req.eff_dt_tm = req.effDtTm
+    mna_req.completed = 0;
+    mna_req.failed = 0;
+    mna_req.status = PROGRESSING_STATUS.IN_PROGRESS
+    mna_req.sub_dt_tm = new Date().toISOString()
+    mna_req.updated_at = new Date().toISOString()
+
+    let activity: Activity = new Activity()
+    activity.user_id = profile.user.id!
+    activity.page = PAGES.ReservedNumberList
+    activity.operation = PAGE_OPERATION.ACTIVATE
+    activity.resp_org = req.ro
+    activity.status = PROGRESSING_STATUS.IN_PROGRESS
+    activity.sub_dt_tm = mna_req.sub_dt_tm
+    activity.created_at = new Date().toISOString()
+    activity.updated_at = new Date().toISOString()
+
+    payload.cmd = "U"
+    payload.newRespOrgId = req.ro
+    payload.conName = req.contactName
+    payload.conTel = req.contactNumber
+    payload.tmplName = req.templateName
+    payload.svcOrderNum = req.serviceOrder
+    payload.effDtTm = req.effDtTm
+
+    mna_req.total = req.numList.length
+    total = req.numList.length
+    payload.qty = 1
+
+    mna_req = await this.mnaReqRepository.create(mna_req)
+    if (!mna_req)
+      throw new HttpErrors.BadRequest("Failed to create activity")
+
+    activity.total = total
+    activity.completed = completed
+    activity.failed = failed
+    activity.req_id = mna_req.id
+
+    activity = await this.activityRepository.create(activity)
+    if (!activity)
+      throw new HttpErrors.BadRequest("Failed to create activity")
+
+    this.messageQueueService.pushMNA(activity, mna_req)
+
+    while (total > 0) {
+      total --
+      payload.num = req.numList[total]
+      payload.destNums = [ { destNum: req.numList[total], numTermLine: req.numTermLine }]
+
+      let response = await this.tfnRegistryApiService.createPointerRecord(req.ro, payload, profile)
+      console.log("MNA", response)
+
+      let result:any = await this.saveMNAResult(mna_req, payload.num, response, activity, profile)
+
+      failed += result.code
+      completed += payload.qty - result.code
+      error_message = this.appendErrorMessage(error_message, result.message)
+
+      activatedNumbers = activatedNumbers.concat(result.list)
+
+      // save progress to nsr_req
+      mna_req.completed = completed;
+      mna_req.failed = failed;
+      mna_req.status = PROGRESSING_STATUS.IN_PROGRESS
+      mna_req.message = error_message
+      mna_req.updated_at = new Date().toISOString()
+      await this.mnaReqRepository.save(mna_req)
+
+      activity.completed = completed
+      activity.failed = failed
+      activity.status = PROGRESSING_STATUS.IN_PROGRESS
+      activity.message = error_message
+      activity.updated_at = new Date().toISOString()
+      await this.activityRepository.save(activity)
+
+      this.messageQueueService.pushMNA(activity, mna_req)
+      await DataUtils.sleep(100)
+    }
+
+    mna_req.status = PROGRESSING_STATUS.COMPLETED
+    if (mna_req.total == mna_req.failed)
+      mna_req.status = PROGRESSING_STATUS.FAILED
+    else if (mna_req.total == mna_req.completed)
+      mna_req.status = PROGRESSING_STATUS.SUCCESS
+    mna_req.updated_at = new Date().toISOString()
+    await this.mnaReqRepository.save(mna_req)
+
+    activity.status = mna_req.status
+    activity.updated_at = new Date().toISOString()
+    await this.activityRepository.save(activity)
+
+    this.messageQueueService.pushMNA(activity, mna_req)
+
+    if (activatedNumbers.length>0) {
+      // send numbers to secure382.com to route
+      await this.secure382ApiService.sendNumbers(req.ro!, activatedNumbers)
+    }
+
+    return mna_req
+  }
+
+  private async saveMNAResult(mna_req: MnaReq, num: string, response: any, activity: Activity, profile: AuthorizedUserProfile): Promise<any> {
+    let failed = 0, error_message = "";
+    let list = []
+
+    let mna_result = new MnaResult()
+    mna_result.req_id = mna_req.id
+    mna_result.sub_dt_tm = mna_req.sub_dt_tm
+    mna_result.num = num
+    // mna_result.status = item.status
+
+    let effDtTm = ""
+    if (response.effDtTm!=null)
+      effDtTm = response.effDtTm
+
+    if (effDtTm=="")
+      effDtTm = mna_req.eff_dt_tm
+
+    if (response.failReason!=null || response.errList!=null) {
+      if (response.failReason!=null && response.failReason.length>0) {
+        const error: any = response.failReason[0];
+        mna_result.message = error.errMsg + " Code: " + error.errCode
+
+      } else if (response.errList!=null && response.errList.length>0) {
+        const error: any = response.errList[0];
+        mna_result.message = error.errMsg + " Code: " + error.errCode
+
+      } else
+        mna_result.message = MESSAGES.INTERNAL_SERVER_ERROR
+
+      mna_result.status = PROGRESSING_STATUS.FAILED
+
+      failed++
+      error_message = this.appendErrorMessage(error_message, mna_result.message)
+    } else {
+      mna_result.eff_dt_tm = effDtTm
+      mna_result.status = NUMBER_STATUS.PENDING
+
+      // TODO - check "NOW"
+      await this.saveNumber(profile, mna_result.num!,
+          mna_result.status!,
+          mna_result.sub_dt_tm!, mna_req.ro_id, mna_req.template_name, effDtTm)
+
+      list.push(response.num)
+    }
+
+    mna_result.eff_dt_tm = effDtTm
+    mna_result.updated_at = new Date().toISOString()
+    await this.mnaResultRepository.create(mna_result)
+
+    await this.saveActivityResult(profile, activity.id, TASK_TYPE.PAD, TASK_ACTION.CREATE,
+        mna_result.num, mna_result.sub_dt_tm!, mna_result.status!, mna_req.ro_id, mna_result.message, effDtTm, mna_req.template_name, mna_req.eff_dt_tm=="NOW")
+
+    return { code: failed, message: error_message, list };
+  }
+
+
+
+  async executeScript(sr: ScriptResult, user: any, profile: AuthorizedUserProfile) {
+    let completed: string[] = []
+    let download: any = {}
+
+    while (true) {
+      const status = await this.scriptResultRepository.getProgress(sr.id)
+      if (DataUtils.isFinished(status)) {
+        sr.status = status
+      }
+
+      if (sr.status==PROGRESSING_STATUS.WAITING) {
+        let content: any = ""
+        try {
+          content = await this.scriptResultRepository.getScriptSQL(sr.id)
+          if (content=="") {
+            sr.message = "No SQL Content"
+            sr.status = PROGRESSING_STATUS.FAILED
+
+          } else {
+            // parse sql content
+            let temp: any[] | undefined = undefined
+            let isTemplate = false
+
+            if (content.includes(SCRIPT_TYPE.TMPL_DIALNBR)) {
+              temp = content.split(SCRIPT_TYPE.TMPL_DIALNBR)
+              isTemplate = true
+            }
+            else if (content.includes(SCRIPT_TYPE.DIALNBR)) {
+              if (content.includes(SCRIPT_TYPE.TFNREPT_DIALNBR))
+                temp = content.split(SCRIPT_TYPE.TFNREPT_DIALNBR)
+              else
+                temp = content.split(SCRIPT_TYPE.DIALNBR)
+            }
+
+            if (temp==null || temp.length<2) {
+              sr.message = "Wrong SQL Script"
+              sr.status = PROGRESSING_STATUS.FAILED
+            } else {
+              sr.is_template = isTemplate
+              sr.ro = temp[1].substring(1, 6)
+              // update status
+              sr.status = PROGRESSING_STATUS.UPLOADING
+            }
+          }
+        } catch (err) {
+          sr.message = err?.message + "Code: " + err?.code
+          sr.status = PROGRESSING_STATUS.FAILED
+        }
+      }
+      else if (sr.status==PROGRESSING_STATUS.UPLOADING) {
+        const content = await this.scriptResultRepository.getScriptSQL(sr.id)
+        // TODO: write content to file
+        const filename = user.username + "_"
+            + Math.random().toString(36).substring(2, 15)
+            + Math.random().toString(36).substring(2, 15)
+
+        try {
+          fs.writeFileSync(TEMPORARY + filename + ".sql", content)
+
+          // TODO: upload sql content to ftp server
+          const result = await this.ftpService.upload(user, filename+".sql")
+          if (result.success) {
+            sr.filename = filename
+            sr.uploaded_at = new Date().toISOString()
+            sr.status = PROGRESSING_STATUS.DOWNLOADING
+          } else {
+            sr.status = PROGRESSING_STATUS.FAILED
+            sr.message = result.message
+          }
+
+        } catch (err) {
+          sr.message = err?.message
+          sr.status = PROGRESSING_STATUS.FAILED
+        }
+      }
+      else if (sr.status==PROGRESSING_STATUS.DOWNLOADING) {
+        // TODO: download file from ftp server
+        const time_passed = new Date().getTime() - Date.parse(sr.uploaded_at!)
+        if (time_passed>60*1000) {
+          sr.status = PROGRESSING_STATUS.FAILED
+          sr.message = "Error occurred in FTP server"
+        } else {
+          const result = await this.ftpService.list(user, sr.filename!)
+          if (result.success) {
+            for (let item of result.list) {
+              if (item.name.includes(sr.filename) && (item.name.endsWith(".out") || item.name.endsWith(".err"))) {
+                if (item.name.endsWith(".out"))
+                  sr.out_filename = item.name
+                if (item.name.endsWith(".err"))
+                  sr.err_filename = item.name
+              }
+            }
+
+            if (sr.out_filename || sr.err_filename) {
+              sr.status = PROGRESSING_STATUS.IMPORTING
+
+              // TODO: read all content from downloaded file or read several lines on next step
+              if (sr.out_filename) {
+                const result = await this.ftpService.download(user, sr.out_filename!)
+                sr.status = PROGRESSING_STATUS.FAILED
+                sr.message = result.message
+              }
+
+              if (sr.err_filename) {
+                const result = await this.ftpService.download(user, sr.err_filename!)
+                sr.status = PROGRESSING_STATUS.FAILED
+                sr.message = result.message
+              }
+            }
+          } else {
+            sr.status = PROGRESSING_STATUS.FAILED
+            sr.message = result.message
+          }
+        }
+      }
+      else if (sr.status==PROGRESSING_STATUS.IMPORTING) {
+        // check downloaded file
+        try {
+          if (sr.out_filename && fs.existsSync(TEMPORARY + sr.out_filename)) {
+            // TODO: update number list from downloaded file
+
+
+            // TODO: if read all, update status to "COMPLETED"
+            sr.status = PROGRESSING_STATUS.COMPLETED
+          }
+        } catch (err) {
+          sr.message = err?.message
+          sr.status = PROGRESSING_STATUS.FAILED
+        }
+
+        try {
+          if (sr.out_filename && fs.existsSync(TEMPORARY + sr.out_filename)) {
+            // TODO: update error from downloaded file
+
+            // TODO: if read all, update status to "COMPLETED"
+            sr.status = PROGRESSING_STATUS.COMPLETED
+          }
+        } catch (err) {
+          sr.message = err?.message
+          sr.status = PROGRESSING_STATUS.FAILED
+        }
+      }
+
+      sr.updated_at = new Date().toISOString()
+      await this.scriptResultRepository.save(sr)
+      this.messageQueueService.pushScriptExecution(sr)
+
+      await DataUtils.sleep(100)
+
+      if (DataUtils.isFinished(sr.status))
+        return
+    }
   }
 
 }

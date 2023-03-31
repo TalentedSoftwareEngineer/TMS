@@ -4,41 +4,41 @@
         <p-tabPanel header="Resp Org ID" leftIcon="pi pi-flag" tooltip="Search Resp Org ID">
             <div class="p-fluid mt-5">
                 <span class="field p-float-label">
-                    <p-dropdown 
-                        [options]="resp_org_ids" 
-                        id="resp_org_id" 
-                        name="resp_org_id" 
-                        [(ngModel)]="input_resp_org_id" 
-                        optionLabel="name" 
-                        [showClear]="true" 
-                        scrollHeight="150px" 
-                        [filter]="true" 
+                    <p-dropdown
+                        [options]="resp_org_ids"
+                        id="resp_org_id"
+                        name="resp_org_id"
+                        [(ngModel)]="input_resp_org_id"
+                        optionLabel="name"
+                        [showClear]="true"
+                        scrollHeight="150px"
+                        [filter]="true"
                         filterBy="name"
-                        [virtualScroll]="true" 
+                        [virtualScroll]="true"
                         [itemSize]="40"
                     ></p-dropdown>
-                    <label for="resp_org_id">Resp Org ID</label>
+                    <label>Resp Org ID</label>
                 </span>
             </div>
         </p-tabPanel>
 
         <p-tabPanel header="Resp Org Entity" leftIcon="pi pi-qrcode" tooltip="Search Resp Org Entity">
-            <div class="p-fluid mt-5">  
+            <div class="p-fluid mt-5">
                 <span class="field p-float-label">
-                    <p-dropdown 
-                        [options]="resp_org_entities" 
-                        id="resp_org_entity" 
-                        name="resp_org_entity" 
-                        [(ngModel)]="input_resp_org_entity" 
-                        optionLabel="name" 
-                        [showClear]="true" 
-                        scrollHeight="150px" 
-                        [filter]="true" 
+                    <p-dropdown
+                        [options]="resp_org_entities"
+                        id="resp_org_entity"
+                        name="resp_org_entity"
+                        [(ngModel)]="input_resp_org_entity"
+                        optionLabel="name"
+                        [showClear]="true"
+                        scrollHeight="150px"
+                        [filter]="true"
                         filterBy="name"
-                        [virtualScroll]="true" 
+                        [virtualScroll]="true"
                         [itemSize]="40"
                     ></p-dropdown>
-                    <label for="resp_org_entity">Resp Org Entity</label>
+                    <label>Resp Org Entity</label>
                 </span>
             </div>
         </p-tabPanel>
@@ -46,7 +46,7 @@
         <p-tabPanel header="Toll-Free Number" leftIcon="pi pi-mobile" tooltip="Search Toll-Free Number">
             <div class="p-fluid mt-5">
                 <span class="field p-float-label">
-                    <input type="text" id="toll_free_num" name="toll_free_num" pInputText [(ngModel)]="input_toll_free_num" [ngClass]="{'ng-dirty': !validPhoneNumber, 'ng-invalid': !validPhoneNumber}"> 
+                    <input type="text" id="toll_free_num" name="toll_free_num" pInputText [(ngModel)]="input_toll_free_num" [ngClass]="{'ng-dirty': !validPhoneNumber, 'ng-invalid': !validPhoneNumber}">
                     <label for="toll_free_num">Toll-Free Number</label>
                 </span>
             </div>
@@ -151,7 +151,7 @@
                         </tr>
                     </ng-template>
                 </p-table>
-            
+
                 <!-- <p-paginator [rows]="pageSize" [totalRecords]="resultsLength" (onPageChange)="paginate($event)"></p-paginator> -->
             </div>
         </p-panel>

@@ -124,7 +124,7 @@ export class SomosUserController {
         let num_fields = undefined;
         let custom = undefined;
         let include = [{relation: 'created'}, {relation: 'updated'}];
-        return this.somosUserRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
+        return this.somosUserRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
     }
 
     @get('/somos-users/{id}', {

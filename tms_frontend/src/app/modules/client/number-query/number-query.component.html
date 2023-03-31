@@ -57,7 +57,7 @@
                                 [itemSize]="40"
                                 [disabled]="disabled"
                             ></p-dropdown>
-                            <label for="resp_org_id">Status</label>
+                            <label>Status</label>
                         </span>
                         <span *ngIf="!(retreivedStatus === gConst.TFNUM_STATE_RESERVED || retreivedStatus === gConst.TFNUM_STATE_TRANSITIONAL)" class="field p-float-label">
                             <input type="text" id="status" name="status" pInputText [(ngModel)]="inputStatus" disabled>
@@ -77,10 +77,10 @@
                                 [(ngModel)]="inputReservedUntil"
                                 dateFormat="mm/dd/yy"
                                 [showButtonBar]="true"
-                                [numberOfMonths]="3"
+                                [numberOfMonths]="1"
                                 [disabled]="disabled"
                             ></p-calendar>
-                            <label for="interDate">Reserved Until</label>
+                            <label>Reserved Until</label>
                         </span>
                     </div>
                     <div class="col-6 p-fluid">
@@ -96,27 +96,27 @@
                 <span style="flex: 1;"></span>
                 <div class="grid pt-2">
                     <div class="col">
-                        <div class="p-fluid">
-                            <span class="field p-float-label">
+                        <div class="p-fluid field">
+                            <span class="p-float-label">
                                 <input type="text" id="contactName" name="contactName" pInputText (input)="onInputContactName()" [(ngModel)]="inputContactName">
                                 <label for="contactName">Contact Name</label>
                             </span>
-                            <p *ngIf="!validInputContactName" class="p-error">Invalid Input</p>
+                            <p *ngIf="!validInputContactName" class="p-error">Please enter valid name</p>
                         </div>
                     </div>
                     <div class="col">
-                        <div class="p-fluid">
-                            <span class="field p-float-label">
+                        <div class="p-fluid field">
+                            <span class="p-float-label">
                                 <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="onInputContactNumber()" [(ngModel)]="inputContactNumber">
                                 <label for="contactNumber">Contact Number</label>
                             </span>
-                            <p *ngIf="!validInputContactNumber" class="p-error">Invalid Input</p>
+                            <p *ngIf="!validInputContactNumber" class="p-error">It Must be 10 digits</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-fluid">
-                    <span class="field p-float-label">
+                <div class="p-fluid field">
+                    <span class="p-float-label">
                         <textarea class="pt-4" id="notes" name="notes" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea></textarea>
                         <label for="notes">Notes</label>
                     </span>

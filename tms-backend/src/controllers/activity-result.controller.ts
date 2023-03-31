@@ -25,6 +25,7 @@ import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
 import DataUtils from '../utils/data';
+import {SUPER_ADMIN_ROLE} from "../constants/configurations";
 
 @authenticate('jwt')
 export class ActivityResultController {
@@ -51,11 +52,16 @@ export class ActivityResultController {
     if (!profile.permissions.includes(PERMISSIONS.TASK_TRACKING))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-      let tmpUserIdFilter = userIdFilter=='' ? undefined : userIdFilter;
+    let tmpUserIdFilter = userIdFilter=='' ? undefined : userIdFilter;
+    let fields = ['type','action','src_num','src_tmpl_name','email','src_eff_dt_tm','tgt_num','tgt_tmpl_name','tgt_eff_dt_tm','resp_org','status'];
+    let num_fields = 'src_num, tgt_num';
 
-      let fields = ['type','action','src_num','src_tmpl_name','email','src_eff_dt_tm','tgt_num','tgt_tmpl_name','tgt_eff_dt_tm','resp_org','status'];
-      let num_fields = 'src_num, tgt_num';
-      let custom = [{user_id: tmpUserIdFilter}];
+    let custom = [];
+    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+      custom.push({ user_id: profile.user.id })
+    else
+      custom.push({ user_id: tmpUserIdFilter })
+
     return this.activityResultRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
   }
 
@@ -91,7 +97,12 @@ export class ActivityResultController {
 
     let fields = ['type','action','src_num','src_tmpl_name','email','src_eff_dt_tm','tgt_num','tgt_tmpl_name','tgt_eff_dt_tm','resp_org','status'];
     let num_fields = 'src_num, tgt_num';
-    let custom = [{user_id: tmpUserIdFilter}];
+    let custom = [];
+    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+      custom.push({ user_id: profile.user.id })
+    else
+      custom.push({ user_id: tmpUserIdFilter })
+
     let include = [
       {
         relation: 'user',
@@ -106,6 +117,7 @@ export class ActivityResultController {
         }
       }
     ];
+
     return this.activityResultRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
   }
 

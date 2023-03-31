@@ -25,6 +25,11 @@ export class Privilege extends Entity {
   })
   is_admin: boolean;
 
+  @property({
+    type: 'string',
+  })
+  category: string;
+
   constructor(data?: Partial<Privilege>) {
     super(data);
   }

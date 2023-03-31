@@ -1,5 +1,8 @@
 :host ::ng-deep .p-card {
     &.c-card {
+        &.c-shadow {
+            box-shadow: 1px 4px 5px 1px #aaa;
+        }
         .p-card-body {
             height: 100%;
             .p-card-content {

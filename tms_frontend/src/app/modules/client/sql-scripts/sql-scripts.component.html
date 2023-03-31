@@ -18,14 +18,14 @@
     <ng-template pTemplate="content">
         <div class="pt-2">
             <div class="card">
-                <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+                <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
                 <p-table [value]="sql_scripts" responsiveLayout="stack" [responsive]="true">
                     <ng-template pTemplate="header">
                         <tr>
                             <th class="text-align-center" [ngClass]="sortActive === 'user_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                                 <a (click)="onSortChange('user_id')">User Name</a>
                             </th>
-                            <th class="text-align-center" [ngClass]="sortActive === 'content' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <th class="text-left" [ngClass]="sortActive === 'content' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                                 <a (click)="onSortChange('content')">Sql Script</a>
                             </th>
                             <th class="text-align-center" [ngClass]="sortActive === 'autorun' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
@@ -52,11 +52,11 @@
                         <tr>
                             <td class="text-align-center">
                                 <span class="p-column-title">User Name</span>
-                                {{ sql_script.user.username }}
+                                {{ sql_script.user?.username }}
                             </td>
                             <td class="text-align-center">
                                 <span class="p-column-title">Sql Script</span>
-                                {{ sql_script.content }}
+                                <pre class="text-left">{{ sql_script.content }}</pre>
                             </td>
                             <td class="text-align-center">
                                 <span class="p-column-title">Autorun</span>
@@ -78,17 +78,17 @@
                             </td>
                             <td class="text-align-center">
                                 <span class="p-column-title">Created By</span>
-                                {{ sql_script.created.username }}
+                                {{ sql_script.created?.username }}
                             </td>
                             <td class="text-align-center">
                                 <span class="p-column-title">Updated By</span>
-                                {{ sql_script.updated.username }}
+                                {{ sql_script.updated?.username }}
                             </td>
 
                             <td class="text-align-center" *ngIf="write_permission">
                                 <span class="p-buttonset">
-                                    <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, sql_script.id)"></button>
-                                    <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteSqlScript($event, sql_script.id)"></button>
+                                    <button pButton type="button" title="Edit" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, sql_script.id)"></button>
+                                    <button pButton type="button" title="Delete" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteSqlScript($event, sql_script.id)"></button>
                                 </span>
                             </td>
                         </tr>
@@ -96,10 +96,7 @@
                 </p-table>
 
                 <div class="flex justify-content-center align-items-center gap-3">
-                    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
-                    <div class="p-fluid">
-                      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getSqlScriptsList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-                    </div>
+                    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
                 </div>
             </div>
         </div>
@@ -114,15 +111,13 @@
                 <p-dropdown class="field" [options]="sql_users" id="user_id" name="user_id" [(ngModel)]="input_user_id" (onChange)="onChangeUserName()" placeholder="User Name" optionLabel="name" scrollHeight="150px" [filter]="true" filterBy="name"></p-dropdown>
                 <label for="user_id">User Name</label>
             </span>
-            <p *ngIf="!validUserId" class="p-error">Required!</p>
-            
+
             <span class="p-float-label">
                 <textarea class="pt-4" id="content" name="content" [(ngModel)]="input_content" (input)="onInputContent()" rows="5" cols="30" pInputTextarea></textarea>
                 <label for="content">Sql Script</label>
             </span>
-            <p *ngIf="!validContent" class="p-error">Required!</p>
 
-            <div class="field field-checkbox">
+            <div class="field-checkbox">
                 <p-checkbox id="autorun" name="autorun" [(ngModel)]="input_autorun" [binary]="true" inputId="binary"></p-checkbox>
                 <label for="autorun">Autorun</label>
             </div>

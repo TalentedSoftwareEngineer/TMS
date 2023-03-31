@@ -1,4 +1,11 @@
 export const SUPER_ADMIN_ID = 1
+export const SUPER_ADMIN_ROLE_ID = 1
+export const PAGE_NO_PERMISSION_MSG = "You have no permission for this page"
+
+export const PRIVILEGE_CATEGORY_CUSTOMER_ADMIN = 'Customer Administration';
+
+export const ERRLVL_WARNING               = "WARN"
+export const ERRLVL_ERROR                 = "ERROR"
 
 export const NoPermissionAlertInteral = 2000
 export const PERMISSION_TYPE_DENY     = "DENY"
@@ -29,6 +36,8 @@ export const ROWS_PER_PAGE_OPTIONS = [
   {name: '50', value: 50}
 ]
 
+export const rowsPerPageOptions = [10, 25, 50, 100]
+
 //Contact Information Modal
 //Contact name for the TFN that is being reserved.
 export const CONTACT_NAME_REG_EXP        = /^[\w\d\s`'!@#$%&*()-_+={}\[\]\:;<>,.?/.]{1,30}$/
@@ -50,7 +59,8 @@ export const RESPORG_REG_EXP      = /[A-Z]{3}[0-9]{2}$/
 export const TFNUM_REG_EXP        = RegExp('^(800|833|844|855|866|877|888)(\\d{7}|\\-\\d{3}\\-\\d{4})$')
 export const PHONE_NUMBER_WITH_HYPHEN_REG_EXP = RegExp('\\d{10}|\\d{3}\\-\\d{3}\\-\\d{4}$')
 export const LIMIT_SIXTY_LETTERS_REG_EXP = /^[\w\d\s`'!@#$%&*()-_+={}\[\]\:;<>,.?/.]{1,60}$/;
-export const TEMPLATE_NAME_REG_EXP        = /^[*][a-zA-Z0-9]{2}[a-zA-Z0-9-]{1,12}$/
+export const TEMPLATE_NAME_REG_EXP        = /^[*][a-zA-Z0-9]{2}[a-zA-Z0-9-]{1,12}$/;
+export const EMAIL_REG_EXP        = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 export const INVALID_NUM_TYPE_NONE        = 0
 export const INVALID_NUM_TYPE_COMMON      = 1
@@ -64,6 +74,9 @@ export const INVALID_NUM_TYPE_EMPTY       = 7
 export const NUS_SUBMIT_TYPE_SEARCH		= "SEARCH"
 export const NUS_SUBMIT_TYPE_RESERVE		= "RESERVE"
 export const NUS_SUBMIT_TYPE_SRCHRES		= "SEARCH & RESERVE"
+
+export const RETRIEVE_CARD_TITLE_PREFIX   = "Retrieve"
+export const RESULT_CARD_TITLE_PREFIX2    = "Result: Effective Date, Time and Status: "
 
 //Multiple Conversion to Pointer Records
 export const TMPL_ERR_TYPE = {
@@ -96,6 +109,10 @@ export const ACTION_TRANSFER              = "TRANSFER"    // current is on trans
 export const ACTION_DISCONNECT            = "DISCONNECT"  // current is on disconnect action
 export const ACTION_DELETE                = "DELETE"      // current is on delete action
 
+export const TRANSFER_PENDING_MSG         = "Transfer is Pending and you must submit or save the record to complete Transfer Action"
+export const COPY_PENDING_MSG             = "Copy is Pending and you must submit or save the record to complete Copy Action"
+export const DISCONNECT_PENDING_MSG       = "Disconnect is Pending and you must submit or save the record to complete Disconnect Action"
+
 export const COPYACTION_CHANGE            = "CHANGE"
 export const COPYACTION_CONVERT           = "CONVERT"
 export const COPYACTION_DISCONNECT        = "DISCONNECT"
@@ -117,22 +134,58 @@ export const AOS_LATA_MODAL_HEADER_TITLE     = "Areas of Service: LATAs"
 export const IAC_MODAL_HEADER_TITLE          = "Carriers: IntraLATACarriers"
 export const IEC_MODAL_HEADER_TITLE          = "Carriers: InterLATACarriers"
 
+
+export const RECORD_PAGE_ACTION_CREATE    = "C"
+export const RECORD_PAGE_ACTION_RETRIEVE  = "R"
+
+export const RESULT_CARD_TITLE_PREFIX1    = "Result"
+
 export const CPR_SECT_NAME_SET_BUTTON        = "Set"
 export const CPR_SECT_NAME_ADD_BUTTON        = "Add"
 
 export const INVALID_ROW = -1;
 export const INVALID_COL = -1;
 
-export const INIT_LAD_GRID_LENGTH = 9;
+export const LBL_TYPE_AC   = "AC"; // Area Code
+export const LBL_TYPE_DT   = "DT"; // Date
+export const LBL_TYPE_LT   = "LT"; // LATA
+export const LBL_TYPE_NX   = "NX"; // NXX
+export const LBL_TYPE_ST   = "ST"; // State
+export const LBL_TYPE_TE   = "TE"; // Tel#
+export const LBL_TYPE_TI   = "TI"; // Time
+export const LBL_TYPE_TD   = "TD"; // 10-digit#
+export const LBL_TYPE_SD   = "SD"; // 6-digit#
+export const LBL_TYPE_DA   = "DA"; // Day
+export const LBL_TYPE_SW   = "SW"; // Switch
+export const LBL_TYPE_PC   = "PC"; // Percent
+export const LBL_TYPE_CA   = "CA"; // Carrier
+export const LBL_TYPE_AN   = "AN"; // Announcement
+export const LBL_TYPE_GT   = "GT"; // Go to
+
+export const INIT_LAD_GRID_LENGTH = 12;
 export const INIT_CPR_GRID_LENGTH = 7;
 export const INIT_NUM_GRID_LENGTH = 10;
 export const NUM_GRID_COL_LENGTH = 10;
 
 export const US_CT_TIMEZONE               = "America/Chicago"
 
+export const NUM_NO_PERMISSION_ERR_CODE   = "505002"
+export const TAD_NO_PERMISSION_ERR_CODE   = "540002"
+
+export const SAVE_CMD_SIGN    = 'S'   // the save value of the cmd parameter for calling api
+export const SUBMIT_CMD_SIGN  = 'U'   // the submit value of the cmd parameter for calling api
+
 export const DEFAULT_CARRIERS = [
   "ATX-0288", "IRK-2121", "LGT-0432"
 ]
+
+export const CAD_RETRIEVE_SUCCESSFUL         = "CAD retrieved successfully!"
+export const CAD_CREATE_SUCCESSFUL           = "CAD created successfully!"
+export const CAD_UPDATE_SUCCESSFUL           = "CAD updated successfully!"
+export const CAD_COPY_SUCCESSFUL             = "CAD copied successfully!"
+export const CAD_TRANSFER_SUCCESSFUL         = "CAD transferred successfully!"
+export const CAD_DISCONNECT_SUCCESSFUL       = "CAD disconnected successfully!"
+export const CAD_DELETE_SUCCESSFUL           = "CAD deleted successfully!"
 
 export const AOS_NETWORK_LIST = [
   "US Only (US)",
@@ -654,6 +707,8 @@ export const PAD_DISCONNECT_SUCCESSFUL       = "PAD disconnected successfully!"
 export const PAD_DELETE_SUCCESSFUL           = "PAD deleted successfully!"
 
 //Template Admin Data
+export const RO_CHANGE_MONITOR_INTERVAL = 500
+
 export const TMPLNAME_REG_EXP     = RegExp('^\\*[A-Z]{2}([A-Z|0-9|\\-|#])+$')
 export const TAD_RETRIEVE_SUCCESSFUL         = "TAD retrieved successfully!"
 export const TAD_CREATE_SUCCESSFUL           = "TAD created successfully!"
@@ -662,6 +717,12 @@ export const TAD_COPY_SUCCESSFUL             = "TAD copied successfully!"
 export const TAD_TRANSFER_SUCCESSFUL         = "TAD transferred successfully!"
 export const TAD_DISCONNECT_SUCCESSFUL       = "TAD disconnected successfully!"
 export const TAD_DELETE_SUCCESSFUL           = "TAD deleted successfully!"
+
+export const CADTOTADTYPE_NEW             = "NEW"
+export const CADTOTADTYPE_EXIST           = "EXIST"
+
+export const CADTOTADTYPE_COOKIE_NAME     = "cadToTadType"
+export const CADTOTADSTATE_COOKIE_NAME    = "state"
 
 //Template Record List
 export const ENTITY_LIST = [ "AK", "EJ", "TT", "XQ", "ZX" ];

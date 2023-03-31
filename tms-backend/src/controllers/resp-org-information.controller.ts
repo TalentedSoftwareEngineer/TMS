@@ -2,7 +2,7 @@
 
 import {authenticate} from "@loopback/authentication";
 import {inject, service} from "@loopback/core";
-import {TfnRegistryApiService} from "../services";
+import {RespOrgService, TfnRegistryApiService} from "../services";
 import {get, HttpErrors, param} from "@loopback/rest";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {PERMISSIONS} from "../constants/permissions";
@@ -11,8 +11,8 @@ import {MESSAGES} from "../constants/messages";
 @authenticate('jwt')
 export class RespOrgInformationController {
   constructor(
-      @service(TfnRegistryApiService)
-      public tfnRegistryApiService: TfnRegistryApiService,
+      @service(RespOrgService)
+      public respOrgService: RespOrgService,
   ) {}
 
   @get('/resp_org/entities', {
@@ -45,27 +45,7 @@ export class RespOrgInformationController {
     if (!profile.permissions.includes(PERMISSIONS.RESP_ORG_INFORMATION))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    let response = await this.tfnRegistryApiService.listRespOrgEntity(profile)
-    if (response==null) {
-      throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
-
-    } else if (response.errList!=null) {
-      let message = "";
-
-      if (response.errList.length>0) {
-        const error: any = response.errList[0];
-        message = error.errMsg + " Code: " + error.errCode
-      } else
-        message = MESSAGES.INTERNAL_SERVER_ERROR
-
-      throw new HttpErrors.BadRequest(message)
-    } else if (response.reqId!=null) {
-      throw new HttpErrors.BadRequest("Request is in progress. ReqID: " + response.reqId)
-
-    } else if (response.respOrgList!=null)
-      return response.respOrgList;
-
-    throw new HttpErrors.InternalServerError
+    return this.respOrgService.listEntity(profile)
   }
 
   @get('/resp_org/units', {
@@ -101,27 +81,7 @@ export class RespOrgInformationController {
     if (!profile.permissions.includes(PERMISSIONS.RESP_ORG_INFORMATION))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    let response = await this.tfnRegistryApiService.listRespOrgUnit(profile)
-    if (response==null) {
-      throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
-
-    } else if (response.errList!=null) {
-      let message = "";
-
-      if (response.errList.length>0) {
-        const error: any = response.errList[0];
-        message = error.errMsg + " Code: " + error.errCode
-      } else
-        message = MESSAGES.INTERNAL_SERVER_ERROR
-
-      throw new HttpErrors.BadRequest(message)
-    } else if (response.reqId!=null) {
-      throw new HttpErrors.BadRequest("Request is in progress. ReqID: " + response.reqId)
-
-    } else if (response.respOrgList!=null)
-      return response.respOrgList;
-
-    throw new HttpErrors.InternalServerError
+    return this.respOrgService.listUnit(profile)
   }
 
   @get('/resp_org/retrieve/{by}', {
@@ -185,35 +145,7 @@ export class RespOrgInformationController {
     if (!profile.permissions.includes(PERMISSIONS.RESP_ORG_INFORMATION))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    let response = null;
-    if (by=="unit")
-      response = await this.tfnRegistryApiService.retrieveRespOrgByUnit(value, profile)
-
-    if (by=="entity")
-      response = await this.tfnRegistryApiService.retrieveRespOrgByEntity(value, profile)
-
-    if (by=="number")
-      response = await this.tfnRegistryApiService.retrieveRespOrgByNumber(value, profile)
-
-    if (response==null) {
-      throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
-
-    } else if (response.errList!=null) {
-      let message = "";
-
-      if (response.errList.length>0) {
-        const error: any = response.errList[0];
-        message = error.errMsg + " Code: " + error.errCode
-      } else
-        message = MESSAGES.INTERNAL_SERVER_ERROR
-
-      throw new HttpErrors.BadRequest(message)
-
-    } else if (response.reqId!=null) {
-      throw new HttpErrors.BadRequest("Request is in progress. ReqID: " + response.reqId)
-    }
-
-    return response;
+    return this.respOrgService.retrieveInformationBy(by, value, profile)
   }
 
 }

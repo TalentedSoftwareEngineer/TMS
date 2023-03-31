@@ -4,12 +4,14 @@
 
 export const environment = {
   production: false,
-  base_uri: 'http://localhost:3000/api/v1',
-  stream_uri: 'http://localhost:6379/stream',
+  // base_uri: 'http://localhost:3000/api/v1',
+  // stream_uri: 'http://localhost:6379/stream',
   // base_uri: 'http://192.168.115.96:3000/api/v1',
   // stream_uri: 'http://192.168.115.96:6379/stream',
   // base_uri: 'http://208.76.96.11:3000/api/v1',
-  // stream_uri: 'http://208.76.96.11:6379/stream'
+  // stream_uri: 'http://208.76.96.11:6379/stream',
+  base_uri: 'https://tmsdev.tfnms.com:3000/api/v1',
+  stream_uri: 'https://tmsdev.tfnms.com:6379/stream'
 };
 
 /*

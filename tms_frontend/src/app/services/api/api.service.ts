@@ -520,12 +520,13 @@ export class ApiService {
     return this.http.get<any>(url);
   }
 
-  getNSRData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+  getNSRData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
     }).toString();
     const url = `${this.coreApi}/NSR/data?${parametersQuery}`;
     return this.http.get<any>(url);
@@ -566,12 +567,13 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/MNQ/query`, data);
   }
 
-  getMNQData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+  getMNQData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
     }).toString();
     const url = `${this.coreApi}/MNQ/data?${parametersQuery}`;
     return this.http.get<any>(url);
@@ -598,12 +600,13 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/MND/disconnect`, data);
   }
 
-  getMNDData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+  getMNDData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
     }).toString();
     const url = `${this.coreApi}/MND/data?${parametersQuery}`;
     return this.http.get<any>(url);
@@ -630,12 +633,13 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/TRQ/retrieve`, data);
   }
 
-  getTrqData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+  getTrqData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
     }).toString();
     const url = `${this.coreApi}/TRQ/data?${parametersQuery}`;
     return this.http.get<any>(url);
@@ -657,38 +661,45 @@ export class ApiService {
     return this.http.delete<any>(`${this.coreApi}/TRQ/${id}`);
   }
 
-  submitMNS(data: any): Observable<any> {
+  submitMns(data: any): Observable<any> {
     return this.http.patch<any>(`${this.coreApi}/MNS/spare`, data);
   }
 
-  getMNSData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+  getMnsData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
     }).toString();
     const url = `${this.coreApi}/MNS/data?${parametersQuery}`;
     return this.http.get<any>(url);
   }
 
-  getMNSCount(filterValue: string): Observable<any> {
+  getMnsById(id: string): Observable<any> {
+    const url = `${this.coreApi}/MNS/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  getMnsCount(filterValue: string): Observable<any> {
     const parametersQuery = new URLSearchParams({
       value: `${filterValue}`
     }).toString();
     return this.http.get<any>(`${this.coreApi}/MNS/count?${parametersQuery}`);
   }
 
-  deleteMNS(id: string): Observable<any> {
+  deleteMns(id: string): Observable<any> {
     return this.http.delete<any>(`${this.coreApi}/MNS/${id}`);
   }
 
-  getMroData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+  getMroData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
     }).toString();
     const url = `${this.coreApi}/MRO/data?${parametersQuery}`;
     return this.http.get<any>(url);
@@ -714,12 +725,13 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/MRO/change`, data);
   }
 
-  getMcpData(active: string, direction: string, size: number, page: number, filterValue?: string): Observable<any> {
+  getMcpData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
     }).toString();
     const url = `${this.coreApi}/MCP/data?${parametersQuery}`;
     return this.http.get<any>(url);
@@ -744,5 +756,375 @@ export class ApiService {
   submitMcp(data: any): Observable<any> {
     return this.http.patch<any>(`${this.coreApi}/MCP/convert`, data);
   }
-  
+
+
+  getNarData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
+    }).toString();
+    const url = `${this.coreApi}/NAR/data?${parametersQuery}`;
+    return this.http.get<any>(url);
+  }
+
+  getNarCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/NAR/count?${parametersQuery}`);
+  }
+
+  getNarById(id: string): Observable<any> {
+    const url = `${this.coreApi}/NAR/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  submitNar(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/NAR/submit`, data);
+  }
+
+  deleteNar(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/NAR/${id}`);
+  }
+
+  cancelNar(id: string): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/NAR/${id}`, {});
+  }
+
+
+  getTemplateList(ro: string, startTemplateName?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      ro: `${ro}`,
+      startingTemplateName: `${startTemplateName}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/templates/list?${parametersQuery}`);
+  }
+
+  getTemplate(ro: string, templateName: string, effDtTm: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      ro: `${ro}`,
+      templateName: `${templateName}`,
+      effDtTm: `${effDtTm}`,
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/templates/query?${parametersQuery}`);
+  }
+
+  saveTemplate(ro: string, tmpl: any): Observable<any> {
+    let data = { ... tmpl }
+    data.respOrg = ro
+    return this.http.post<any>(`${this.coreApi}/templates/save`, data);
+  }
+
+  getOcaCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/OCA/count?${parametersQuery}`);
+  }
+
+  getOcaData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
+    }).toString();
+    const url = `${this.coreApi}/OCA/data?${parametersQuery}`;
+    return this.http.get<any>(url);
+  }
+
+  getOcaById(id: string): Observable<any> {
+    const url = `${this.coreApi}/OCA/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  submitOca(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/OCA/activate`, data);
+  }
+
+  deleteOca(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/OCA/${id}`);
+  }
+
+  getReservedNumberList(ro: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      ro: `${ro}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/MNA/list?${parametersQuery}`);
+  }
+
+  getMnaData(active: string, direction: string, size: number, page: number, filterValue?: string, userIdFilter?: string|number): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
+    }).toString();
+    const url = `${this.coreApi}/MNA/data?${parametersQuery}`;
+    return this.http.get<any>(url);
+  }
+
+  getMnaCount(filterValue: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/MNA/count?${parametersQuery}`);
+  }
+
+  getMnaById(id: string): Observable<any> {
+    const url = `${this.coreApi}/MNA/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  deleteMna(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.coreApi}/MNA/${id}`);
+  }
+
+  submitMna(data: any): Observable<any> {
+    return this.http.patch<any>(`${this.coreApi}/MNA/activate`, data);
+  }
+
+  //ScriptResult APIs
+  getNumberList(active: string, direction: string, page: number, size: number, filterValue: string, entity: string, respOrgId: string, tmplName: string, status: string): Observable<any[]> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      entityFilter: `${entity}`,
+      respOrgFilter: `${respOrgId}`,
+      templateFilter: `${tmplName}`,
+      statusFilter: `${status}`,
+    }).toString();
+    const url = `${this.coreApi}/number_list?${parametersQuery}`;
+    return this.http.get<any[]>(url);
+  }
+
+  getNumberListCount(filterValue: string, entity: string, respOrgId: string, tmplName: string, status: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`,
+      entityFilter: `${entity}`,
+      respOrgFilter: `${respOrgId}`,
+      templateFilter: `${tmplName}`,
+      statusFilter: `${status}`,
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/number_list/count?${parametersQuery}`);
+  }
+
+  getUsernamesOfNumberList(): Observable<any[]> {
+    const url = `${this.coreApi}/number_list/script_users`;
+    return this.http.get<any[]>(url);
+  }
+
+  getRespOrgOfNumberList(): Observable<any[]> {
+    const url = `${this.coreApi}/number_list/resp_org`;
+    return this.http.get<any[]>(url);
+  }
+
+  getEntityOfNumberList(): Observable<any[]> {
+    const url = `${this.coreApi}/number_list/entity`;
+    return this.http.get<any[]>(url);
+  }
+
+  getTemplateOfNumberList(): Observable<any[]> {
+    const url = `${this.coreApi}/number_list/template`;
+    return this.http.get<any[]>(url);
+  }
+
+  getStatusOfNumberList(): Observable<any[]> {
+    const url = `${this.coreApi}/number_list/status`;
+    return this.http.get<any[]>(url);
+  }
+
+  getScriptSQLsOfNumberList(active: string, direction: string, page: number, size: number, filterValue: string, userIdFilter?: string): Observable<ISqlScript[]> {
+    const parametersQuery = new URLSearchParams({
+      limit: `${size}`,
+      skip: `${(page - 1) * size}`,
+      order: `${active} ${direction}`,
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
+    }).toString();
+    const url = `${this.coreApi}/number_list/script_sqls?${parametersQuery}`;
+    return this.http.get<ISqlScript[]>(url);
+  }
+
+  getScriptCountOfNumberList(filterValue: string, userIdFilter?: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      value: `${filterValue}`,
+      userIdFilter: `${userIdFilter}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/number_list/script_count?${parametersQuery}`);
+  }
+
+  importNumberList(ids: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      ids: `${ids}`,
+    }).toString();
+    const url = `${this.coreApi}/number_list/script_submit?${parametersQuery}`;
+    return this.http.post<any>(url, {});
+  }
+
+  confirmNumImporting(): Observable<any[]> {
+    const url = `${this.coreApi}/number_list/stas`;
+    return this.http.get<any[]>(url);
+  }
+
+  cancelNumImporting(ids: string): Observable<any[]> {
+    const parametersQuery = new URLSearchParams({
+      ids: `${ids}`,
+    }).toString();
+    const url = `${this.coreApi}/number_list/script_cancel?${parametersQuery}`;
+    return this.http.get<any[]>(url);
+  }
+
+  //Template Admin Data
+  tmplAdminDataRetrieve(ro: any, templateName: string, effDtTm: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      ro: `${ro}`,
+      templateName: `${templateName}`,
+      effDtTm: `${effDtTm}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/templates/retrieve?${parametersQuery}`);
+  }
+
+  tmplLock(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/lock`, data);
+  }
+
+  unlockCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/unlock`, data);
+  }
+
+  deleteCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/delete`, data);
+  }
+
+  updateTmplRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/update`, data);
+  }
+
+  createTmplRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/create`, data);
+  }
+
+  copyTmplRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/copy`, data);
+  }
+
+  disconnectTmplRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/disconnect`, data);
+  }
+
+  transferTmplRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/templates/transfer`, data);
+  }
+
+  // Customer Admin Data
+  retrieveCadRec(ro: any, num: string, effDtTm: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      ro: `${ro}`,
+      num: `${num}`,
+      effDtTm: `${effDtTm}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/customer-record/retrieve?${parametersQuery}`);
+  }
+
+  lockCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/lock`, data);
+  }
+
+  tmplUnLock(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/unlock`, data);
+  }
+
+  deleteTmplRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/delete`, data);
+  }
+
+  updateCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/update`, data);
+  }
+
+  createCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/create`, data);
+  }
+
+  copyCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/copy`, data);
+  }
+
+  disconnectCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/disconnect`, data);
+  }
+
+  transferCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/transfer`, data);
+  }
+
+  queryTmplRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/query`, data);
+  }
+
+  convertCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/convert`, data);
+  }
+
+  // Pointer Admin Data
+  retrievePtrRec(ro: any, num: string, effDtTm: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      ro: `${ro}`,
+      num: `${num}`,
+      effDtTm: `${effDtTm}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/pointer-record/retrieve?${parametersQuery}`);
+  }
+
+  lockPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/lock`, data);
+  }
+
+  unlockPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/unlock`, data);
+  }
+
+  deletePtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/delete`, data);
+  }
+
+  updatePtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/update`, data);
+  }
+
+  createPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/create`, data);
+  }
+
+  copyPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/copy`, data);
+  }
+
+  disconnectPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/disconnect`, data);
+  }
+
+  transferPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/transfer`, data);
+  }
+
+  // queryTmplRec(data: any): Observable<any> {
+  //   return this.http.put<any>(`${this.coreApi}/pointer-record/query`, data);
+  // }
+
+  convertPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/convert`, data);
+  }
+
+  resultOfConvertedPtrRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/pointer-record/convert`, data);
+  }
 }

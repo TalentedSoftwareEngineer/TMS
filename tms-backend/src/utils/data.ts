@@ -1,3 +1,5 @@
+import {PROGRESSING_STATUS} from "../constants/number_adminstration";
+
 export default class DataUtils {
     static sleep(ms: number) {
         return new Promise((resolve) => {
@@ -104,8 +106,18 @@ export default class DataUtils {
     }
 
     static getWhere(value?: string, fields?: string[], num_fields?: string, custom?: any[]) {
-        if (value==null || value.trim()=="")
+        if (value==null || value.trim()=="" ) {
+            if (custom!=null && custom.length>0) {
+                const where: any = { and : [] }
+                custom.forEach(function(item: any) {
+                    where.and.push(item)
+                })
+
+                return where;
+            }
+
             return {};
+        }
 
         let where: any = { and: [ {} ] };
         value = value.trim()
@@ -146,8 +158,23 @@ export default class DataUtils {
         if (order && order!="")
             filter.order = order
 
-        if (value==null /* || value.trim()=="" */)
+        if (value==null  || value.trim()=="" ) {
+            if (include!=null && include.length>0) {
+                filter.include = []
+                include.forEach(item => {
+                    filter.include.push(item)
+                })
+            }
+
+            if (custom!=null && custom.length>0) {
+                filter.where = { and : [] }
+                custom.forEach(function(item: any) {
+                    filter.where.and.push(item)
+                })
+            }
+
             return filter;
+        }
 
         let where: any = { and: [ {} ] };
         value = value.trim()
@@ -186,6 +213,17 @@ export default class DataUtils {
         }
 
         return filter
+    }
+
+    static isFinished(status: string): boolean {
+        if (status==null)
+            return false
+
+        if (status==PROGRESSING_STATUS.COMPLETED || status==PROGRESSING_STATUS.SUCCESS
+            || status==PROGRESSING_STATUS.FAILED || status==PROGRESSING_STATUS.CANCELED)
+            return true
+
+        return false
     }
 }
 

@@ -4,7 +4,7 @@ import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
 import { tap } from "rxjs/operators";
-import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import { PAGE_NO_PERMISSION_MSG, PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, rowsPerPageOptions, ROWS_PER_PAGE_OPTIONS } from '../../constants';
 import moment from 'moment';
 import { ISqlUser } from "../../../models/user";
 import { PERMISSIONS } from 'src/app/consts/permissions';
@@ -35,7 +35,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any[] = ROWS_PER_PAGE_OPTIONS;
+  rowsPerPageOptions: any[] = rowsPerPageOptions;
   noNeedRemoveColumn = true
 
   input_sftp_hosts: string|undefined|null = ''
@@ -78,7 +78,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
       if(state.user.permissions?.includes(PERMISSIONS.READ_SQL_SCRIPT)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
@@ -129,7 +129,6 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
 
         })).toPromise();
 
-      this.getTotalSqlUsersCount();
       this.filterResultLength = -1
       await this.api.getSqlUserCount(filterValue).pipe(tap( res => {
         this.filterResultLength = res.count
@@ -160,18 +159,21 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getSqlUsersList();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getSqlUsersList();
+  };
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getSqlUsersList();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   onSFTPEdit = () => {
@@ -238,6 +240,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
     this.showSuccess('Successfully created!');
     this.closeSqlUserModal();
     this.getSqlUsersList();
+    this.getTotalSqlUsersCount();
   }
 
   onOpenEditModal = async (event: Event, sql_user_id: number) => {
@@ -271,6 +274,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
           this.api.deleteSqlUserById(sql_user_id).subscribe(res => {
             this.showSuccess('Successfully deleted!')
             this.getSqlUsersList();
+            this.getTotalSqlUsersCount();
           })
         },
         reject: (type: any) => {

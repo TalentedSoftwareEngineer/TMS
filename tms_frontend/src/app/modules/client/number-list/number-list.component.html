@@ -1,113 +1,112 @@
 <h4 class="page_title">Number List</h4>
-<p-panel header="Sql Scripts" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+<p-panel header="Sql Scripts" [toggleable]="true" [collapsed]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <ng-template pTemplate="icons">
-        
+
     </ng-template>
 
     <div class="pt-2">
         <div class="card">
-            <p-table
-                #sqlScriptsTable
-                [value]="sqlScripts"
-                [(selection)]="selectedSqlScripts"
-                dataKey="id"
-                styleClass="p-datatable-customers"
-                [rowHover]="true"
-                [rows]="10"
-                [showCurrentPageReport]="true"
-                [rowsPerPageOptions]="[10,25,50]"
-                [loading]="sqlScriptsLoading"
-                responsiveLayout="stack"
-                [responsive]="true"
-                [paginator]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-                [filterDelay]="0" 
-                [globalFilterFields]="['username','sqlScript','autoRun']"
-                styleClass="p-datatable-lg"
-            >
-                <ng-template pTemplate="caption">
-                    <div class="table-header flex justify-content-end">
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-search"></i>
-                            <input pInputText type="text" (input)="sqlScriptsTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Search..." />
-                        </span>
-                    </div>
-                </ng-template>
-    
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 3rem">
-                            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
-                        </th>
-                        <th pSortableColumn="username">
-                            <div class="flex justify-content-center align-items-center">
-                                User Name
-                                <p-sortIcon field="username"></p-sortIcon>
-                                <!-- <p-columnFilter type="text" field="username" display="menu"></p-columnFilter> -->
-                            </div>
-                        </th>
-                        <th pSortableColumn="sqlScript">
-                            <div class="flex justify-content-center align-items-center">
-                                Sql Script
-                                <p-sortIcon field="sqlScript"></p-sortIcon>
-                                <!-- <p-columnFilter type="text" field="sqlScript" display="menu"></p-columnFilter> -->
-                            </div>
-                        </th>
-                        <th pSortableColumn="autoRun">
-                            <div class="flex justify-content-center align-items-center">
-                                Autorun
-                                <p-sortIcon field="autoRun"></p-sortIcon>
-                                <!-- <p-columnFilter field="autoRun" matchMode="equals" display="menu" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                    <ng-template pTemplate="header">
-                                        <div class="px-3 pt-3 pb-0">
-                                            <span class="font-bold">Autorun Picker</span>
-                                        </div>
-                                    </ng-template>
-                                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                        <p-dropdown [ngModel]="value" [options]="autoRunStatuses" (onChange)="filter($event.value)" placeholder="Any">
-                                            <ng-template let-option pTemplate="item">
-                                                <span>{{option.label}}</span>
-                                            </ng-template>
-                                        </p-dropdown>
-                                    </ng-template>
-                                </p-columnFilter> -->
-                            </div>
-                        </th>
-                    </tr>
-                </ng-template>
-    
-                <ng-template pTemplate="body" let-sqlScript>
-                    <tr class="p-selectable-row text-align-center">
-                        <td>
-                            <p-tableCheckbox [value]="sqlScript"></p-tableCheckbox>
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">User Name</span>
-                            {{sqlScript.username}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Sql Script</span>
-                            {{sqlScript.sqlScript}}
-                        </td>
-                        <td class="text-align-center">
-                            <span class="p-column-title">Autorun</span>
-                            {{sqlScript.autoRun}}
-                        </td>
-                    </tr>
-                </ng-template>
-                
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="8">No Sql Scripts found.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+          <h5><span *ngIf="scriptLength!=-1">Total {{scriptLength}} Record</span><span *ngIf="scriptLength>1">s</span><i *ngIf="scriptLength!=-1&&filteredScriptLength!=-1&&filteredScriptLength<scriptLength" style="font-size: medium;">, {{filteredScriptLength}} Record<span *ngIf="filteredScriptLength>1">s</span> Filtered</i></h5>
+          <p-table
+            [value]="sql_scripts"
+            [(selection)]="selectedSQLScripts"
+            dataKey="id"
+            [rowHover]="true"
+            [rows]="10"
+            responsiveLayout="stack"
+            [responsive]="true">
+            <ng-template pTemplate="caption">
+              <div class="grid">
+                <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
+                  <span class="p-float-label">
+                      <p-dropdown [options]="usernameOptions" id="filterByUsername" [(ngModel)]="selectUsername" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
+                      <label>Username</label>
+                  </span>
+                </div>
+                <div class="lg:col-4 md:col-6 col-12 p-fluid pl-0 pr-0">
+                  <div class="p-inputgroup">
+                    <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="scriptFilterValue" [disabled]="isLoading" (keyup.enter)="onScriptClickFilter()">
+                    <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onScriptClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 3rem">
+                    <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                </th>
+                <th class="text-align-center" [ngClass]="scriptSortActive === 'user_id' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
+                    <a (click)="onSortChange('user_id')">User Name</a>
+                </th>
+                <th class="text-left" [ngClass]="scriptSortActive === 'content' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
+                    <a (click)="onSortChange('content')">Sql Script</a>
+                </th>
+                <th class="text-align-center" [ngClass]="scriptSortActive === 'autorun' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
+                  <a (click)="onSortChange('autorun')">Autorun</a>
+                </th>
+
+                <ng-container *ngIf="allFinish">
+                    <th class="text-align-center">Import Status</th>
+                    <th class="text-center">Imported</th>
+                    <th class="text-align-center">Message</th>
+                </ng-container>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-sql_script>
+              <tr>
+                <td>
+                    <p-tableCheckbox [value]="sql_script"></p-tableCheckbox>
+                </td>
+                <td class="text-align-center">
+                  <span class="p-column-title">User Name</span>
+                  {{ sql_script.user?.username }}
+                </td>
+                <td class="text-align-center">
+                  <span class="p-column-title">Sql Script</span>
+                  <pre class="text-left">{{ sql_script?.content }}</pre> 
+                </td>
+                <td class="text-align-center">
+                  <span class="p-column-title">Autorun</span>
+                  <ng-container *ngIf="sql_script.autorun">
+                    <i class="pi pi-check"></i>
+                  </ng-container>
+                  <ng-container *ngIf="!sql_script.autorun">
+                    <i class="pi pi-times"></i>
+                  </ng-container>
+                </td>
+
+                <ng-container *ngIf="allFinish">
+                    <td class="text-align-center">
+                        <span class="p-column-title">Import Status</span>
+                        <p-tag [severity]="getImportStatusColor(sql_script.status)" [value]="sql_script.status"></p-tag>
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Imported</span>
+                        <p-tag [severity]="sql_script.imported>0?'success':'danger'" [value]="sql_script.imported"></p-tag>
+                    </td>
+                    <td class="text-align-center">
+                        <span class="p-column-title">Message</span>
+                        {{sql_script.message}}
+                    </td>
+                </ng-container>
+              </tr>
+            </ng-template>
+          </p-table>
+
+          <div class="flex justify-content-center align-items-center gap-3">
+            <p-paginator [rows]="scriptPageSize" [totalRecords]="filteredScriptLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="onScriptPagination($event)"></p-paginator>
+          </div>
         </div>
     </div>
 
     <ng-template pTemplate="footer">
         <div class="flex justify-content-end">
-            <button pButton pRipple (click)="onSubmit()" label="Submit" icon="pi pi-send" class="p-button-text"></button>
+            <span class="p-buttonset">
+                <button pButton pRipple (click)="confirm()" [disabled]="!allFinish" label="Confirm" icon="pi pi-check" class="p-button-text"></button>
+                <button pButton pRipple (click)="onCancel()" [disabled]="!allFinish" label="Cancel" icon="pi pi-times" class="p-button-text"></button>
+                <button pButton pRipple (click)="submit()" [disabled]="allFinish" label="Submit" icon="pi pi-send" class="p-button-text"></button>
+            </span>
         </div>
     </ng-template>
 </p-panel>
@@ -117,6 +116,7 @@
 
     <div class="pt-2">
         <div class="card">
+            <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
             <p-table
                 #numbersTable
                 [value]="numberList"
@@ -124,131 +124,76 @@
                 dataKey="id"
                 [rowHover]="true"
                 [rows]="10"
-                [showCurrentPageReport]="true"
-                [rowsPerPageOptions]="[10,25,50]"
                 [loading]="numberListLoading"
                 responsiveLayout="stack"
                 [responsive]="true"
-                [paginator]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-                [filterDelay]="0" 
-                [globalFilterFields]="['entity','respOrgId','templateName', 'tollFreeNumber', 'status', 'submitDate']"
+                [filterDelay]="0"
                 styleClass="p-datatable-lg"
             >
                 <ng-template pTemplate="caption">
-                    <div class="table-header flex justify-content-end">
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-search"></i>
-                            <input pInputText type="text" (input)="numbersTable.filterGlobal($any($event.target).value, 'contains')" placeholder="Number List Search..." />
-                        </span>
+                    <div class="grid">
+                        <!-- <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
+                            <span class="p-float-label">
+                                <p-dropdown [options]="entityOptions" id="filterByEntity" [(ngModel)]="selectEntity" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
+                                <label>Entity</label>
+                            </span>
+                        </div> -->
+                        <!-- <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
+                            <span class="p-float-label">
+                                <p-dropdown [options]="respOrgIdOptions" id="filterByRespOrgId" [(ngModel)]="selectRespOrgId" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
+                                <label>Resp Org Id</label>
+                            </span>
+                        </div> -->
+                        <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
+                            <span class="p-float-label">
+                                <p-dropdown [options]="tmplNameOptions" id="filterByTmplName" [(ngModel)]="selectTmplName" [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
+                                <label>Template Name</label>
+                            </span>
+                        </div>
+                        <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
+                            <span class="p-float-label">
+                                <p-dropdown [options]="statusOptions" id="filterByStatus" [(ngModel)]="selectStatus" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
+                                <label>Status</label>
+                            </span>
+                        </div>
+                        <div class="lg:col-4 md:col-6 col-12 p-fluid pl-0 pr-0">
+                            <div class="p-inputgroup">
+                                <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+                                <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+                            </div>
+                        </div>
                     </div>
                 </ng-template>
-    
+
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 3rem">
                             <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
                         </th>
-                        <th pSortableColumn="entity">
-                            <div class="flex justify-content-center align-items-center">
-                                Entity
-                                <p-sortIcon field="entity"></p-sortIcon>
-                                <!-- <p-columnFilter field="entity" matchMode="equals" display="menu" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                    <ng-template pTemplate="header">
-                                        <div class="px-3 pt-3 pb-0">
-                                            <span class="font-bold">Entity Picker</span>
-                                        </div>
-                                    </ng-template>
-                                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                        <p-dropdown [ngModel]="value" [options]="filterEntities" (onChange)="filter($event.value)" placeholder="Any">
-                                            <ng-template let-option pTemplate="item">
-                                                <span>{{option.label}}</span>
-                                            </ng-template>
-                                        </p-dropdown>
-                                    </ng-template>
-                                </p-columnFilter> -->
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'entity' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('entity')">Entity</a>
                         </th>
-                        <th pSortableColumn="respOrgId">
-                            <div class="flex justify-content-center align-items-center">
-                                Resp Org Id
-                                <p-sortIcon field="respOrgId"></p-sortIcon>
-                                <!-- <p-columnFilter field="respOrgId" matchMode="equals" display="menu" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                    <ng-template pTemplate="header">
-                                        <div class="px-3 pt-3 pb-0">
-                                            <span class="font-bold">Resp Org Id Picker</span>
-                                        </div>
-                                    </ng-template>
-                                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                        <p-dropdown [ngModel]="value" [options]="filterRespOrgIds" (onChange)="filter($event.value)" placeholder="Any">
-                                            <ng-template let-option pTemplate="item">
-                                                <span>{{option.label}}</span>
-                                            </ng-template>
-                                        </p-dropdown>
-                                    </ng-template>
-                                </p-columnFilter> -->
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'resp_org' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('resp_org')">Resp Org Id</a>
                         </th>
-                        <th pSortableColumn="templateName">
-                            <div class="flex justify-content-center align-items-center">
-                                Template Name
-                                <p-sortIcon field="templateName"></p-sortIcon>
-                                <!-- <p-columnFilter field="templateName" matchMode="equals" display="menu" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                    <ng-template pTemplate="header">
-                                        <div class="px-3 pt-3 pb-0">
-                                            <span class="font-bold">Template Name Picker</span>
-                                        </div>
-                                    </ng-template>
-                                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                        <p-dropdown [ngModel]="value" [options]="filterTemplateName" (onChange)="filter($event.value)" placeholder="Any">
-                                            <ng-template let-option pTemplate="item">
-                                                <span>{{option.label}}</span>
-                                            </ng-template>
-                                        </p-dropdown>
-                                    </ng-template>
-                                </p-columnFilter> -->
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'template_name' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('template_name')">Template Name</a>
                         </th>
-                        <th pSortableColumn="tollFreeNumber">
-                            <div class="flex justify-content-center align-items-center">
-                                Toll-Free Number
-                                <p-sortIcon field="tollFreeNumber"></p-sortIcon>
-                                <!-- <p-columnFilter type="text" field="tollFreeNumber" display="menu"></p-columnFilter> -->
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'num' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('num')">Toll-Free Number</a>
                         </th>
-                        <th pSortableColumn="status">
-                            <div class="flex justify-content-center align-items-center">
-                                Status
-                                <p-sortIcon field="status"></p-sortIcon>
-                                <!-- <p-columnFilter field="status" matchMode="equals" display="menu" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                    <ng-template pTemplate="header">
-                                        <div class="px-3 pt-3 pb-0">
-                                            <span class="font-bold">Status Picker</span>
-                                        </div>
-                                    </ng-template>
-                                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                        <p-dropdown [ngModel]="value" [options]="filterStatus" (onChange)="filter($event.value)" placeholder="Any">
-                                            <ng-template let-option pTemplate="item">
-                                                <span>{{option.label}}</span>
-                                            </ng-template>
-                                        </p-dropdown>
-                                    </ng-template>
-                                </p-columnFilter> -->
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'status' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('status')">Status</a>
                         </th>
-                        <th pSortableColumn="submitDate">
-                            <div class="flex justify-content-center align-items-center">
-                                Submit Date
-                                <p-sortIcon field="submitDate"></p-sortIcon>
-                                <!-- <p-columnFilter type="text" field="submitDate" display="menu"></p-columnFilter> -->
-                            </div>
+                        <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                            <a (click)="onSortChange('sub_dt_tm')">Submit Date</a>
                         </th>
                         <th class="text-align-center w-100px">
                             Action
                         </th>
                     </tr>
                 </ng-template>
-    
+
                 <ng-template pTemplate="body" let-number>
                     <tr class="p-selectable-row text-align-center">
                         <td>
@@ -260,15 +205,15 @@
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Resp Org Id</span>
-                            {{number.respOrgId}}
+                            {{number.resp_org}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Template Name</span>
-                            {{number.templateName}}
+                            {{number.template_name}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Toll-Free Number</span>
-                            {{number.tollFreeNumber}}
+                            {{number.num | phoneFormat}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Status</span>
@@ -276,31 +221,118 @@
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Submit Date</span>
-                            {{number.submitDate}}
+                            {{number.sub_dt_tm}}
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Action</span>
-    
-                        </td>                                                            
+
+                        </td>
                     </tr>
                 </ng-template>
-                
+
                 <ng-template pTemplate="emptymessage">
                     <tr>
                         <td colspan="8">No Number List found.</td>
                     </tr>
                 </ng-template>
             </p-table>
+
+            <div class="flex justify-content-center align-items-center gap-3">
+                <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
+            </div>
         </div>
     </div>
 
     <ng-template pTemplate="footer">
         <div class="flex justify-content-end">
             <span class="p-buttonset">
-                <button pButton pRipple (click)="onConvert()" label="Convert" icon="pi pi-arrow-right-arrow-left" class="p-button-text"></button>
-                <button pButton pRipple (click)="onActivate()" label="Activate" icon="pi pi-check" class="p-button-text p-button-success"></button>
+                <button pButton pRipple [disabled]="selectedNumbers.length==0" (click)="onConvert()" label="Convert" icon="pi pi-arrow-right-arrow-left" class="p-button-text"></button>
+                <button pButton pRipple [disabled]="selectedNumbers.length==0" (click)="onActivate()" label="Activate" icon="pi pi-check" class="p-button-text p-button-success"></button>
                 <button pButton pRipple (click)="onDownload()" label="Download" icon="pi pi-download" class="p-button-text p-button-help"></button>
             </span>
         </div>
     </ng-template>
 </p-panel>
+
+
+<p-dialog styleClass="c-modal pt-2" [(visible)]="flagOpenActivateModal" (onHide)="closeActivateModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '60vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <ng-template pTemplate="header">
+        <div class="flex justify-content-between align-items-center w-full">
+            <h5 class="mb-0">Activate</h5>
+            <button id="btn_contactInformation"><span>&#9990;</span>Contact Information *</button>
+        </div>
+    </ng-template>
+
+    <div class="grid p-fluid">
+        <div class="lg:col-6 col-12">
+            <span class="p-float-label">
+                <p-dropdown
+                    [options]="templates"
+                    id="template"
+                    name="template"
+                    [(ngModel)]="inputTemplate"
+                    optionLabel="tmplName"
+                    scrollHeight="150px"
+                    [filter]="true"
+                    [virtualScroll]="true"
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label>Template *</label>
+            </span>
+        </div>
+        <div class="lg:col-6 col-12">
+            <span class="p-float-label">
+                <input type="text" id="serviceOrderNum" name="serviceOrderNum" pInputText [(ngModel)]="inputServiceOrderNum" (blur)="onSvcOrderFieldFocusOut()">
+                <label for="serviceOrderNum">Service Order *</label>
+            </span>
+            <p *ngIf="!validSvcOrdrNum" class="p-error">Must be 4 to 13 alphanumeric characters. The 1st character must be alpha, 2nd to 12th characters must be alphanumeric. The 13th character must be alpha.</p>
+        </div>
+        <div class="lg:col-6 col-12">
+            <span class="p-float-label">
+                <input type="text" id="numTermLine" name="numTermLine" pInputText [(ngModel)]="inputNumTermLine" (blur)="onNumTermLineFieldFocusOut()">
+                <label for="numTermLine">Number of Lines *</label>
+            </span>
+            <p *ngIf="!validNumTermLine" class="p-error">Please input number between 1 ~ 9999.</p>
+        </div>
+        <div class="lg:col-6 col-12">
+            <div class="grid p-fluid">
+                <div class="col-8">
+                    <span class="p-float-label">
+                        <p-calendar
+                          inputId="effDateTime"
+                          [(ngModel)]="inputEffDate"
+                          dateFormat="mm/dd/yy"
+                          [minDate]="minEffDate"
+                          [showButtonBar]="true"
+                          [showTime]="true"
+                          hourFormat="12"
+                          [disabled]="inputNow"
+                          (onSelect)="onDateFieldFocusOut();onEffDateIntervalFifteenMin();"
+                          [stepMinute]="15"
+                        ></p-calendar>
+                        <label>Effective Date/Time *</label>
+                    </span>
+                    <p *ngIf="!validEffDate" class="p-error">Effective Date/Time is required. </p>
+                </div>
+                <div class="col-4 flex align-items-center">
+                    <label class="ml-3">
+                        <p-inputSwitch
+                            id="now"
+                            name="now"
+                            (onChange)="onDateFieldFocusOut()"
+                            [(ngModel)]="inputNow"
+                        ></p-inputSwitch>
+                        Now
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-content-end">
+        <span class="p-buttonset">
+            <button pButton pRipple (click)="onModalActivate()" label="Activate" icon="pi pi-search-plus" class="p-button-text"></button>
+            <button pButton pRipple (click)="onModalCancel()" label="Cancel" icon="pi pi-times" class="p-button-text p-button-danger"></button>
+        </span>
+    </div>
+</p-dialog>

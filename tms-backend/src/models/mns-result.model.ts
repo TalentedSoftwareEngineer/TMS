@@ -25,51 +25,6 @@ export class MnsResult extends Entity {
   num?: string;
 
   @property({
-    type: 'number',
-  })
-  rec_version_id?: number;
-
-  @property({
-    type: 'string',
-  })
-  last_act_dt?: string;
-
-  @property({
-    type: 'string',
-  })
-  res_until_dt?: string;
-
-  @property({
-    type: 'string',
-  })
-  disc_until_dt?: string;
-
-  @property({
-    type: 'string',
-  })
-  eff_dt?: string;
-
-  @property({
-    type: 'string',
-  })
-  resp_org_id?: string;
-
-  @property({
-    type: 'string',
-  })
-  con_name?: string;
-
-  @property({
-    type: 'string',
-  })
-  con_phone?: string;
-
-  @property({
-    type: 'string',
-  })
-  short_notes?: string;
-
-  @property({
     type: 'string',
   })
   status?: string;

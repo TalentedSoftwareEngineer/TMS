@@ -3,41 +3,9 @@ import {QueueManager} from "redis-smq";
 import {EQueueType} from "redis-smq/dist/types";
 import {HttpErrors} from "@loopback/rest";
 import {startEventStreamServer} from "./event_stream";
+import {PRIVATE_KEY, PUBLIC_KEY, RSMQ_CONFIG, RSMQ_QUEUE, SERVER} from "./config";
 
 export * from './application';
-
-export const PUBLIC_KEY = '/etc/letsencrypt/live/tmsdev.tfnms.com/fullchain.pem'
-export const PRIVATE_KEY = '/etc/letsencrypt/live/tmsdev.tfnms.com/privkey.pem'
-export const SERVER = "tmsdev.tfnms.com"
-
-export const RSMQ_QUEUE = "activities"
-export const RSMQ_CONFIG: any = {
-  namespace: 'tollfree_number_management_system',
-  redis: {
-    // @ts-ignore
-    client: 'redis',
-    options: {
-      // @ts-ignore
-      host: '127.0.0.1',
-      port: 6789,
-      connect_timeout: 3600000,
-    },
-  },
-  logger: {
-    enabled: false,
-    options: {
-      level: 'error',
-    },
-  },
-  messages: {
-    store: {// false,
-      deadLettered: {
-        queueSize: 5000,
-        expire: 24 * 60 * 60 * 1000
-      },
-    }
-  },
-}
 
 export function createQueue(queue: string, callback: any) {
   console.log("Creating Queue:" + queue + " .......")
@@ -63,6 +31,10 @@ export function createQueue(queue: string, callback: any) {
 }
 
 export async function main(options: ApplicationConfig = {}) {
+  createQueue(RSMQ_QUEUE, () => {
+    startEventStreamServer(process.env.NODE_ENV, options.rest)
+  })
+
   const app = new BackendApplication(options);
   await app.basePath("/api/v1");
   await app.restServer.basePath("/api/v1");
@@ -73,10 +45,6 @@ export async function main(options: ApplicationConfig = {}) {
   console.log(`Server is running at ${url}`);
   console.log(`Try ${url}/ping`);
   console.log("Environment", process.env.NODE_ENV)
-
-  createQueue(RSMQ_QUEUE, () => {
-    startEventStreamServer(process.env.NODE_ENV, options.rest)
-  })
 
   return app;
 }

@@ -15,7 +15,8 @@ import {
   TFNUM_REG_EXP,
   TFNUM_STATE_RESERVED,
   TFNUM_STATE_TRANSITIONAL,
-  TFNUM_STATE_SPARE
+  TFNUM_STATE_SPARE,
+  PAGE_NO_PERMISSION_MSG
  } from '../../constants';
 import moment from 'moment';
 import { PERMISSIONS } from 'src/app/consts/permissions';
@@ -74,10 +75,10 @@ export class NumberQueryComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.NUMBER_QUERY_UPDATE)) {
+      if(state.user.permissions?.includes(PERMISSIONS.NUMBER_QUERY)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
@@ -113,6 +114,7 @@ export class NumberQueryComponent implements OnInit {
 
   onRetrieve = (): any => {
     this.isResult = false;
+    this.inputTollFreeNumber = this.inputTollFreeNumber.replace(/\W/g, '');
 
     let numRegExp = this.gConst.NUM_REG_EXP
     let tfNumRegExp = this.gConst.TFNUM_REG_EXP
@@ -147,6 +149,11 @@ export class NumberQueryComponent implements OnInit {
   }
 
   onSave = () => {
+    this.onInputContactName()
+    this.onInputContactNumber()
+    if (!this.validInputContactName || !this.validInputContactNumber)
+      return
+
     this.api.updateNumberQuery({
       recVersionId: this.recVersionId,
       ro: this.store.getCurrentRo(),

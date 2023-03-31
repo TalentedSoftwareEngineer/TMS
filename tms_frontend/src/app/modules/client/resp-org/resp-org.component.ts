@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, NUM_REG_EXP } from '../../constants';
+import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, NUM_REG_EXP, PAGE_NO_PERMISSION_MSG } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IUser, ITaskTracking, IRetrieveRespOrg} from "../../../models/user";
@@ -68,7 +68,7 @@ export class RespOrgComponent implements OnInit {
       if(state.user.permissions?.includes(PERMISSIONS.RESP_ORG_INFORMATION)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return

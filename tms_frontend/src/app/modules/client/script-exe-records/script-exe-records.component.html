@@ -29,11 +29,11 @@
 </div>
 
 <div class="card">
-  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
   <p-table [value]="script_exe_records" responsiveLayout="stack" [responsive]="true">
     <ng-template pTemplate="header">
       <tr>
-        <th class="text-align-center" [ngClass]="sortActive === 'sql_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+        <th class="text-left" [ngClass]="sortActive === 'sql_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('sql_id')">Sql Script</a>
         </th>
         <th class="text-align-center" [ngClass]="sortActive === 'result' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
@@ -57,7 +57,7 @@
       <tr>
         <td class="text-align-center">
           <span class="p-column-title">Sql Script</span>
-          {{ script_exe_record.sql?.content }}
+          <pre class="text-left">{{ script_exe_record.sql?.content }}</pre> 
         </td>
         <td class="text-align-center">
           <span class="p-column-title">Result</span>
@@ -84,9 +84,6 @@
   </p-table>
 
   <div class="flex justify-content-center align-items-center gap-3">
-    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
-    <div class="p-fluid">
-      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getScriptResultsList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-    </div>
+    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
   </div>
 </div>

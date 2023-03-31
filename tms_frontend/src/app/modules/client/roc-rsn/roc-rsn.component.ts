@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ROUTES } from 'src/app/app.routes';
+import { PAGE_NO_PERMISSION_MSG } from '../../constants';
 
 @Component({
   selector: 'app-roc-rsn',
@@ -35,10 +36,10 @@ export class RocRsnComponent implements OnInit {
 
   async ngOnInit() {
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.RSN)) {
+      if(state.user.permissions?.includes(PERMISSIONS.ROC_SUBSCRIBER_NOTIFICATIONS)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return

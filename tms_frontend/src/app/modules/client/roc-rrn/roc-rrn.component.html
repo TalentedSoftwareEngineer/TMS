@@ -4,38 +4,37 @@
     <div class="grid">
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <input type="text" id="respOrgEntity" name="respOrgEntity" [ngClass]="{'ng-dirty': !validRespOrgEntity, 'ng-invalid': !validRespOrgEntity}" (input)="onInputRespOrgEntity()" pInputText [(ngModel)]="inputRespOrgEntity"> 
+                <input type="text" id="respOrgEntity" name="respOrgEntity" [ngClass]="{'ng-dirty': !validRespOrgEntity, 'ng-invalid': !validRespOrgEntity}" (input)="onInputRespOrgEntity()" pInputText [(ngModel)]="inputRespOrgEntity">
                 <label for="respOrgEntity">Entity ID *</label>
             </span>
-            <strong *ngIf="!validRespOrgEntity" class="p-error">Required!</strong>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <input type="text" id="txnID" name="txnID" pInputText [(ngModel)]="inputTransactionID"> 
+                <input type="text" id="txnID" name="txnID" pInputText [(ngModel)]="inputTransactionID">
                 <label for="txnID">Transaction ID</label>
             </span>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <p-calendar 
-                    inputId="dateRange" 
-                    selectionMode="range" 
-                    dateFormat="mm/dd/yy" 
+                <p-calendar
+                    inputId="dateRange"
+                    selectionMode="range"
+                    dateFormat="mm/dd/yy"
                     [readonlyInput]="true"
-                    [(ngModel)]="dateRange" 
+                    [(ngModel)]="dateRange"
                 ></p-calendar>
                 <label for="dateRange">Date Range</label>
             </span>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <input type="text" id="respOrgID" name="respOrgID" pInputText [(ngModel)]="inputRespOrgID"> 
+                <input type="text" id="respOrgID" name="respOrgID" pInputText [(ngModel)]="inputRespOrgID">
                 <label for="respOrgID">Resp Org ID</label>
             </span>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <input type="text" id="tollFreeNumber" name="tollFreeNumber" [ngClass]="{'ng-dirty': !validTollFreeNumber, 'ng-invalid': !validTollFreeNumber}" (blur)="onNumFieldFocusOut()" pInputText [(ngModel)]="inputTollFreeNumber"> 
+                <input type="text" id="tollFreeNumber" name="tollFreeNumber" [ngClass]="{'ng-dirty': !validTollFreeNumber, 'ng-invalid': !validTollFreeNumber}" (blur)="onNumFieldFocusOut()" pInputText [(ngModel)]="inputTollFreeNumber">
                 <label for="tollFreeNumber">Toll-Free Number</label>
             </span>
             <strong *ngIf="!validTollFreeNumber" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'.</strong>

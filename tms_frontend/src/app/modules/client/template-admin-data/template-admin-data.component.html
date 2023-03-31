@@ -1,6 +1,6 @@
 <h4 class="page_title">Template Admin Data</h4>
 
-<p-panel [header]="retrieveCardTitle" [toggleable]="!bRetrieveCardIconHidden" [collapsed]="bExpRetrieve" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+<p-panel [header]="retrieveCardTitle" [toggleable]="!bRetrieveCardIconHidden" [collapsed]="!bExpRetrieve" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <ng-template pTemplate="icons">
         <span style="flex: 1;"></span>
     </ng-template>
@@ -21,19 +21,25 @@
                     [showButtonBar]="true"
                     [showTime]="true"
                     hourFormat="12"
+                    (onSelect)="onSearchEffDtTmIntervalFifteenMin();"
+                    [stepMinute]="15"
                 ></p-calendar>
                 <label for="searchEffDtTm">Effective Date Time</label>
             </span>
         </div>
     </div>
     <div class="flex justify-content-end">
-        <button pButton pRipple (click)="onSearchTemplate()" icon="pi pi-search" label="Retrieve" class="p-button-text" [disabled]="!bRetrieveEnable || inputSearchTmplName=='' || validTmplName == false"></button>
+        <button pButton pRipple (click)="onSearchTemplate()" icon="pi pi-search" label="Retrieve" class="p-button-text" [disabled]="(!bRetrieveEnable)"></button>
     </div>
 </p-panel>
 
-<p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="true" [collapsed]="bExpResult" iconPos="left" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-    <ng-template pTemplate="icons">
-        <span style="flex: 1;">
+<p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="bRetrieveCardIconHidden" [collapsed]="!bExpResult" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+    <ng-template pTemplate="icons" *ngIf="!bEffDtTmListHidden">
+        <span>
+            <button pButton pRipple class="p-button-text" label="Import CPR Report Data" icon="pi pi-file-import" (click)="fileInput.click()" [disabled]="disable"></button>
+            <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".csv"/>
+        </span>
+        <span>
             <p-dropdown
                 *ngIf="!bEffDtTmListHidden"
                 [options]="getEffDtTmStatusOptions(effDtTmStatList)"
@@ -42,7 +48,6 @@
                 name="effDtTmStat"
                 optionLabel="name"
                 optionValue="value"
-                [showClear]="true"
                 scrollHeight="150px"
                 [filter]="true"
                 filterBy="name"
@@ -53,10 +58,6 @@
     </ng-template>
 
     <div class="pt-2">
-        <div class="flex justify-content-end mb-3">
-            <button pButton pRipple class="p-button-text" label="Import CPR Report Data" icon="pi pi-file-import" (click)="fileInput.click()" [disabled]="disable"></button>
-            <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".csv"/>
-        </div>
 
         <div class="card">
             <p-tabView [(activeIndex)]="activeMainTab">
@@ -70,13 +71,13 @@
                         <!-- at creating -->
                         <ng-container *ngIf="this.action === gConst.ACTION_CREATE">
                             <div class="grid">
-                                <div class="lg:col-4 col-12 p-fluid">
-                                    <span class="field p-float-label">
-                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
+                                <div class="lg:col-4 col-12 p-fluid field">
+                                    <span class="p-float-label">
+                                        <input type="text" [(ngModel)]="inputRespOrg" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
                                         <label for="respOrg">Resp Org</label>
                                     </span>
                                 </div>
-                                <div class="lg:col-4 col-12 p-fluid">
+                                <div class="lg:col-4 col-12 p-fluid field">
                                     <span class="p-float-label">
                                         <p-calendar
                                             inputId="createEffDtTm"
@@ -86,13 +87,14 @@
                                             [showButtonBar]="true"
                                             [showTime]="true"
                                             hourFormat="12"
-                                            (onSelect)="checkDataExistForCR()"
+                                            (onSelect)="checkDataExistForCR();onCreateEffDtTmIntervalFifteenMin();"
+                                            [stepMinute]="15"
                                         ></p-calendar>
                                         <label for="createEffDtTm">Effective Date Time</label>
                                     </span>
                                     <p *ngIf="!getBoolean(inputCreateEffDtTm)" class="p-error">Effective Date field is required</p>
                                 </div>
-                                <div class="lg:col-2 col-6 flex align-items-center">
+                                <div class="lg:col-2 col-6 flex align-items-center field">
                                     <label class="ml-3" for="createNow">
                                         <p-inputSwitch
                                             id="createNow"
@@ -103,7 +105,7 @@
                                         Now
                                     </label>
                                 </div>
-                                <div class="lg:col-2 col-6 flex align-items-center">
+                                <div class="lg:col-2 col-6 flex align-items-center field">
                                     <label class="ml-3" for="createNow">
                                         <p-inputSwitch
                                             id="priority"
@@ -119,13 +121,13 @@
                         <!-- at no creating -->
                         <ng-container *ngIf="this.action !== gConst.ACTION_CREATE">
                             <div class="grid">
-                                <div class="lg:col-4 col-12 p-fluid">
+                                <div class="lg:col-4 col-12 p-fluid field">
                                     <span class="p-float-label">
                                         <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
                                         <label for="respOrg">Resp Org</label>
                                     </span>
                                 </div>
-                                <div class="lg:col-4 col-12 flex align-items-center">
+                                <div class="lg:col-4 col-12 flex align-items-center field">
                                     <label class="ml-3" for="priority">
                                         <p-inputSwitch
                                             id="priority"
@@ -137,7 +139,7 @@
                                         High Priority
                                     </label>
                                 </div>
-                                <div class="lg:col-4 col-12 flex align-items-center">
+                                <div class="lg:col-4 col-12 flex align-items-center field">
                                     <label class="ml-3" for="dscInd">
                                         <p-inputSwitch
                                             id="dscInd"
@@ -201,7 +203,7 @@
                                 </div>
                             </p-panel>
 
-                            <p-panel header="Destination" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+                            <p-panel header="Destination" styleClass="mt-4" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
                                 <ng-template pTemplate="icons">
                                     <span style="flex: 1;"></span>
                                 </ng-template>
@@ -413,7 +415,6 @@
                                                                     scrollHeight="150px"
                                                                     [filter]="true"
                                                                     filterBy="name"
-                                                                    [disabled]="disable || cprSectNames.length === 0"
                                                                 ></p-dropdown>
                                                             </td>
                                                         </ng-container>
@@ -432,10 +433,9 @@
                                                                             [name]="k + '_' + g"
                                                                             pInputText
                                                                             [value]="data"
-                                                                            (blur)="onCPRFieldFocusOut()"
+                                                                            (blur)="handleCPRCellChange($event, index)"
                                                                             (click)="setCPRActiveIndexes(index, k, g)"
-                                                                            (input)="handleCPRCellChange($event, index)"
-                                                                            [disabled]="disable || cprSectNames.length === 0 || cprGridCategory[index][g] == null || cprGridCategory[index][g] === ''"
+                                                                            (input)="onCPRFieldFocusOut()"
                                                                         >
                                                                     </td>
                                                                 </ng-container>
@@ -450,24 +450,24 @@
                                             <div class="lg:col-6 col-12">
                                                 <div class="grid">
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRRowAbove()" label="Insert Row Above" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                        <button pButton pRipple (click)="onInsertCPRRowBelow()" label="Insert Row Below" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRRowAbove()" label="Insert Row Above" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRRowBelow()" label="Insert Row Below" class="p-button-text"></button>
                                                     </div>
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRRowEnd()" label="Insert Row End" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                        <button pButton pRipple (click)="onDeleteCPRRowEnd()" label="Delete Row" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRRowEnd()" label="Insert Row End" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onDeleteCPRRowEnd()" label="Delete Row" class="p-button-text"></button>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="lg:col-6 col-12 p-buttonset flex justify-content-between">
                                                 <div class="grid">
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRColumnBefore()" label="Insert Column Before" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                        <button pButton pRipple (click)="onInsertCPRColumnAfter()" label="Insert Column After" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRColumnBefore()" label="Insert Column Before" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRColumnAfter()" label="Insert Column After" class="p-button-text"></button>
                                                     </div>
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRColumnLast()" label="Insert Column Last" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                        <button pButton pRipple (click)="onDeleteCPRColumn()" label="Delete Column" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRColumnLast()" label="Insert Column Last" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onDeleteCPRColumn()" label="Delete Column" class="p-button-text"></button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -700,8 +700,7 @@
         <div>
             <div class="p-fluid">
                 <span class="p-float-label">
-                    <textarea class="pt-4" id="message" name="message" [(ngModel)]="inputMessage" rows="7" cols="30" pInputTextarea disabled></textarea>
-                    <label for="message">Message</label>
+                    <div class="pt-4" id="message" [innerHTML]="inputMessage" style="min-height: 150px;" pInputTextarea></div>
                 </span>
             </div>
 
@@ -711,7 +710,6 @@
                     <button pButton pRipple (click)="onCopy()" icon="pi pi-copy" label="Copy" class="p-button-text" [disabled]="!bCopyEnable"></button>
                     <button pButton pRipple (click)="onTransfer()" icon="pi pi-arrows-h" label="Transfer" class="p-button-text" [disabled]="!bTransferEnable"></button>
                     <button pButton pRipple (click)="toggleDelete()" icon="pi pi-trash" label="Delete" class="p-button-text" [disabled]="!bDeleteEnable"></button>
-                    <button pButton pRipple (click)="onConvert()" icon="pi pi-arrow-right-arrow-left" label="Convert" class="p-button-text" [disabled]="!bCopyEnable"></button>
                 </div>
 
                 <div class="lg:col-5 col-12 p-buttonset text-align-center">
@@ -724,3 +722,263 @@
         </div>
     </div>
 </p-panel>
+
+<p-dialog header="Copy Template Record" styleClass="c-modal" [(visible)]="copyModalVisible" (onHide)="closeCopyModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '70vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <div class="grid">
+        <div class="lg:col-6 col-12">
+            <p-panel header="Source Record">
+                <div class="p-fluid pt-2">
+                    <span class="field p-float-label">
+                        <input type="text" id="srcTmplName" name="srcTmplName" pInputText [(ngModel)]="inputSrcTmplName" disabled>
+                        <label for="srcTmplName">Template</label>
+                    </span>
+
+                    <span class="field p-float-label">
+                        <input type="text" id="srcEffDtTm" name="srcEffDtTm" pInputText [(ngModel)]="inputSrcEffDtTm" disabled>
+                        <label for="srcEffDtTm">Effective Date/Time</label>
+                    </span>
+                </div>
+            </p-panel>
+        </div>
+        <div class="lg:col-6 col-12">
+            <p-panel header="Target Record">
+                <div class="p-fluid pt-2">
+                    <span class="field p-float-label">
+                        <input type="text" id="tgtTmplName" name="tgtTmplName" pInputText [(ngModel)]="inputTgtTmplName">
+                        <label for="tgtTmplName">Template</label>
+                    </span>
+
+                    <div class="grid">
+                        <div class="col-9 p-fluid">
+                            <span class="p-float-label">
+                                <p-calendar
+                                    inputId="tgtEffDtTm"
+                                    [(ngModel)]="inputTgtEffDtTm"
+                                    dateFormat="mm/dd/yy"
+                                    [minDate]="nowDateTime"
+                                    [showButtonBar]="true"
+                                    [showTime]="true"
+                                    hourFormat="12"
+                                    [stepMinute]="1"
+                                    [disabled]="inputCopyNow"
+                                    (onSelect)="onTgtEffDtTmIntervalFifteenMin();"
+                                    [stepMinute]="15"
+                                ></p-calendar>
+                                <label>Effective Date/Time</label>
+                            </span>
+                        </div>
+                        <div class="col-3 flex align-items-center">
+                            <label class="ml-3">
+                                <p-inputSwitch
+                                    id="copyNow"
+                                    name="copyNow"
+                                    (onChange)="handleCheckOnModal($event, 'copyNow')"
+                                    [(ngModel)]="inputCopyNow"
+                                ></p-inputSwitch>
+                                Now
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </p-panel>
+        </div>
+        <div class="lg:col-6 col-12">
+            <p-panel header="Action">
+                <div class="pt-2">
+                    <div class="field-radiobutton">
+                        <p-radioButton name="action" value="CHANGE" [(ngModel)]="radioCopyAction" inputId="change"></p-radioButton>
+                        <label for="change">CHANGE</label>
+                    </div>
+                    <div class="field-radiobutton">
+                        <p-radioButton name="action" value="DISCONNECT" [(ngModel)]="radioCopyAction" inputId="disconnect"></p-radioButton>
+                        <label for="disconnect">DISCONNECT</label>
+                    </div>
+                    <!-- <div class="field-radiobutton">
+                        <p-radioButton name="action" value="NEW" [(ngModel)]="radioCopyAction" inputId="new"></p-radioButton>
+                        <label for="new">NEW</label>
+                    </div> -->
+                </div>
+            </p-panel>
+        </div>
+        <div class="lg:col-6 col-12">
+            <p-panel header="Copy Portions from Source Record">
+                <div class="pt-2">
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="Entire Data" 
+                            name="portionEntire" 
+                            [(ngModel)]="portionEntire" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionEntire')"
+                        ></p-checkbox>
+                    </div>
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="CR Basic Data" 
+                            [(ngModel)]="portionCR" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionCR')"
+                            [disabled]="status===gConst.STAT_FAILED || status===gConst.STAT_INVALID || !bCheckCREnable"
+                        ></p-checkbox>
+                    </div>
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="CPR" 
+                            [(ngModel)]="portionCPR" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionCPR')"
+                            [disabled]="noCPR || !bCheckCPREnable"
+                        ></p-checkbox>
+                    </div>
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="LAD" 
+                            [(ngModel)]="portionLAD" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionLAD')"
+                            [disabled]="noLAD || !bCheckLADEnable"
+                        ></p-checkbox>
+                    </div>
+                </div>
+            </p-panel>
+        </div>
+    </div>
+    <div class="flex justify-content-end">
+        <div class="p-buttonset text-center">
+            <button pButton pRipple (click)="checkValidForCopying()" icon="pi pi-copy" label="Copy" class="p-button-text"></button>
+            <button pButton pRipple (click)="closeCopyModal()" icon="pi pi-times" label="Cancel" class="p-button-text"></button>
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog header="Delete TAD" styleClass="c-modal" [(visible)]="deleteModalVisible" (onHide)="closeDeleteModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '70vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <p-panel header="Source Record">
+        <div class="p-fluid pt-2">
+            <span class="field p-float-label">
+                <input type="text" pInputText [(ngModel)]="tmplName" disabled>
+                <label>Template</label>
+            </span>
+
+            <span class="field p-float-label">
+                <input type="text" pInputText [(ngModel)]="selectEffDtTmStat.split(' ')[0] + ' ' + selectEffDtTmStat.split(' ')[1] + ' ' + selectEffDtTmStat.split(' ')[2]" disabled>
+                <label for="srcEffDtTm">Effective Date/Time</label>
+            </span>
+        </div>
+    </p-panel>
+    <div class="flex justify-content-end">
+        <div class="p-buttonset text-center">
+            <button pButton pRipple (click)="deleteTemplateRecord()" icon="pi pi-copy" label="Delete" class="p-button-text"></button>
+            <button pButton pRipple (click)="closeDeleteModal()" icon="pi pi-times" label="Cancel" class="p-button-text"></button>
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog header="Transfer Template Record" styleClass="c-modal" [(visible)]="transferModalVisible" (onHide)="transferModalVisible=false" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '70vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <div class="grid">
+        <div class="lg:col-6 col-12">
+            <p-panel header="Source Record">
+                <div class="p-fluid pt-2">
+                    <span class="field p-float-label">
+                        <input type="text" id="srcTmplName" name="srcTmplName" pInputText [(ngModel)]="inputSrcTmplName" disabled>
+                        <label for="srcTmplName">Template</label>
+                    </span>
+
+                    <span class="field p-float-label">
+                        <input type="text" id="srcEffDtTm" name="srcEffDtTm" pInputText [(ngModel)]="inputSrcEffDtTm" disabled>
+                        <label for="srcEffDtTm">Effective Date/Time</label>
+                    </span>
+                </div>
+            </p-panel>
+        </div>
+        <div class="lg:col-6 col-12">
+            <p-panel header="Target Record">
+                <div class="p-fluid pt-2">
+                    <span class="field p-float-label">
+                        <input type="text" id="tgtTmplName" name="tgtTmplName" pInputText [(ngModel)]="inputTgtTmplName">
+                        <label for="tgtTmplName">Template</label>
+                    </span>
+
+                    <div class="grid">
+                        <div class="col-9 p-fluid">
+                            <span class="p-float-label">
+                                <p-calendar
+                                    inputId="tgtEffDtTm"
+                                    [(ngModel)]="inputTgtEffDtTm"
+                                    dateFormat="mm/dd/yy"
+                                    [minDate]="nowDateTime"
+                                    [showButtonBar]="true"
+                                    [showTime]="true"
+                                    hourFormat="12"
+                                    [stepMinute]="1"
+                                    [disabled]="inputCopyNow"
+                                    (onSelect)="onTgtEffDtTmIntervalFifteenMin();"
+                                    [stepMinute]="15"
+                                ></p-calendar>
+                                <label>Effective Date/Time</label>
+                            </span>
+                        </div>
+                        <div class="col-3 flex align-items-center">
+                            <label class="ml-3">
+                                <p-inputSwitch
+                                    id="copyNow"
+                                    name="copyNow"
+                                    (onChange)="handleCheckOnModal($event, 'copyNow')"
+                                    [(ngModel)]="inputCopyNow"
+                                ></p-inputSwitch>
+                                Now
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </p-panel>
+        </div>
+        <div class="lg:col-6 col-12">
+            <p-panel header="Transfer Portions from Source Record">
+                <div class="pt-2">
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="Entire Data" 
+                            name="portionEntire" 
+                            [(ngModel)]="portionEntire" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionEntire')"
+                        ></p-checkbox>
+                    </div>
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="CR Basic Data" 
+                            [(ngModel)]="portionCR" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionCR')"
+                            [disabled]="status===gConst.STAT_FAILED || status===gConst.STAT_INVALID || !bCheckCREnable"
+                        ></p-checkbox>
+                    </div>
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="CPR" 
+                            [(ngModel)]="portionCPR" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionCPR')"
+                            [disabled]="noCPR || !bCheckCPREnable"
+                        ></p-checkbox>
+                    </div>
+                    <div class="field-checkbox">
+                        <p-checkbox 
+                            label="LAD" 
+                            [(ngModel)]="portionLAD" 
+                            [binary]="true" 
+                            (onChange)="handleCheckOnModal($event, 'portionLAD')"
+                            [disabled]="noLAD || !bCheckLADEnable"
+                        ></p-checkbox>
+                    </div>
+                </div>
+            </p-panel>
+        </div>
+    </div>
+    <div class="flex justify-content-end">
+        <div class="p-buttonset text-center">
+            <button pButton pRipple (click)="checkValidForTransferring()" icon="pi pi-copy" label="Transfer" class="p-button-text"></button>
+            <button pButton pRipple (click)="transferModalVisible=false" icon="pi pi-times" label="Cancel" class="p-button-text"></button>
+        </div>
+    </div>
+</p-dialog>

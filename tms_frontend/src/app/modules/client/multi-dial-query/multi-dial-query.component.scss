@@ -30,3 +30,16 @@
         border-bottom: 1px solid #c8ced3;
     }
 }
+
+:host ::ng-deep .c-modal.p-dialog {
+    .p-dialog-content {
+        // overflow-y: visible;
+    }
+}
+
+:host ::ng-deep .c-table.p-datatable {
+    .p-datatable-wrapper {
+        // overflow: visible;
+    }
+}
+

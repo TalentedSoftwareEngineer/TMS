@@ -6,13 +6,13 @@
         <div class="lg:col-3 col-6 p-fluid pl-0 pr-0">
           <span class="p-float-label">
             <p-dropdown [options]="filter_status" id="status_search" [(ngModel)]="statusFilterValue" optionLabel="name" scrollHeight="150px"></p-dropdown>
-            <label for="status_search">Status</label>
+            <label>Status</label>
           </span>
         </div>
         <div class="lg:col-3 col-6 p-fluid pl-0 pr-0">
           <span class="p-float-label">
             <p-dropdown [options]="filter_roles" id="role_search" [(ngModel)]="roleFilterValue" optionLabel="name" [filter]="true" filterBy="name" scrollHeight="150px"></p-dropdown>
-            <label for="role_search">Role</label>
+            <label>Role</label>
           </span>
         </div>
         <div class="lg:col-4 col-12 p-fluid pl-0 pr-0">
@@ -31,7 +31,7 @@
 </div>
 
 <div class="card">
-  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
   <p-table [value]="users" responsiveLayout="stack" [responsive]="true">
     <ng-template pTemplate="header">
       <tr>
@@ -65,7 +65,6 @@
         <th class="text-align-center" [ngClass]="sortActive === 'updated_by' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('updated_by')">Updated By</a>
         </th>
-        <!-- <th>Users</th> -->
         <th class="text-align-center w-100px" *ngIf="write_permission">Action</th>
       </tr>
     </ng-template>
@@ -117,11 +116,11 @@
           {{ user.updated_by }}
         </td>
         <td class="text-align-center" *ngIf="write_permission">
-          <span *ngIf="authUserId!=user.id" class="p-buttonset">
-            <button *ngIf="!user.status" pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)"></button>
-            <button *ngIf="user.status" pButton type="button" icon="pi pi-eye-slash" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)"></button>
-            <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, user.id)"></button>
-            <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteUser($event, user.id)"></button>
+          <span class="p-buttonset">
+            <button *ngIf="!user.status" pButton type="button" title="Active" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)" [disabled]="authUserId==user.id"></button>
+            <button *ngIf="user.status" pButton type="button" title="Inactive" icon="pi pi-eye-slash" class="p-button-rounded p-button-outlined p-button-help" (click)="viewUser($event, user.id)" [disabled]="authUserId==user.id"></button>
+            <button pButton type="button" title="Edit" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, user.id)" [disabled]="authUserId==user.id"></button>
+            <button pButton type="button" title="Delete" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteUser($event, user.id)" [disabled]="authUserId==user.id"></button>
           </span>
         </td>
       </tr>
@@ -129,10 +128,7 @@
   </p-table>
 
   <div class="flex justify-content-center align-items-center gap-3">
-    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
-    <div class="p-fluid">
-      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getUsersList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-    </div>
+    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
   </div>
 </div>
 
@@ -144,10 +140,9 @@
             <div class="p-fluid pt-2">
               <div class="field">
                 <span class="p-float-label">
-                  <input type="text" id="username" name="username" [ngClass]="{'ng-dirty': !validUsername, 'ng-invalid': !validUsername}" (input)="validUsername=input_username!=''" pInputText [(ngModel)]="input_username"> 
+                  <input type="text" id="username" name="username" [ngClass]="{'ng-dirty': !validUsername, 'ng-invalid': !validUsername}" (input)="validUsername=input_username!=''" pInputText [(ngModel)]="input_username">
                   <label for="username">Username</label>
                 </span>
-                <p *ngIf="!validUsername" class="p-error">Required!</p>
               </div>
               <span class="field p-float-label">
                 <p-dropdown [options]="companies" id="company_id" name="company_id" [(ngModel)]="input_company_id" optionLabel="name" scrollHeight="150px" styleClass="w-100"></p-dropdown>
@@ -157,26 +152,27 @@
                 <p-dropdown [options]="roles" id="role_id" name="role_id" [(ngModel)]="input_role_id" optionLabel="name" scrollHeight="150px" styleClass="w-100"></p-dropdown>
                 <label for="role_id">Role</label>
               </span>
+              <span class="field p-float-label">
+                <p-dropdown [options]="timezones" id="timezone" name="timezone" [(ngModel)]="input_timezone" optionLabel="name" optionValue="value" scrollHeight="150px" styleClass="w-100"></p-dropdown>
+                <label for="timezone">Time Zone</label>
+              </span>
               <div class="field">
                 <span class="p-float-label">
-                  <input type="text" id="email" name="email" [ngClass]="{'ng-dirty': !validEmail, 'ng-invalid': !validEmail}" (input)="validEmail=input_email!=''" pInputText [(ngModel)]="input_email"> 
+                  <input type="text" id="email" name="email" [ngClass]="{'ng-dirty': !validEmail, 'ng-invalid': !validEmail}" (input)="onInputEmail()" pInputText [(ngModel)]="input_email">
                   <label for="email">Email</label>
                 </span>
-                <p *ngIf="!validEmail" class="p-error">Required!</p>
               </div>
               <div class="field">
                 <span class="p-float-label">
-                  <input type="text" id="first_name" name="first_name" [ngClass]="{'ng-dirty': !validFirstName, 'ng-invalid': !validFirstName}" (input)="validFirstName=input_first_name!=''" pInputText [(ngModel)]="input_first_name"> 
+                  <input type="text" id="first_name" name="first_name" [ngClass]="{'ng-dirty': !validFirstName, 'ng-invalid': !validFirstName}" (input)="validFirstName=input_first_name!=''" pInputText [(ngModel)]="input_first_name">
                   <label for="first_name">First Name</label>
                 </span>
-                <p *ngIf="!validFirstName" class="p-error">Required!</p>
               </div>
               <div class="field">
                 <span class="p-float-label">
-                  <input type="text" id="last_name" name="last_name" [ngClass]="{'ng-dirty': !validLastName, 'ng-invalid': !validLastName}" (input)="validLastName=input_last_name!=''" pInputText [(ngModel)]="input_last_name"> 
+                  <input type="text" id="last_name" name="last_name" [ngClass]="{'ng-dirty': !validLastName, 'ng-invalid': !validLastName}" (input)="validLastName=input_last_name!=''" pInputText [(ngModel)]="input_last_name">
                   <label for="last_name">Last Name</label>
-                </span>  
-                <p *ngIf="!validLastName" class="p-error">Required!</p>
+                </span>
               </div>
             </div>
 
@@ -197,10 +193,9 @@
                   <p-password id="password" name="password" [ngClass]="{'ng-dirty': !validPassword, 'ng-invalid': !validPassword}" (input)="validPassword=input_password!=''" [(ngModel)]="input_password" [toggleMask]="true" [feedback]="false"></p-password>
                   <label for="password">New Password</label>
                 </span>
-                <p *ngIf="!validPassword" class="p-error">Required!</p>
               </div>
               <span class="field p-float-label">
-                <p-password id="confirm_password" name="confirm_password" [(ngModel)]="input_confirm_password" [toggleMask]="true" [feedback]="false"></p-password>
+                <p-password id="confirm_password" name="confirm_password" [ngClass]="{'ng-dirty': !validConfirmPassword, 'ng-invalid': !validConfirmPassword}" (input)="validConfirmPassword=input_confirm_password!=''" [(ngModel)]="input_confirm_password" [toggleMask]="true" [feedback]="false"></p-password>
                 <label for="confirm_password">Confirm Password</label>
               </span>
             </div>
@@ -218,7 +213,7 @@
                 <label for="somos_id">Somos User</label>
               </span>
             </div>
-            
+
             <span class="p-buttonset flex justify-content-end" *ngIf="modalTitle.toLowerCase()=='edit'">
               <button pButton pRipple (click)="somosReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
               <button pButton pRipple (click)="onSomosUpdate()" label="Save" icon="pi pi-save" class="p-button-text"></button>
@@ -233,43 +228,43 @@
                   <label for="country">Country</label>
               </span>
               <span class="field p-float-label">
-                  <input type="text" id="address" name="address" pInputText [(ngModel)]="input_address"> 
+                  <input type="text" id="address" name="address" pInputText [(ngModel)]="input_address">
                   <label for="address">Address</label>
               </span>
               <span class="field p-float-label">
-                  <input type="text" id="province" name="province" pInputText [(ngModel)]="input_province"> 
+                  <input type="text" id="province" name="province" pInputText [(ngModel)]="input_province">
                   <label for="province">Province</label>
               </span>
               <span class="field p-float-label">
-                  <input type="text" id="city" name="city" pInputText [(ngModel)]="input_city"> 
+                  <input type="text" id="city" name="city" pInputText [(ngModel)]="input_city">
                   <label for="city">City</label>
               </span>
               <span class="field p-float-label">
-                  <input type="text" id="zip_code" name="zip_code" pInputText [(ngModel)]="input_zip_code"> 
+                  <input type="text" id="zip_code" name="zip_code" pInputText [(ngModel)]="input_zip_code">
                   <label for="zip_code">Zip Code</label>
               </span>
               <span class="field p-float-label">
-                  <input type="number" id="tel1" name="tel1" pInputText [(ngModel)]="input_tel1"> 
+                  <input type="number" id="tel1" name="tel1" pInputText [(ngModel)]="input_tel1">
                   <label for="tel1">Tel-1</label>
               </span>
               <span class="field p-float-label">
-                  <input type="number" id="tel2" name="tel2" pInputText [(ngModel)]="input_tel2"> 
+                  <input type="number" id="tel2" name="tel2" pInputText [(ngModel)]="input_tel2">
                   <label for="tel2">Tel-2</label>
               </span>
               <span class="field p-float-label">
-                  <input type="number" id="mobile" name="mobile" pInputText [(ngModel)]="input_mobile"> 
+                  <input type="number" id="mobile" name="mobile" pInputText [(ngModel)]="input_mobile">
                   <label for="mobile">Mobile</label>
               </span>
               <span class="field p-float-label">
-                  <input type="number" id="fax" name="fax" pInputText [(ngModel)]="input_fax"> 
+                  <input type="number" id="fax" name="fax" pInputText [(ngModel)]="input_fax">
                   <label for="fax">Fax</label>
               </span>
               <span class="field p-float-label">
-                  <input type="text" id="contact_name" name="contact_name" pInputText [(ngModel)]="input_contact_name"> 
+                  <input type="text" id="contact_name" name="contact_name" pInputText [(ngModel)]="input_contact_name">
                   <label for="contact_name">Contact Name</label>
               </span>
               <span class="field p-float-label">
-                  <input type="number" id="contact_number" name="contact_number" pInputText [(ngModel)]="input_contact_number"> 
+                  <input type="number" id="contact_number" name="contact_number" pInputText [(ngModel)]="input_contact_number">
                   <label for="contact_number">Contact Number</label>
               </span>
             </div>

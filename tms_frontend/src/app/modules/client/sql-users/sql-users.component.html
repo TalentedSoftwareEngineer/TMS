@@ -2,12 +2,12 @@
     <ng-template pTemplate="content">
         <div class="p-fluid pt-2">
             <span class="field p-float-label">
-                <input #elmnt_sftp_hosts type="text" id="sftp_hosts" name="sftp_hosts" pInputText [(ngModel)]="input_sftp_hosts" [disabled]="!isSftpEditing"> 
+                <input #elmnt_sftp_hosts type="text" id="sftp_hosts" name="sftp_hosts" pInputText [(ngModel)]="input_sftp_hosts" [disabled]="!isSftpEditing">
                 <label for="sftp_hosts">Sftp Hosts (Comma separated)</label>
             </span>
-    
+
             <span class="field p-float-label">
-                <input type="text" id="sftp_path" name="sftp_path" pInputText [(ngModel)]="input_sftp_path" [disabled]="!isSftpEditing"> 
+                <input type="text" id="sftp_path" name="sftp_path" pInputText [(ngModel)]="input_sftp_path" [disabled]="!isSftpEditing">
                 <label for="sftp_path">Sftp Path</label>
             </span>
         </div>
@@ -34,7 +34,7 @@
     </div>
 
     <div class="col-12 md:col-7 text-right" *ngIf="write_permission">
-        <button pButton pRipple (click)="openSqlUserModal('Add')" label="Add New Script" icon="pi pi-plus"></button>
+        <button pButton pRipple (click)="openSqlUserModal('Add')" label="Add New User" icon="pi pi-plus"></button>
     </div>
   </div>
 </div>
@@ -43,7 +43,7 @@
     <ng-template pTemplate="content">
         <div class="pt-2">
             <div class="card">
-                <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+                <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
                 <p-table [value]="sql_users" responsiveLayout="stack" [responsive]="true">
                     <ng-template pTemplate="header">
                         <tr>
@@ -53,7 +53,7 @@
                             <th class="text-align-center" [ngClass]="sortActive === 'password' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                                 <a (click)="onSortChange('password')">Password</a>
                             </th>
-                            
+
                             <th class="text-align-center" [ngClass]="sortActive === 'created_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                                 <a (click)="onSortChange('created_at')">Created At</a>
                             </th>
@@ -99,8 +99,8 @@
 
                             <td class="text-align-center" *ngIf="write_permission">
                                 <span class="p-buttonset">
-                                    <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, sql_user.id)"></button>
-                                    <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteSqlUser($event, sql_user.id)"></button>
+                                    <button pButton type="button" title="Edit" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, sql_user.id)"></button>
+                                    <button pButton type="button" title="Delete" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteSqlUser($event, sql_user.id)"></button>
                                 </span>
                             </td>
                         </tr>
@@ -108,10 +108,7 @@
                 </p-table>
 
                 <div class="flex justify-content-center align-items-center gap-3">
-                    <p-paginator [rows]="pageSize" [totalRecords]="resultsLength" (onPageChange)="paginate($event)"></p-paginator>
-                    <div class="p-fluid">
-                      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getSqlUsersList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-                    </div>
+                    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
                 </div>
             </div>
         </div>
@@ -123,18 +120,16 @@
 
         <div class="p-fluid">
             <span class="field p-float-label">
-                <input type="text" id="username" name="username" [ngClass]="{'ng-dirty': !validUsername, 'ng-invalid': !validUsername}" pInputText [(ngModel)]="input_username" (input)="onInputUserName()"> 
+                <input type="text" id="username" name="username" [ngClass]="{'ng-dirty': !validUsername, 'ng-invalid': !validUsername}" pInputText [(ngModel)]="input_username" (input)="onInputUserName()">
                 <label for="username">User Name</label>
             </span>
-            <p *ngIf="!validUsername" class="p-error">Required!</p>
         </div>
-        
+
         <div class="p-fluid">
             <span class="field p-float-label">
                 <p-password id="password" name="password" [ngClass]="{'ng-dirty': !validPassword, 'ng-invalid': !validPassword}" [(ngModel)]="input_password" (input)="onChangePassword()" [toggleMask]="true" [feedback]="false"></p-password>
                 <label for="password">Password</label>
             </span>
-            <p *ngIf="!validPassword" class="p-error">Required!</p>
         </div>
 
         <div *ngIf="modalTitle.toLowerCase()=='add'" class="flex justify-content-end mt-5">

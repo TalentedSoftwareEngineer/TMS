@@ -25,6 +25,16 @@ export class SomosUser extends Entity {
   password: string;
 
   @property({
+    type: 'string',
+  })
+  client_key?: string;
+
+  @property({
+    type: 'string',
+  })
+  client_secret?: string;
+
+  @property({
     type: 'date',
   })
   created_at?: string;

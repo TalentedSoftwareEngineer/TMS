@@ -15,7 +15,7 @@
 </div>
 
 <div class="card">
-  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
   <p-table [value]="somos_users" responsiveLayout="stack" [responsive]="true">
     <ng-template pTemplate="header">
       <tr>
@@ -25,12 +25,12 @@
         <th class="text-align-center" [ngClass]="sortActive === 'password' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('password')">Password</a>
         </th>
-        <!-- <th class="text-align-center" [ngClass]="sortActive === 'client_key' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+        <th class="text-align-center" [ngClass]="sortActive === 'client_key' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('client_key')">Client Key</a>
         </th>
-        <th class="text-align-center" [ngClass]="sortActive === 'client_password' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
-          <a (click)="onSortChange('client_password')">Client Secret</a>
-        </th> -->
+        <th class="text-align-center" [ngClass]="sortActive === 'client_secret' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('client_secret')">Client Secret</a>
+        </th>
         <th class="text-align-center" [ngClass]="sortActive === 'created_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('created_at')">Created At</a>
         </th>
@@ -57,14 +57,14 @@
           <span class="p-column-title">Password</span>
           {{ sms_user.password }}
         </td>
-        <!-- <td class="text-align-center">
+        <td class="text-align-center">
           <span class="p-column-title">Client Key</span>
           {{ sms_user.client_key }}
         </td>
         <td class="text-align-center">
           <span class="p-column-title">Client Secret</span>
-          {{ sms_user.client_password }}
-        </td> -->
+          {{ sms_user.client_secret }}
+        </td>
         <td class="text-align-center">
           <span class="p-column-title">Created At</span>
           {{ sms_user.created_at }}
@@ -84,8 +84,8 @@
 
         <td class="text-align-center" *ngIf="write_permission">
           <span class="p-buttonset">
-            <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, sms_user.id)"></button>
-            <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteSMSUser($event, sms_user.id)"></button>
+            <button pButton type="button" title="Edit" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, sms_user.id)"></button>
+            <button pButton type="button" title="Delete" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteSMSUser($event, sms_user.id)"></button>
           </span>
         </td>
       </tr>
@@ -93,10 +93,7 @@
   </p-table>
 
   <div class="flex justify-content-center align-items-center gap-3">
-    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
-    <div class="p-fluid">
-      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getSMSUserList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-    </div>
+    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
   </div>
 </div>
 
@@ -109,7 +106,7 @@
               <input #ref_username [ngClass]="{'ng-dirty': !(ref_username.checkValidity() || input_username==undefined), 'ng-invalid': !(ref_username.checkValidity() || input_username==undefined)}" type="text" id="username" name="username" pInputText [(ngModel)]="input_username" pattern="^([^]{6,8})" required> 
               <label for="username">Somos User</label>
             </span>
-            <p id="username-help" class="p-error" [ngClass]="{'visibility-hidden': ref_username.checkValidity() || input_username==undefined}">Invalid Somos User</p>
+            <p id="username-help" class="p-error mb-2" [ngClass]="{'visibility-hidden': ref_username.checkValidity() || input_username==undefined}">Invalid Somos User</p>
           </div>
 
           <div>
@@ -130,15 +127,15 @@
             <small id="username-help" class="p-error" [ngClass]="ref_password.validity.valid || input_password==undefined ? 'visibility-hidden' : 'visibility-visible'">Invalid Password</small>
           </div>
 
-          <!-- <span class="field p-float-label">
+          <span class="field p-float-label">
               <input type="email" id="client_key" name="client_key" pInputText [(ngModel)]="input_client_key"> 
               <label for="client_key">Client Key</label>
           </span>
 
           <span class="field p-float-label">
-              <input type="text" id="client_password" name="client_password" pInputText [(ngModel)]="input_client_password"> 
-              <label for="client_password">Client Secret</label>
-          </span> -->
+              <input type="text" id="client_secret" name="client_secret" pInputText [(ngModel)]="input_client_password"> 
+              <label for="client_secret">Client Secret</label>
+          </span>
         </div>
 
         <div *ngIf="modalTitle.toLowerCase()=='add'" class="flex justify-content-end mt-5">

@@ -23,13 +23,15 @@
                         [showTime]="true"
                         hourFormat="12"
                         [disabled]="inputNow"
+                        [stepMinute]="15"
+                        (onSelect)="onEffDateTimeIntervalFifteenMin();"
                     ></p-calendar>
-                    <label for="effDateTime">Start Effective Date/Time*</label>
+                    <label>Start Effective Date/Time*</label>
                 </span>
-                <p *ngIf="effDateErr" class="p-error">Request Name field is required</p>
+                <p *ngIf="effDateErr" class="p-error">Effective Date/Time is required</p>
             </div>
             <div class="col-3 flex align-items-center">
-                <label class="ml-3" for="now">
+                <label class="ml-3">
                     <p-inputSwitch
                         id="now"
                         name="now"
@@ -50,7 +52,7 @@
 
         <div class="grid mt-4">
             <div class="col-3">
-                <p class="mb-2">CSV File: </p>
+                <!-- <p class="mb-2">CSV File: </p> -->
                 <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
                 <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
             </div>
@@ -77,7 +79,7 @@
 <p-panel header="Activity Log" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
   <div class="pt-2">
     <div class="card">
-      <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+      <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
       <p-table
         [value]="activityLogs"
         dataKey="id"
@@ -86,17 +88,22 @@
         [responsive]="true"
       >
         <ng-template pTemplate="caption">
-          <div class="table-header flex justify-content-end">
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-search"></i>
-                            <input pInputText type="text" [(ngModel)]="filterValue" (keyup.enter)="onClickFilter()" placeholder="Search..." />
-                        </span>
+          <div class="grid p-fluid">
+            <div *ngIf="isSuperAdmin" class="lg:col-3 md:col-5 col-12 pr-0 pl-0">
+              <p-dropdown [options]="userOptions" [(ngModel)]="selectUser" placeholder="Search..." [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="150px"></p-dropdown>
+            </div>
+            <div class="lg:col-4 md:col-7 col-12 pr-0 pl-0">
+              <div class="p-inputgroup">
+                  <input pInputText type="text" [(ngModel)]="filterValue" (keyup.enter)="onClickFilter()" placeholder="Search..." />
+                  <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="onClickFilter()"></button>
+              </div>
+            </div>
           </div>
         </ng-template>
 
         <ng-template pTemplate="header">
           <tr>
-            <th class="text-align-center" [ngClass]="sortActive === 'user.username' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <th *ngIf="isSuperAdmin" class="text-align-center" [ngClass]="sortActive === 'user.username' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
               <a (click)="onSortChange('user.username')">Created By</a>
             </th>
             <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
@@ -131,7 +138,7 @@
 
         <ng-template pTemplate="body" let-result>
           <tr class="p-selectable-row text-align-center">
-            <td class="text-align-center">
+            <td *ngIf="isSuperAdmin" class="text-align-center">
               <span class="p-column-title">Created By</span>
               {{result.user?.username}}
             </td>
@@ -173,9 +180,9 @@
             <td class="text-align-center">
               <span class="p-column-title">Action</span>
               <span class="p-buttonset">
-                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
-                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
-                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
+                                <button pButton pRipple type="button" title="Detail" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
+                                <button pButton pRipple type="button" title="Download" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
+                                <button pButton pRipple type="button" title="Delete" icon="pi pi-trash" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
                             </span>
             </td>
           </tr>
@@ -183,19 +190,102 @@
 
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="8">No Result found.</td>
+            <td colspan="10">No Result found.</td>
           </tr>
         </ng-template>
       </p-table>
 
       <div class="flex justify-content-center align-items-center gap-3">
-        <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
-        <div class="p-fluid">
-          <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getData()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-        </div>
+        <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
       </div>
     </div>
   </div>
 </p-panel>
 
-<div class="mb-5"></div>
+<p-dialog header="View Numbers" styleClass="c-modal pt-2" [(visible)]="flagOpenModal" (onHide)="closeModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+  <div class="card pt-0">
+    <p-table
+      #numbersTable
+      [value]="numberList"
+      dataKey="id"
+      [rows]="10"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [loading]="numberListLoading"
+      responsiveLayout="scroll"
+      [responsive]="true"
+      [paginator]="true"
+      [scrollable]="true"
+      scrollDirection="both"
+      [filterDelay]="0"
+      [globalFilterFields]="[ 'num', 'eff_dt_tm', 'message','status' ]"
+      styleClass="p-datatable-lg"
+    >
+      <ng-template pTemplate="caption">
+        <div class="flex justify-content-end align-items-center">
+          <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
+        </div>
+        <div class="flex align-items-center" [ngClass]="resultTotal>0 ? 'justify-content-between' : 'justify-content-end'">
+          <p class="mb-0" *ngIf="resultTotal>0">Total <span class="dialog_total_count">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
+          <div class="table-header">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
+                        </span>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="num" style="flex: 2;" class="justify-content-center align-items-center">
+            <div>
+              Number
+              <p-sortIcon field="num"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="eff_dt_tm" style="flex: 2;" class="justify-content-center align-items-center">
+            <div>
+              Effective Date/Time
+              <p-sortIcon field="eff_dt_tm"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="status" style="flex: 1;" class="justify-content-center align-items-center">
+            <div>
+              Status
+              <p-sortIcon field="status"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="message" style="flex: 4;" class="justify-content-center align-items-center">
+            <div>
+              Message
+              <p-sortIcon field="message"></p-sortIcon>
+            </div>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-number>
+        <tr>
+          <td style="flex: 2;" class="justify-content-center align-items-center">
+            {{number.num | phoneFormat}}
+          </td>
+          <td style="flex: 2;" class="justify-content-center align-items-center">
+            {{number.eff_dt_tm}}
+          </td>
+          <td style="flex: 1;" class="justify-content-center align-items-center">
+            {{number.status}}
+          </td>
+          <td style="flex: 4;" class="justify-content-center align-items-center">
+            {{number.message}}
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr style="flex: 1;">
+          <td colspan="12">No Number List found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</p-dialog>

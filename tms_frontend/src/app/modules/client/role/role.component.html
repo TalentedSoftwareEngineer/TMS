@@ -15,7 +15,7 @@
 </div>
 
 <div class="card">
-  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+  <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
   <p-table [value]="roles" responsiveLayout="stack" [responsive]="true">
     <ng-template pTemplate="header">
       <tr>
@@ -70,9 +70,9 @@
 
         <td class="text-align-center" *ngIf="write_permission">
           <span class="p-buttonset">
-            <button pButton type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="onOpenViewModal($event, role.id)"></button>
-            <button pButton type="button" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, role.id)"></button>
-            <button pButton type="button" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteRole($event, role.id)"></button>
+            <button pButton type="button" title="View" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-help" (click)="onOpenViewModal($event, role.id)"></button>
+            <button pButton type="button" title="Edit" icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-warning" (click)="onOpenEditModal($event, role.id)"></button>
+            <button pButton type="button" title="Delete" icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteRole($event, role.id)"></button>
           </span>
         </td>
       </tr>
@@ -80,27 +80,23 @@
   </p-table>
 
   <div class="flex justify-content-center align-items-center gap-3">
-    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
-    <div class="p-fluid">
-      <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getRolesList()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-    </div>
+    <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
   </div>
 </div>
 
 <p-dialog [header]="modalTitle + ' Role'" styleClass="c-modal" [(visible)]="flag_openDialog" (onHide)="closeRoleModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '50vw'}" [modal]="true" [draggable]="false" [resizable]="false">
     <form #f="ngForm" (ngSubmit)="onRoleSubmit(f.value)">
       <p-panel header="Main" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-        <div class="flex-column-container pt-2 p-fluid">  
+        <div class="flex-column-container pt-2 p-fluid">
           <div class="field">
             <span class="p-float-label">
-              <input type="text" id="name" name="name" [ngClass]="{'ng-dirty': !validRoleName, 'ng-invalid': !validRoleName}" (input)="validRoleName=input_name!=''" pInputText [(ngModel)]="input_name"> 
+              <input type="text" id="name" name="name" [ngClass]="{'ng-dirty': !validRoleName, 'ng-invalid': !validRoleName}" (input)="validRoleName=input_name!=''" pInputText [(ngModel)]="input_name">
               <label for="name">Role Name</label>
             </span>
-            <p *ngIf="!validRoleName" class="p-error">Required!</p>
           </div>
-  
+
           <span class="field p-float-label">
-            <input type="text" id="description" name="description" pInputText [(ngModel)]="input_description"> 
+            <input type="text" id="description" name="description" pInputText [(ngModel)]="input_description">
             <label for="description">Description</label>
           </span>
         </div>
@@ -115,10 +111,10 @@
               <p>{{item_privilege.name}}</p>
               <label class="switch">
                 <input type="checkbox"
-                  [id]="'privilege_'+item_privilege.id" 
-                  [name]="'privilege_'+item_privilege.id" 
-                  [checked]="isCheckedPrivilege(item_privilege.id)" 
-                  (change)="onChangePrivileges($event, item_privilege)" 
+                  [id]="'privilege_'+item_privilege.id"
+                  [name]="'privilege_'+item_privilege.id"
+                  [checked]="isCheckedPrivilege(item_privilege.id)"
+                  (change)="onChangePrivileges($event, item_privilege)"
                   [disabled]="isDidabled(item_privilege)"
                 >
                 <span class="slider round"></span>
@@ -132,18 +128,29 @@
       <h1 class="mt-5"></h1>
       <p-panel header="TFM Privileges" [toggleable]="true" styleClass="panel-forms" class="panel-forms" pStyleClass=".panel-forms" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
         <div class="grid pt-2">
-          <ng-container *ngFor="let item_privilege of privileges">
-            <div *ngIf="!item_privilege.is_admin" class="col-6 justify-content-between-container">
-              <p>{{item_privilege.name}}</p>
-              <label class="switch">
-                <input type="checkbox"
-                  [id]="'privilege_'+item_privilege.id" 
-                  [name]="'privilege_'+item_privilege.id" 
-                  [checked]="isCheckedPrivilege(item_privilege.id)" 
-                  (change)="onChangePrivileges($event, item_privilege)" 
-                >
-                <span class="slider round"></span>
-              </label>
+          <ng-container *ngFor="let catagories of tfm_privileges">
+            <div class="col-6">
+              <ul style="list-style-type:none" class="pl-0 mt-3 mb-0">
+                <li>
+                  <strong>{{catagories.catagory}}</strong>
+                  <ul style="list-style-type:none" class="pl-4">
+                    <li *ngFor="let item_privilege of catagories.items" class="mt-4">
+                      <div class="flex justify-content-between align-items-center">
+                        <p class="mb-0">{{item_privilege.name}}</p>
+                        <label class="switch">
+                          <input type="checkbox"
+                            [id]="'privilege_'+item_privilege.id"
+                            [name]="'privilege_'+item_privilege.id"
+                            [checked]="isCheckedPrivilege(item_privilege.id)"
+                            (change)="onChangePrivileges($event, item_privilege)"
+                          >
+                          <span class="slider round"></span>
+                        </label>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
             </div>
           </ng-container>
         </div>

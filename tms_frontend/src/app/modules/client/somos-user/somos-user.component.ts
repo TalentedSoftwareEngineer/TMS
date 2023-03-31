@@ -3,7 +3,7 @@ import {Location} from '@angular/common';
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { TMSUserType, NoPermissionAlertInteral, PERMISSION_TYPE_DENY, PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import { TMSUserType, NoPermissionAlertInteral, PERMISSION_TYPE_DENY, PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {ISomosUser} from "../../../models/user";
@@ -30,7 +30,7 @@ export class SomosUserComponent implements OnInit {
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any[] = ROWS_PER_PAGE_OPTIONS
+  rowsPerPageOptions: any[] = rowsPerPageOptions;
   noNeedRemoveColumn = true
 
   noNeedEditColumn = false
@@ -75,7 +75,7 @@ export class SomosUserComponent implements OnInit {
       if(state.user.permissions?.includes(PERMISSIONS.READ_SOMOS_USER)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
@@ -144,18 +144,21 @@ export class SomosUserComponent implements OnInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getSMSUserList();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getSMSUserList()
+  };
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getSMSUserList();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   openSMSUserModal = (modal_title: string) => {
@@ -172,7 +175,7 @@ export class SomosUserComponent implements OnInit {
     let username = form_values.username;
     let password = form_values.password;
     let client_key = form_values.client_key;
-    let client_password = form_values.client_password;
+    let client_secret = form_values.client_secret;
 
     if(this.input_username==''||this.input_username==undefined) {
       this.input_username = '';
@@ -193,8 +196,8 @@ export class SomosUserComponent implements OnInit {
       this.api.createSMSUser({
         username: username,
         password: password,
-        // client_key: client_key,
-        // client_password: client_password,
+        client_key: client_key,
+        client_secret: client_secret,
       }).subscribe(res => {
         resolve()
       });
@@ -203,6 +206,7 @@ export class SomosUserComponent implements OnInit {
     this.showSuccess('Somos User successfully created!');
     this.closeSMSUserModal();
     this.getSMSUserList();
+    this.getTotalSMSUserCount();
   }
 
   onOpenEditModal = async (event: Event, smsUser_id: number) => {
@@ -211,7 +215,7 @@ export class SomosUserComponent implements OnInit {
       this.input_username = res.username;
       this.input_password = res.password;
       this.input_client_key = res.client_key;
-      this.input_client_password = res.client_password;
+      this.input_client_password = res.client_secret;
 
       this.openSMSUserModal('Edit');
     })
@@ -229,8 +233,8 @@ export class SomosUserComponent implements OnInit {
     this.api.updateSMSUser(this.clickedId, {
       username: this.input_username,
       password: this.input_password,
-      // client_key: this.input_client_key == null ? '' : this.input_client_key,
-      // client_password: this.input_client_password == null ? '' : this.input_client_password,
+      client_key: this.input_client_key == null ? '' : this.input_client_key,
+      client_secret: this.input_client_password == null ? '' : this.input_client_password,
     }).subscribe(res => {
       this.showSuccess('Somos User update succeeded!');
       this.closeSMSUserModal();
@@ -249,6 +253,7 @@ export class SomosUserComponent implements OnInit {
         this.api.deleteSMSUserById(SMSUser_id).subscribe(res => {
           this.showSuccess('Somos User successfully deleted!')
           this.getSMSUserList();
+          this.getTotalSMSUserCount();
         })
       },
       reject: (type: any) => {

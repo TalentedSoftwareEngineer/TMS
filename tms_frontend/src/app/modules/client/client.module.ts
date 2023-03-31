@@ -43,6 +43,7 @@ import {BadgeModule} from 'primeng/badge';
 import {TooltipModule} from 'primeng/tooltip';
 import {CalendarModule} from 'primeng/calendar';
 import { TagModule } from 'primeng/tag';
+import {MultiSelectModule} from 'primeng/multiselect';
 
 // @ts-ignore
 import {CountToModule} from "angular-count-to";
@@ -97,54 +98,53 @@ import { RocRrnComponent } from './roc-rrn/roc-rrn.component';
 // };
 
 @NgModule({
-  imports: [
-    CommonModule,
-    ClientRoutingModule,
-    ReactiveFormsModule,
-    FormsModule,
-    SharedModule,
+    imports: [
+        CommonModule,
+        ClientRoutingModule,
+        ReactiveFormsModule,
+        FormsModule,
+        SharedModule,
 
-    // primeng component modules
-    MenuModule,
-    ButtonModule,
-    InputTextModule,
-    InputSwitchModule,
-    RippleModule,
-    PanelMenuModule,
-    SplitButtonModule,
-    ToggleButtonModule,
-    TableModule,
-    PaginatorModule,
-    DropdownModule,
-    // ChartModule,
-    SelectButtonModule,
-    AutoCompleteModule,
-    ConfirmDialogModule,
-    ProgressSpinnerModule,
-    ProgressBarModule,
-    DialogModule,
-    PanelModule,
-    StyleClassModule,
-    AccordionModule,
-    PasswordModule,
-    DividerModule,
-    CheckboxModule,
-    InputTextareaModule,
-    RadioButtonModule,
-    TabViewModule,
-    OverlayPanelModule,
-    MessagesModule,
-    MessageModule,
-    FileUploadModule,
-    BadgeModule,
-    TooltipModule,
-    CalendarModule,
-    TagModule,
-    
-    // ---------------------------------
-
-    CountToModule,
-  ],
+        // primeng component modules
+        MenuModule,
+        ButtonModule,
+        InputTextModule,
+        InputSwitchModule,
+        RippleModule,
+        PanelMenuModule,
+        SplitButtonModule,
+        ToggleButtonModule,
+        TableModule,
+        PaginatorModule,
+        DropdownModule,
+        // ChartModule,
+        SelectButtonModule,
+        AutoCompleteModule,
+        ConfirmDialogModule,
+        ProgressSpinnerModule,
+        ProgressBarModule,
+        DialogModule,
+        PanelModule,
+        StyleClassModule,
+        AccordionModule,
+        PasswordModule,
+        DividerModule,
+        CheckboxModule,
+        InputTextareaModule,
+        RadioButtonModule,
+        TabViewModule,
+        OverlayPanelModule,
+        MessagesModule,
+        MessageModule,
+        FileUploadModule,
+        BadgeModule,
+        TooltipModule,
+        CalendarModule,
+        TagModule,
+        MultiSelectModule,
+        // ---------------------------------
+        CountToModule,
+    ],
   declarations: [
     HeaderComponent,
     LeftmenuComponent,

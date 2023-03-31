@@ -58,4 +58,4 @@ export interface NsrResultRelations {
   // describe navigational properties here
 }
 
-export type NSRResultWithRelations = NsrResult & NsrResultRelations;
+export type NsrResultWithRelations = NsrResult & NsrResultRelations;

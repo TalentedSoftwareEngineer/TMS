@@ -13,11 +13,12 @@ import {
   INVALID_NUM_TYPE_COMMON,
   SPECIFICNUM_REG_EXP,
   PHONE_NUMBER_WITH_HYPHEN_REG_EXP,
-  LIMIT_SIXTY_LETTERS_REG_EXP, ROWS_PER_PAGE_OPTIONS
+  LIMIT_SIXTY_LETTERS_REG_EXP, ROWS_PER_PAGE_OPTIONS, SUPER_ADMIN_ROLE_ID, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions
 } from '../../constants';
 import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ROUTES } from 'src/app/app.routes';
 import { Router } from '@angular/router';
+import { IUser } from 'src/app/models/user';
 
 @Component({
   selector: 'app-multi-dial-disconnect',
@@ -44,7 +45,7 @@ export class MultiDialDisconnectComponent implements OnInit {
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any = ROWS_PER_PAGE_OPTIONS
+  rowsPerPageOptions: any = rowsPerPageOptions
 
   inputDialNumbers: string = '';
   invalidNumType: number = INVALID_NUM_TYPE_NONE;
@@ -53,7 +54,7 @@ export class MultiDialDisconnectComponent implements OnInit {
   inputEffDateTime: any = null;
   minEffDateTime: Date = new Date();
   inputNow: boolean = false;
-  inputInterDate: any = null;
+  inputInterDate: any = new Date(new Date().setDate(new Date().getDate() + 45));
   interDateErr: boolean = false;
   inputYesNo : boolean = false;
   inputMessage: string = '';
@@ -71,6 +72,10 @@ export class MultiDialDisconnectComponent implements OnInit {
   progressingReq: any[] = [];
   completedReq: any[] = [];
   csvNumbersContent: string = '';
+
+  isSuperAdmin: boolean = false;
+  userOptions: any[] = [];
+  selectUser: string|number = '';
 
   constructor(
     public store: StoreService,
@@ -93,17 +98,21 @@ export class MultiDialDisconnectComponent implements OnInit {
     })
 
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.MND)) {
+      if(state.user.permissions?.includes(PERMISSIONS.MULTI_DIAL_NUMBER_DISCONNECT)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
       }
+
+      this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
+      this.inputRequestName = state.contactInformation.name;
     })
 
-    this.getData();
+    await this.getData();
+    this.getUsersList();
 
     this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
       if(data.page.toUpperCase()=='MND') {
@@ -143,7 +152,7 @@ export class MultiDialDisconnectComponent implements OnInit {
   getData = async () => {
     this.getTotalCount();
 
-    await this.api.getMNDData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue)
+    await this.api.getMNDData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
         res.map(u => {
           u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '';
@@ -165,6 +174,16 @@ export class MultiDialDisconnectComponent implements OnInit {
     .pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
+  }
+
+  getUsersList = async () => {
+    try {
+      await this.api.getUsersListForFilter()
+        .pipe(tap(async (res: IUser[]) => {
+          this.userOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: item.username, value: item.id}))];
+        })).toPromise();
+    } catch (e) {
+    }
   }
 
   onCsvXlUploadAuto = async (event: any) => {
@@ -189,6 +208,11 @@ export class MultiDialDisconnectComponent implements OnInit {
   onSubmit = () => {
     if(this.inputDialNumbers=='') {
       this.invalidNumType = INVALID_NUM_TYPE_COMMON;
+      return;
+    }
+
+    this.onNumFieldFocusOut();
+    if (this.invalidNumType!=INVALID_NUM_TYPE_NONE) {
       return;
     }
 
@@ -234,7 +258,7 @@ export class MultiDialDisconnectComponent implements OnInit {
     this.inputDialNumbers = ""
     this.inputRequestName = ""
     this.inputEffDateTime = null
-    this.inputInterDate = null
+    this.inputInterDate = new Date(new Date().setDate(new Date().getDate() + 45));
     this.onNumFieldFocusOut()
   }
 
@@ -265,7 +289,6 @@ export class MultiDialDisconnectComponent implements OnInit {
   onOpenViewModal = async (event: Event, result: any) => {
     this.csvNumbersContent = '';
     this.viewedResult = result;
-    this.resultTotal = parseInt(result.completed);
 
     await this.api.getMNDById(result.id)
       .pipe(tap((response: any[])=>{
@@ -283,6 +306,7 @@ export class MultiDialDisconnectComponent implements OnInit {
         this.inputNumListFilterKey = '';
         this.onInputNumListFilterKey();
         this.flagOpenModal = true;
+        this.resultTotal = this.numberList.length
       })).toPromise();
   }
 
@@ -410,18 +434,21 @@ export class MultiDialDisconnectComponent implements OnInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getData();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getData()
+  };
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getData();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   closeModal = () => {
@@ -429,7 +456,7 @@ export class MultiDialDisconnectComponent implements OnInit {
   }
 
   onViewNumbersDownload = () => {
-    let data = `Number,Template,Effective Date,Status,Message\n${this.csvNumbersContent}\n`
+    let data = `Number,Template,Effective Date,Status,Message${this.csvNumbersContent}\n`
 
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);
@@ -439,6 +466,11 @@ export class MultiDialDisconnectComponent implements OnInit {
     tempLink.href = url;
     tempLink.setAttribute('download', fileName);
     tempLink.click();
+  }
+
+  onEffDateTimeIntervalFifteenMin = () => {
+    let d = new Date(this.inputEffDateTime).getTime();
+    this.inputEffDateTime = new Date(Math.ceil(d / 900000) * 900000);
   }
 
   showWarn = (msg: string) => {

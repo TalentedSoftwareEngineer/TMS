@@ -18,7 +18,7 @@ import {
   response, HttpErrors,
 } from '@loopback/rest';
 import {
-  Company,
+  Company, IdAndRO,
   User,
   UserCreateRequest,
   UserCredentials,
@@ -30,7 +30,6 @@ import {UserCredentialsRepository, UserInfoRepository, UserRepository} from '../
 import {authenticate, TokenService} from "@loopback/authentication";
 import {inject} from "@loopback/core";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
-import {IdAndRO} from "../models/id_ro";
 import AuditionedUtils from "../utils/audition";
 import {hash, genSalt} from "bcryptjs";
 import {PERMISSIONS} from "../constants/permissions";
@@ -83,6 +82,9 @@ export class UserController {
               },
               role_id: {
                 type: "integer",
+              },
+              timezone: {
+                type: "number",
               },
               password: {
                 type: "string",
@@ -146,6 +148,7 @@ export class UserController {
     user.company_id = req.company_id
     user.role_id = req.role_id
     user.somos_id = req.somos_id
+    user.timezone = req.timezone
     user.created_by = profile.user.id
     user.created_at = new Date().toISOString()
     user.updated_by = profile.user.id
@@ -554,6 +557,7 @@ export class UserController {
 
     const tx = await this.userRepository.beginTransaction()
 
+    // TODO - check all foreign key of user_id
     await this.userRepository.userInfo(id).delete()
     await this.userRepository.userCredentials(id).delete()
     await this.userRepository.deleteById(id);

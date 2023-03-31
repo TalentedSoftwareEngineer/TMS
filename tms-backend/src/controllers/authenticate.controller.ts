@@ -2,9 +2,9 @@ import {get, getModelSchemaRef, param, post, requestBody,} from '@loopback/rest'
 import {authenticate, TokenService} from "@loopback/authentication";
 import {TokenServiceBindings, UserServiceBindings} from "@loopback/authentication-jwt";
 import {inject} from "@loopback/core";
-import {BasicAuthenticationUserService} from "../services/basic-authentication-user.service";
 import {Company, SomosUser, User, UserInfo} from "../models";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
+import {BasicAuthenticationUserService} from "../services";
 
 export type UserAuthenticateRequest = {
   username: string;

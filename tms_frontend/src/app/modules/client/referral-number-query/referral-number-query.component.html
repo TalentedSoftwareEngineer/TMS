@@ -2,19 +2,21 @@
 
 <p-panel header="Retrieve" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
-        <div class="grid mt-3">
-          <div class="col-3">
-            <p class="mb-2">CSV File: </p>
-            <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
-            <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
-          </div>
-          <div class="col-9 p-fluid">
-            <span class="field p-float-label">
-                <textarea id="tollFreeNumber" rows="5" cols="30" pInputTextarea [(ngModel)]="inputTollFreeNumber" (blur)="onNumFieldFocusOut()"></textarea>
-                <label for="tollFreeNumber">Toll-Free Number *</label>
-            </span>
-            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
-          </div>
+        <div class="grid">
+            <div class="lg:col-12 col-12">
+                <div class="flex justify-content-end align-items-center">
+                    <!-- <p class="mb-0 mr-3">CSV File: </p> -->
+                    <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
+                    <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
+                </div>
+                <div class="mt-3 p-fluid">
+                    <span class="p-float-label">
+                        <textarea id="tollFreeNumber" rows="7" cols="30" pInputTextarea [(ngModel)]="inputTollFreeNumber" (blur)="onNumFieldFocusOut()"></textarea>
+                        <label for="tollFreeNumber">Toll-Free Number *</label>
+                    </span>
+                    <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+                </div>
+            </div>
         </div>
         <div class="flex justify-content-end">
             <button pButton pRipple type="button" (click)="onRetrieve()" label="Retrieve" icon="pi pi-search" class="p-button-text"></button>
@@ -26,7 +28,7 @@
 <p-panel header="Result" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
         <div class="card">
-            <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="filterResultLength!=-1&&filterResultLength!=resultsLength">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
+            <h5><span *ngIf="resultsLength!=-1">Total {{resultsLength}} Record</span><span *ngIf="resultsLength>1">s</span><i *ngIf="resultsLength!=-1&&filterResultLength!=-1&&filterResultLength<resultsLength" style="font-size: medium;">, {{filterResultLength}} Record<span *ngIf="filterResultLength>1">s</span> Filtered</i></h5>
             <p-table
                 [value]="results"
                 dataKey="id"
@@ -35,17 +37,22 @@
                 [responsive]="true"
             >
                 <ng-template pTemplate="caption">
-                    <div class="table-header flex justify-content-end">
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-search"></i>
-                            <input pInputText type="text" [(ngModel)]="filterValue" (keyup.enter)="onClickFilter()" placeholder="Search..." />
-                        </span>
-                    </div>
+                    <div class="grid p-fluid">
+                        <div *ngIf="isSuperAdmin" class="lg:col-3 md:col-5 col-12 pr-0 pl-0">
+                          <p-dropdown [options]="userOptions" [(ngModel)]="selectUser" placeholder="Search..." [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="150px"></p-dropdown>
+                        </div>
+                        <div class="lg:col-4 md:col-7 col-12 pr-0 pl-0">
+                          <div class="p-inputgroup">
+                              <input pInputText type="text" [(ngModel)]="filterValue" (keyup.enter)="onClickFilter()" placeholder="Search..." />
+                              <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="onClickFilter()"></button>
+                          </div>
+                        </div>
+                      </div>
                 </ng-template>
 
                 <ng-template pTemplate="header">
                     <tr>
-                        <th class="text-align-center">
+                        <th *ngIf="isSuperAdmin" class="text-align-center">
                             Created By
                         </th>
                         <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
@@ -71,7 +78,7 @@
 
                 <ng-template pTemplate="body" let-result>
                     <tr class="p-selectable-row text-align-center">
-                        <td class="text-align-center">
+                        <td *ngIf="isSuperAdmin" class="text-align-center">
                             <span class="p-column-title">Created By</span>
                             {{result.user.username}}
                         </td>
@@ -101,9 +108,9 @@
                         <td class="text-align-center">
                             <span class="p-column-title">Action</span>
                             <span class="p-buttonset">
-                                <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
-                                <button pButton pRipple type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
-                                <button pButton pRipple type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
+                                <button pButton pRipple type="button" title="Detail" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
+                                <button pButton pRipple type="button" title="Download" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
+                                <button pButton pRipple type="button" title="Delete" icon="pi pi-trash" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
                             </span>
                         </td>
                     </tr>
@@ -117,10 +124,7 @@
             </p-table>
 
             <div class="flex justify-content-center align-items-center gap-3">
-                <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" (onPageChange)="paginate($event)"></p-paginator>
-                <div class="p-fluid">
-                    <p-dropdown [options]="rowsPerPageOptions" id="status_search" [(ngModel)]="pageSize" (onChange)="getData()" optionLabel="name" optionValue="value" scrollHeight="150px"></p-dropdown>
-                </div>
+                <p-paginator [rows]="pageSize" [totalRecords]="filterResultLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="paginate($event)"></p-paginator>
             </div>
         </div>
     </div>
@@ -134,14 +138,13 @@
             dataKey="id"
             [rows]="10"
             [showCurrentPageReport]="true"
-            [rowsPerPageOptions]="[10,25,50]"
+            [rowsPerPageOptions]="rowsPerPageOptions"
             [loading]="numberListLoading"
             responsiveLayout="stack"
             [responsive]="true"
             [paginator]="true"
-            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
             [filterDelay]="0"
-            [globalFilterFields]="['num','resp_org_id','ref_num','resp_org_name','message']"
+            [globalFilterFields]="['num','resp_org_id','ref_num','resp_org_name','status','message']"
             styleClass="p-datatable-lg"
         >
           <ng-template pTemplate="caption">
@@ -149,7 +152,7 @@
               <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
             </div>
             <div class="flex align-items-center" [ngClass]="resultTotal>0 ? 'justify-content-between' : 'justify-content-end'">
-              <p class="mb-0" *ngIf="resultTotal>0">Total <span style="font-size: 16px;">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
+              <p class="mb-0" *ngIf="resultTotal>0">Total <span class="dialog_total_count">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
               <div class="table-header">
                         <span class="p-input-icon-left">
                             <i class="pi pi-search"></i>

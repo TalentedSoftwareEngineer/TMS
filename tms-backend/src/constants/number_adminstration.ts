@@ -19,20 +19,41 @@ export const NUMBER_STATUS = {
     WORKING: "WORKING",
     DISCONNECT: "DISCONNECT",
     TRANSITIONAL: "TRANSITIONAL",
+    PENDING: "PENDING",
 }
 
 export const PROGRESSING_STATUS = {
+    // start
+    PENDING: 'PENDING',
+
+    // progress
     IN_PROGRESS: 'IN PROGRESS',
 
     // ended
     COMPLETED: 'COMPLETED',
     SUCCESS: 'SUCCESS',
     FAILED: 'FAILED',
+
+    CANCELED: 'CANCELED',
+
+    // upload
+    WAITING: 'WAITING',
+    UPLOADING: 'UPLOADING',
+    DOWNLOADING: 'DOWNLOADING',
+    IMPORTING: 'IMPORTING',
+}
+
+export const ADMIN_DATA_OPERATION = {
+    SUBMIT: 'U',
+    SAVE: 'S',
 }
 
 export const TASK_TYPE = {
     NUM: "NUM",
     OTHER: "OTHER",
+    PAD: "PAD",
+    TAD: 'TAD',
+    CAD: 'CAD',
 }
 
 export const PAGE_OPERATION = {
@@ -45,6 +66,11 @@ export const PAGE_OPERATION = {
     SPARE: "SPARE",
     CHANGE: "CHANGE",
     CONVERT: "CONVERT",
+    ACTIVATE: "ACTIVATE",
+    CREATE: "CREATE",
+    COPY: "COPY",
+    TRANSFER: "TRANSFER",
+    DELETE: "DELETE",
 }
 
 export const TASK_ACTION = {
@@ -53,7 +79,22 @@ export const TASK_ACTION = {
     UPDATE: "UPDATE",
     RETRIEVE: "RETRIEVE",
     DISCONNECT: "DISCONNECT",
-    SPARE: "SPARE",
     CHANGE: "CHANGE",
     CONVERT: "CONVERT",
+    ACTIVATE: "ACTIVATE",
+    CREATE: "CREATE",
+    COPY: "COPY",
+    TRANSFER: "TRANSFER",
+    DELETE: "DELETE",
+}
+
+export const TASK_STATUS = {
+    PENDING: 'PENDING',
+    SAVED: 'SAVED',
+}
+
+export const SCRIPT_TYPE = {
+    TMPL_DIALNBR:  "RHDB_TEMPLATE_DIALNBR",
+    DIALNBR : "RHDB_NAREP",
+    TFNREPT_DIALNBR : "RHDB_NAREP_TFNREPT",
 }

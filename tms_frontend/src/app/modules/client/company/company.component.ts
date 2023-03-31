@@ -3,7 +3,7 @@ import {Location} from '@angular/common';
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { TMSUserType, NoPermissionAlertInteral, PERMISSION_TYPE_DENY, PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS } from '../../constants';
+import { TMSUserType, NoPermissionAlertInteral, PERMISSION_TYPE_DENY, PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {ICompany} from "../../../models/user";
@@ -103,7 +103,7 @@ export class CompanyComponent implements OnInit {
       if(state.user.permissions?.includes(PERMISSIONS.READ_COMPANY)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
@@ -179,18 +179,21 @@ export class CompanyComponent implements OnInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getCompaniesList();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getCompaniesList();
+  }
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getCompaniesList();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   openCompanyModal = (modal_title: string) => {
@@ -249,6 +252,7 @@ export class CompanyComponent implements OnInit {
         last_name: last_name,
         contact_phone: contact_phone,
       }).subscribe(res => {
+        this.getTotalCompaniesCount();
         resolve()
       });
     })
@@ -297,7 +301,7 @@ export class CompanyComponent implements OnInit {
     if(this.input_company_email=='') this.validCompanyEmail = false;
     if(this.input_first_name=='') this.validFirstName = false;
     if(this.input_last_name=='') this.validLastName = false;
-    if(this.input_ro_id='') this.validRoId = false;
+    if(this.input_ro_id=='') this.validRoId = false;
     if(this.input_name==''||this.input_code==''||this.input_resp_org_id==''||this.input_role_code==''||this.input_company_email==''||this.input_first_name==''||this.input_last_name==''||this.input_ro_id=='') {
       return;
     }
@@ -333,6 +337,7 @@ export class CompanyComponent implements OnInit {
           this.api.deleteCompanyById(company_id).subscribe(res => {
             this.showSuccess('Company successfully deleted!')
             this.getCompaniesList();
+            this.getTotalCompaniesCount();
           })
         },
         reject: (type: any) => {
@@ -349,27 +354,27 @@ export class CompanyComponent implements OnInit {
   }
 
   clearInputs = () => {
-    this.input_name = ''
+    this.input_name = '';
+    this.input_code = '';
+    this.input_role_code = '';
+    this.input_resp_org_id = '';
+    this.input_company_email = '';
+    this.input_address = '';
+    this.input_city = '';
+    this.input_state = '';
+    this.input_zip_code = '';
+    this.input_first_name = '';
+    this.input_last_name = '';
+    this.input_contact_email = '';
+    this.input_contact_phone = '';
+    this.input_ro_id = '';
     this.validName = true;
-    this.input_code = ''
     this.validCode = true;
-    this.input_role_code = ''
     this.validRoleCode = true;
-    this.input_resp_org_id = ''
     this.validRespOrgId = true;
-    this.input_company_email = ''
     this.validCompanyEmail = true;
-    this.input_address = ''
-    this.input_city = ''
-    this.input_state = ''
-    this.input_zip_code = ''
-    this.input_first_name = ''
     this.validFirstName = true;
-    this.input_last_name = ''
     this.validLastName = true;
-    this.input_contact_email = ''
-    this.input_contact_phone = ''
-    this.input_ro_id = ''
     this.validRoId = true;
   }
 

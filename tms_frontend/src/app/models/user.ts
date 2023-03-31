@@ -11,9 +11,9 @@ export interface IUserToken {
 
 export interface IUser {
   id: number;
-  role_id: number;
+  role_id: number,
   role?: IRole,
-
+  timezone: any,
   company?: ICompany,
   somos?: ISomosUser,
   somosUser?: ISomosUser,
@@ -96,7 +96,7 @@ export interface ISomosUser {
   username: string,
   password?: string,
   client_key?: string,
-  client_password?: string,
+  client_secret?: string,
   created_at: any,
   updated_at: any,
   created_by: any,
@@ -122,6 +122,7 @@ export interface IRole {
 export interface IPrivilege {
   id: number,
   name: string,
+  category: string,
   is_admin: number | boolean,
 }
 

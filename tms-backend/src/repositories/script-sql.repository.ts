@@ -28,4 +28,12 @@ export class ScriptSqlRepository extends DefaultCrudRepository<
     this.created = this.createBelongsToAccessorFor('created', userRepositoryGetter,);
     this.registerInclusionResolver('created', this.created.inclusionResolver);
   }
+
+  public async getScriptUser(id: typeof ScriptSql.prototype.id): Promise<any> {
+    const user = await this.user(id).catch(err => {
+      throw err;
+    })
+
+    return { username: user.username, password: user.password }
+  }
 }

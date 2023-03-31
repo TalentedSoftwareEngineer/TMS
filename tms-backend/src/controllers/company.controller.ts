@@ -140,7 +140,7 @@ export class CompanyController {
         let num_fields = undefined;
         let custom = [{status: tmpStatusFilter}];
         let include = [{relation: 'created'}, {relation: 'updated'}];
-        return this.companyRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
+        return this.companyRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
     }
 
     @get('/companies/{id}', {

@@ -1,21 +1,30 @@
 import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig} from '@loopback/core';
+import {ApplicationConfig, createBindingFromClass} from '@loopback/core';
 import {RestExplorerBindings, RestExplorerComponent,} from '@loopback/rest-explorer';
 import {RepositoryMixin} from '@loopback/repository';
-import {RestApplication} from '@loopback/rest';
+import {RestApplication, RestBindings} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
 import {AuthenticationComponent} from "@loopback/authentication";
 import {JWTAuthenticationComponent, TokenServiceBindings, UserServiceBindings} from "@loopback/authentication-jwt";
 import {DbDataSource} from "./datasources";
-import {BasicAuthenticationUserService} from "./services/basic-authentication-user.service";
 import {AuthorizationComponent} from "@loopback/authorization";
-import {MessageQueueService, NumberService, TfnRegistryApiService} from "./services";
+import {
+  AutomationService, BasicAuthenticationUserService, CustomerRecordService, FtpService,
+  JobService, MailService,
+  MessageQueueService,
+  NumberService, PointerRecordService, RespOrgService, Secure382ApiService,
+  TemplateService,
+  TfnRegistryApiService
+} from "./services";
 import {UserCredentialsRepository, UserRepository} from "./repositories";
 import {QueueManager} from "redis-smq";
 import {EQueueType} from "redis-smq/dist/types";
-
+import {CronComponent, CronJob} from "@loopback/cron";
+import {AutoReserve} from "./jobs/auto-reserve";
+import {UploadScript} from "./jobs/upload-script";
+import {DownloadScript} from "./jobs/download-script";
 export {ApplicationConfig};
 
 export class BackendApplication extends BootMixin(
@@ -49,6 +58,9 @@ export class BackendApplication extends BootMixin(
 
     this.component(AuthenticationComponent);
     this.component(JWTAuthenticationComponent);
+    this.component(CronComponent)
+    this.component(AuthorizationComponent);
+
     this.dataSource(DbDataSource, UserServiceBindings.DATASOURCE_NAME);
 
     // @ts-ignore
@@ -58,11 +70,34 @@ export class BackendApplication extends BootMixin(
 
     this.bind(TokenServiceBindings.TOKEN_SECRET).to("tms_token");
     this.bind(TokenServiceBindings.TOKEN_EXPIRES_IN).to("3600");
+    this.bind(RestBindings.REQUEST_BODY_PARSER_OPTIONS).to({
+      json: {limit: '10MB'},
+      text: {limit: '10MB'}
+    })
 
-    this.service(MessageQueueService)
     this.service(TfnRegistryApiService);
+    this.service(RespOrgService)
     this.service(NumberService);
 
-    this.component(AuthorizationComponent);
+    this.service(MessageQueueService)
+    this.service(AutomationService);
+    this.service(JobService);
+
+    this.service(MailService);
+    this.service(Secure382ApiService);
+    this.service(FtpService)
+
+    this.service(TemplateService);
+    this.service(CustomerRecordService);
+    this.service(PointerRecordService);
+
+    const auto_reserve_job = createBindingFromClass(AutoReserve)
+    this.add(auto_reserve_job)
+
+    const upload_script = createBindingFromClass(UploadScript)
+    this.add(upload_script)
+
+    const download_script = createBindingFromClass(DownloadScript)
+    this.add(download_script)
   }
 }

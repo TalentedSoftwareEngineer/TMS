@@ -15,6 +15,12 @@ export class Numbers extends Entity {
   id: string;
 
   @property({
+    type: 'number',
+    required: true,
+  })
+  user_id: number;
+
+  @property({
     type: 'string',
   })
   entity?: string;
@@ -35,6 +41,31 @@ export class Numbers extends Entity {
     required: true,
   })
   status: string;
+
+  @property({
+    type: 'string',
+  })
+  template_name?: string;
+
+  @property({
+    type: 'string',
+  })
+  eff_dt_tm?: string;
+
+  @property({
+    type: 'string',
+  })
+  last_act_dt?: string;
+
+  @property({
+    type: 'string',
+  })
+  res_until_dt?: string;
+
+  @property({
+    type: 'string',
+  })
+  disc_until_dt?: string;
 
   @property({
     type: 'string',

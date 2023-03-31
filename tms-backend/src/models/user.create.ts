@@ -1,6 +1,3 @@
-import {User} from "./user.model";
-import {UserInfo} from "./user-info.model";
-
 export class UserCreateRequest {
     username: string;
     email: string;
@@ -11,6 +8,8 @@ export class UserCreateRequest {
     company_id: number;
     somos_id: number;
     role_id: number;
+
+    timezone: number;
 
     password: string;
 

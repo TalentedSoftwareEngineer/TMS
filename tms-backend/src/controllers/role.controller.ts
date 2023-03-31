@@ -17,10 +17,9 @@ import {
   requestBody,
   response, HttpErrors,
 } from '@loopback/rest';
-import {Company, Role} from '../models';
+import {Company, Role, RoleCreateRequest} from '../models';
 import {RolePrivilegeRepository, RoleRepository, UserRepository} from '../repositories';
 import {authenticate} from "@loopback/authentication";
-import {RoleCreateRequest} from "../models/role.create";
 import {inject} from "@loopback/core";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import AuditionedUtils from "../utils/audition";
@@ -160,7 +159,7 @@ export class RoleController {
         }
       }
     ];
-    return this.roleRepository.find(AuditionedUtils.includeAuditionedFilter(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include)));
+    return this.roleRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
   }
 
   @get('/roles/for_filter', {

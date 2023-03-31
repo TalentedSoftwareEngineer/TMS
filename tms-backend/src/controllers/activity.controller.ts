@@ -25,6 +25,7 @@ import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
 import DataUtils from '../utils/data';
+import {SUPER_ADMIN_ROLE} from "../constants/configurations";
 
 @authenticate('jwt')
 export class ActivityController {
@@ -57,7 +58,12 @@ export class ActivityController {
 
     let fields = ['operation','sub_dt_tm','message'];
     let num_fields = undefined;
-    let custom = [{user_id: tmpUserFilterId}, {status: tmpStatusFilter}];
+    let custom: any[] = [{status: tmpStatusFilter}];
+    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+      custom.push({ user_id: profile.user.id })
+    else
+      custom.push({ user_id: tmpUserFilterId })
+
     return this.activityRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
   }
 
@@ -95,7 +101,12 @@ export class ActivityController {
 
     let fields = ['operation','sub_dt_tm','message'];
     let num_fields = undefined;
-    let custom = [{user_id: tmpUserFilterId}, {status: tmpStatusFilter}];
+    let custom: any[] = [{status: tmpStatusFilter}];
+    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+      custom.push({ user_id: profile.user.id })
+    else
+      custom.push({ user_id: tmpUserFilterId })
+
     let include = [
       {
         relation: 'user',
@@ -104,6 +115,7 @@ export class ActivityController {
         }
       }
     ];
+
     return this.activityRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
   }
 

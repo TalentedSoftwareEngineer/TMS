@@ -10,7 +10,8 @@ import {
   INVALID_NUM_TYPE_NONE,
   INVALID_NUM_TYPE_COMMON,
   SPECIFICNUM_REG_EXP,
-  PHONE_NUMBER_WITH_HYPHEN_REG_EXP
+  PHONE_NUMBER_WITH_HYPHEN_REG_EXP,
+  PAGE_NO_PERMISSION_MSG
  } from '../../constants';
 
 @Component({
@@ -84,10 +85,10 @@ export class RocRsbComponent implements OnInit {
 
   async ngOnInit() {
     this.store.state$.subscribe(async (state) => {
-      if(state.user.permissions?.includes(PERMISSIONS.RSB)) {
+      if(state.user.permissions?.includes(PERMISSIONS.ROC_CHANGE_REQUEST)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return

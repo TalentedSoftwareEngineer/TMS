@@ -51,7 +51,7 @@
                     <label for="role_id">Role</label>
                 </span>
                 <span class="field p-float-label">
-                    <input type="text" id="email" name="email" pInputText [(ngModel)]="input_email" required> 
+                    <input type="text" id="email" name="email" pInputText [(ngModel)]="input_email" [ngClass]="{'ng-dirty': !validEmail, 'ng-invalid': !validEmail}" (input)="onInputEmail()"> 
                     <label for="email">Email</label>
                 </span>
                 <span class="field p-float-label">
@@ -69,23 +69,26 @@
             </span>
         </p-tabPanel>
         <p-tabPanel header="Change Password">
-            <div class="p-fluid pt-2">  
-                <span class="field p-float-label">
-                    <p-password id="old_password" name="old_password" [(ngModel)]="input_old_password" [toggleMask]="true" [feedback]="false"></p-password>
-                    <label for="old_password">Old Password</label>
-                </span>
-                <span class="field p-float-label">
-                    <p-password id="password" name="password" [(ngModel)]="input_password" [toggleMask]="true" [feedback]="false" [required]="required"></p-password>
-                    <label for="password">New Password</label>
-                </span>
-                <span class="field p-float-label">
-                    <p-password id="confirm_password" name="confirm_password" [(ngModel)]="input_confirm_password" [toggleMask]="true" [feedback]="false"></p-password>
-                    <label for="confirm_password">Confirm Password</label>
-                </span>
-            </div>
+            <form #myForm="ngForm">
+                <div class="p-fluid pt-2">  
+                    <span class="field p-float-label">
+                        <p-password id="old_password" name="old_password" [(ngModel)]="input_old_password" [toggleMask]="true" [feedback]="false" [required]="required"></p-password>
+                        <label for="old_password">Old Password</label>
+                    </span>
+                    <span class="field p-float-label">
+                        <p-password id="password" name="password" [(ngModel)]="input_password" [toggleMask]="true" [feedback]="false" [required]="required"></p-password>
+                        <label for="password">New Password</label>
+                    </span>
+                    <span class="field p-float-label">
+                        <p-password id="confirm_password" name="confirm_password" [(ngModel)]="input_confirm_password" [toggleMask]="true" [feedback]="false"></p-password>
+                        <label for="confirm_password">Confirm Password</label>
+                    </span>
+                </div>
+            </form>
+
             <span class="p-buttonset flex justify-content-end">
-                <button pButton pRipple (click)="passwordReset()" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
-                <button pButton pRipple (click)="onPasswordUpdate()" label="Save" icon="pi pi-save" class="p-button-text"></button>
+                <button pButton pRipple (click)="myForm.resetForm();" label="Reset" icon="pi pi-undo" class="p-button-text p-button-danger"></button>
+                <button pButton pRipple (click)="onPasswordUpdate();myForm.resetForm();" label="Save" icon="pi pi-save" class="p-button-text"  [disabled]="input_old_password==''||input_password==''"></button>
             </span>
         </p-tabPanel>
         <p-tabPanel header="Somos Information">
@@ -157,12 +160,12 @@
                 <div class="col-12 md:col-6">
                     <h5>Custom Logo Image</h5>
                     <div class="" style="padding: 10px;">
-                    <img [src]="logoImg" [hidden]="logoImg == ''" height="50" />
+                        <img [src]="logoImg" [hidden]="logoImg == ''" height="50" />
                     </div>
                     <div class="justify-content-start">
-                    <input #customLogo  (change)="onChangeCustomLogoImg($event)" type="file" id="customLogo" name="customLogo" accept="image/*" style="display: none"/>
-                    <button pButton (click)="customLogo.click()" label="Choose" class="mr-2"></button>
-                    <button pButton [hidden]="logoImg == ''" (click)="onClickRemoveLogo()" label="Remove" class="p-button-danger"></button>
+                        <input #customLogo  (change)="onChangeCustomLogoImg($event)" type="file" id="customLogo" name="customLogo" accept="image/*" style="display: none"/>
+                        <button pButton (click)="customLogo.click()" label="Choose" class="mr-2"></button>
+                        <button pButton [hidden]="logoImg == ''" (click)="onClickRemoveLogo()" label="Remove" class="p-button-danger"></button>
                     </div>
                 </div>
                 <div class="col-12 md:col-6">

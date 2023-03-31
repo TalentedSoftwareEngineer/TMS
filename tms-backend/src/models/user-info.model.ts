@@ -9,7 +9,6 @@ export class UserInfo extends Entity {
     type: 'number',
     id: true,
     generated: false,
-    required: true,
   })
   id?: number;
 

@@ -23,3 +23,9 @@
         border-bottom: 1px solid #c8ced3;
     }
 }
+
+:host ::ng-deep .p-dialog.c-modal {
+    .p-dialog-content{
+        overflow-y: visible;
+    }
+}

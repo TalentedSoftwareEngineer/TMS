@@ -8,6 +8,7 @@ import {TimePipe} from "../../../pipes/time.pipe";
 import {CalcPeriodUniquePercPipe} from "../../../pipes/calc-period-unique-perc.pipe";
 import {SecondsToMinutesPipe} from "../../../pipes/seconds-to-minutes.pipe";
 import {CeilWithMinimumPipe} from "../../../pipes/ceil-with-minimum.pipe";
+import {RouterModule} from "@angular/router";
 
 @NgModule({
   declarations: [
@@ -22,7 +23,7 @@ import {CeilWithMinimumPipe} from "../../../pipes/ceil-with-minimum.pipe";
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
+    ReactiveFormsModule
   ],
   exports: [
     FixedPipe,

@@ -26,7 +26,8 @@ export interface AppState {
   userType: TMSUserType;
   currentRo: string|undefined;
   openContactInformationModal: boolean;
-  contactInformation: IContactInformation
+  contactInformation: IContactInformation;
+  cadState: any;
 }
 
 @Injectable({
@@ -189,6 +190,14 @@ export class StoreService {
 
   public getContactInformation() {
     return this.store.contactInformation;
+  }
+
+  public storeCadState(cadState: any) {
+    this.store = {...this.store, cadState};
+  }
+
+  public getCadState() {
+    return this.store.cadState;
   }
 
 }

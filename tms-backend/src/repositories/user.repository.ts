@@ -8,7 +8,7 @@ import {
 } from '@loopback/repository';
 import {DbDataSource} from '../datasources';
 // @ts-ignore
-import {User, UserRelations, Company, UserCredentials, UserProfile, SomosUser, UserInfo, Role} from '../models';
+import {User, UserRelations, Company, UserCredentials, SomosUser, UserInfo, Role} from '../models';
 import {CompanyRepository} from './company.repository';
 import {UserCredentialsRepository} from './user-credentials.repository';
 import {UserInfoRepository} from './user-info.repository';

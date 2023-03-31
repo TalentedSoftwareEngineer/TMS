@@ -50,13 +50,12 @@ export class PrivilegeController {
   })
   async find(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-    @param.filter(Privilege) filter?: Filter<Privilege>,
   ): Promise<Privilege[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_ROLE))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.privilegeRepository.find(filter);
+    return this.privilegeRepository.find({});
   }
 
   @get('/privileges/{id}', {
@@ -75,13 +74,12 @@ export class PrivilegeController {
   async findById(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
     @param.path.number('id') id: number,
-    @param.filter(Privilege, {exclude: 'where'}) filter?: FilterExcludingWhere<Privilege>
   ): Promise<Privilege> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_ROLE))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    return this.privilegeRepository.findById(id, filter);
+    return this.privilegeRepository.findById(id);
   }
 
 }

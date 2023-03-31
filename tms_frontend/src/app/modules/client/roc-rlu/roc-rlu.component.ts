@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { StoreService } from 'src/app/services/store/store.service';
 import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ROUTES } from 'src/app/app.routes';
+import { PAGE_NO_PERMISSION_MSG } from '../../constants';
 
 @Component({
   selector: 'app-roc-rlu',
@@ -20,10 +21,10 @@ export class RocRluComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.RLU)) {
+      if(state.user.permissions?.includes(PERMISSIONS.ROC_LOA_UPLOAD)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return

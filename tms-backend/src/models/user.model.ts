@@ -42,10 +42,18 @@ export class User extends Entity {
     required: true,
   })
   last_name: string;
+
   @property({
     type: 'string',
   })
   ro?: string;
+
+  @property({
+    type: 'number',
+    required: true,
+    default: 0,
+  })
+  timezone: number;
 
   @property({
     type: 'boolean',

@@ -99,7 +99,7 @@
     <p-divider></p-divider>
     <div class="grid">
         <div class="col-3">
-            <p class="mb-2">CSV File: </p>
+            <!-- <p class="mb-2">CSV File: </p> -->
             <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
             <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
         </div>
@@ -165,21 +165,18 @@
                 <input type="text" id="firstName" name="firstName" [ngClass]="{'ng-dirty': !validFirstName, 'ng-invalid': !validFirstName}" pInputText (input)="validFirstName=inputFirstName!=''" [(ngModel)]="inputFirstName" required>
                 <label for="firstName">Toll-Free Subscriber First Name *</label>
             </span>
-            <p *ngIf="!validFirstName" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <input type="text" id="lastName" name="lastName" [ngClass]="{'ng-dirty': !validLastName, 'ng-invalid': !validLastName}" pInputText (input)="validLastName=inputLastName!=''" [(ngModel)]="inputLastName" required>
                 <label for="lastName">Toll-Free Subscriber Last Name *</label>
             </span>
-            <p *ngIf="!validLastName" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <input type="text" id="cmpyAddress1" name="cmpyAddress1" [ngClass]="{'ng-dirty': !validCmpyAddress1, 'ng-invalid': !validCmpyAddress1}" pInputText (input)="validCmpyAddress1=inputCmpyAddress1!=''" [(ngModel)]="inputCmpyAddress1" required>
                 <label for="cmpyAddress1">Subscriber Address 1 *</label>
             </span>
-            <p *ngIf="!validCmpyAddress1" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
@@ -192,42 +189,36 @@
                 <input type="text" id="city" name="city" [ngClass]="{'ng-dirty': !validCity, 'ng-invalid': !validCity}" pInputText (input)="validCity=inputCity!=''" [(ngModel)]="inputCity" required>
                 <label for="city">Subscriber City *</label>
             </span>
-            <p *ngIf="!validCity" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <input type="text" id="zipCode" name="zipCode" [ngClass]="{'ng-dirty': !validZipCode, 'ng-invalid': !validZipCode}" pInputText (input)="validZipCode=inputZipCode!=''" [(ngModel)]="inputZipCode" required>
                 <label for="zipCode">Subscriber Zip Code *</label>
             </span>
-            <p *ngIf="!validZipCode" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <input type="text" id="state" name="state" [ngClass]="{'ng-dirty': !validState, 'ng-invalid': !validState}" pInputText (input)="validState=inputState!=''" [(ngModel)]="inputState" required>
                 <label for="state">Subscriber State *</label>
             </span>
-            <p *ngIf="!validState" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <input type="text" id="authCusContact" name="authCusContact" [ngClass]="{'ng-dirty': !validAuthCusContact, 'ng-invalid': !validAuthCusContact}" pInputText (input)="validAuthCusContact=inputAuthCusContact!=''" [(ngModel)]="inputAuthCusContact" required>
                 <label for="authCusContact">Authorized Contact Name *</label>
             </span>
-            <p *ngIf="!validAuthCusContact" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <input type="text" id="authCusTitle" name="authCusTitle" [ngClass]="{'ng-dirty': !validAuthCusTitle, 'ng-invalid': !validAuthCusTitle}" pInputText (input)="validAuthCusTitle=inputAuthCusTitle!=''" [(ngModel)]="inputAuthCusTitle" required>
                 <label for="authCusTitle">Contact Title *</label>
             </span>
-            <p *ngIf="!validAuthCusTitle" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <input type="text" id="authCusPhone" name="authCusPhone" [ngClass]="{'ng-dirty': !validAuthCusPhone, 'ng-invalid': !validAuthCusPhone}" pInputText (input)="validAuthCusPhone=inputAuthCusPhone!=''" [(ngModel)]="inputAuthCusPhone" required>
                 <label for="authCusPhone">Contact Telephone # *</label>
             </span>
-            <p *ngIf="!validAuthCusPhone" class="p-error">Required!</p>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">

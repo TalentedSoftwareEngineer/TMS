@@ -13,11 +13,12 @@ import {
   INVALID_NUM_TYPE_COMMON,
   SPECIFICNUM_REG_EXP,
   PHONE_NUMBER_WITH_HYPHEN_REG_EXP,
-  LIMIT_SIXTY_LETTERS_REG_EXP, ROWS_PER_PAGE_OPTIONS
+  LIMIT_SIXTY_LETTERS_REG_EXP, ROWS_PER_PAGE_OPTIONS, SUPER_ADMIN_ROLE_ID, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions
 } from '../../constants';
  import { Router } from '@angular/router';
 import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ROUTES } from 'src/app/app.routes';
+import { IUser } from 'src/app/models/user';
 
 @Component({
   selector: 'app-multi-dial-query',
@@ -43,12 +44,14 @@ export class MultiDialQueryComponent implements OnInit {
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any = ROWS_PER_PAGE_OPTIONS
+  rowsPerPageOptions: any = rowsPerPageOptions
 
   inputDialNumbers: string = '';
   invalidNumType: number = INVALID_NUM_TYPE_NONE;
   inputRequestName: string = '';
   validRequestName: boolean = true;
+  inputEmail: string = '';
+  validEmail: boolean = true
   inputMessage: string = '';
 
   activityLogs: any[] = [];
@@ -66,6 +69,13 @@ export class MultiDialQueryComponent implements OnInit {
   inputNumListFilterKey: string = '';
   resultTotal: number = -1;
   numberListLoading: boolean = false;
+
+  isSuperAdmin: boolean = false;
+  userOptions: any[] = [];
+  selectUser: string|number = '';
+
+  respOrgOptions: any[] = [];
+  statusOptions: any[] = [];
 
   constructor(
     public store: StoreService,
@@ -88,17 +98,20 @@ export class MultiDialQueryComponent implements OnInit {
     })
 
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.MNQ)) {
+      if(state.user.permissions?.includes(PERMISSIONS.MULTI_DIAL_NUMBER_QUERY)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
       }
+
+      this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
 
-    this.getData();
+    await this.getData();
+    this.getUsersList();
 
     this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
       if(data.page.toUpperCase()=='MNQ') {
@@ -138,7 +151,7 @@ export class MultiDialQueryComponent implements OnInit {
   getData = async () => {
     this.getTotalCount();
 
-    await this.api.getMNQData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue)
+    await this.api.getMNQData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
         res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
         this.activityLogs = res;
@@ -157,6 +170,16 @@ export class MultiDialQueryComponent implements OnInit {
     .pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
+  }
+
+  getUsersList = async () => {
+    try {
+      await this.api.getUsersListForFilter()
+        .pipe(tap(async (res: IUser[]) => {
+          this.userOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: item.username, value: item.id}))];
+        })).toPromise();
+    } catch (e) {
+    }
   }
 
   onCsvXlUploadAuto = async (event: any) => {
@@ -198,6 +221,7 @@ export class MultiDialQueryComponent implements OnInit {
 
     this.api.submitMNQ(body).subscribe(res=>{
       if(res.success) {
+        this.inputDialNumbers = ''
         setTimeout(()=>{
           this.sortActive = 'sub_dt_tm'
           this.sortDirection = 'DESC'
@@ -305,26 +329,37 @@ export class MultiDialQueryComponent implements OnInit {
   onOpenViewModal = async (event: Event, result: any) => {
     this.csvNumbersContent = '';
     this.viewedResult = result;
-    this.resultTotal = parseInt(result.completed);
 
     await this.api.getMNQById(result.id)
       .pipe(tap((response: any[])=>{
         response.map(u => {
-          u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-          u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-          u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-          u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : ''
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          // u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+          // u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+          // u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+          // u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : ''
         });
 
+        this.respOrgOptions = [{label: 'All', value: ''}];
+        this.statusOptions = [{label: 'All', value: ''}];
         this.numberList = response;
         response.forEach((item, index) => {
           this.csvNumbersContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.status},${item.eff_dt==null?'':item.eff_dt},${item.last_act_dt==null?'':item.last_act_dt},${item.res_until_dt==null?'':item.res_until_dt},${item.disc_until_dt==null?'':item.disc_until_dt},${item.con_name==null?'':item.con_name},${item.con_phone==null?'':item.con_phone},${item.message==null?'':item.message},${item.short_notes==null?'':item.short_notes}`;
+
+          if(this.respOrgOptions.find(find_item=>(find_item.label==item.resp_org_id))==undefined) {
+            this.respOrgOptions.push({label: item.resp_org_id, value: item.resp_org_id});
+          }
+
+          if(this.statusOptions.find(find_item=>(find_item.label==item.status))==undefined) {
+            this.statusOptions.push({label: item.status, value: item.status});
+          }
         });
 
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
         this.onInputNumListFilterKey();
         this.flagOpenModal = true;
+        this.resultTotal = this.numberList.length
       })).toPromise();
   }
 
@@ -333,10 +368,10 @@ export class MultiDialQueryComponent implements OnInit {
 
     await this.api.getMNQById(result.id).pipe(tap((response: any[])=>{
       response.map(u => {
-        u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-        u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-        u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-        u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+        // u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+        // u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+        // u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
+        // u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
       });
 
       response.forEach((item, index) => {
@@ -380,7 +415,7 @@ export class MultiDialQueryComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/^[A-Za-z0-9]$/g, ''), 'contains');
+    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
   }
 
   closeModal = () => {
@@ -413,18 +448,21 @@ export class MultiDialQueryComponent implements OnInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getData();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getData()
+  };
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getData();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   showWarn = (msg: string) => {

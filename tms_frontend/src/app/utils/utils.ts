@@ -7,21 +7,21 @@ import {zonedTimeToUtc} from "date-fns-tz";
  * @returns {string[]}
  */
  export function retrieveNumListWithHyphen(numString: any) {
-    numString = numString.trim().replaceAll('-', '');
+    numString = numString?.trim().replaceAll('-', '');
 
-    while (numString.includes("  ")) {
-      numString = numString.replace("  ", " ")
+    while (numString?.includes("  ")) {
+      numString = numString?.replace("  ", " ")
     }
-    while (numString.includes("\n\n")) {
-      numString = numString.replace("\n\n", "\n")
+    while (numString?.includes("\n\n")) {
+      numString = numString?.replace("\n\n", "\n")
     }
-    numString = numString.replace(/\, /g, ",")
-    numString = numString.replace(/\ /g, "\n")
-    numString = numString.replace(/\n/g, ",")
+    numString = numString?.replace(/\, /g, ",")
+    numString = numString?.replace(/\ /g, "\n")
+    numString = numString?.replace(/\n/g, ",")
 
     let numberReg = RegExp('\\d{10}|\\d{3}\\-\\d{3}\\-\\d{4}$')
     let numStrWithHyphen = ""
-    let numList = numString.split(",")
+    let numList = numString?.split(",")
 
     for (let num of numList) {
       if (numStrWithHyphen !== '')
@@ -250,4 +250,134 @@ export function retrieveNumList(numString: string) {
   const strUTCDate = getUTCString(localTime)
 
   return strUTCDate
+}
+
+
+/**
+ * convert UTC String(YYYY-MM-DDTHH:mmZ) to Centeral Time(MM/DD/YYYY HH:mm A) of USA
+ * @param strDateTime
+ */
+ export function fromUTCStrToCTStr(strDateTime: any) {
+
+  if (strDateTime === undefined || strDateTime == null || strDateTime === "") return ""
+
+  if (strDateTime.includes("NOW")) return strDateTime
+
+  if (strDateTime.length === 10) {
+    // parse the year, month, date
+    let [year, month, date] = strDateTime.split("-")
+
+    return month + '/' + date + '/' + year
+  }
+
+  // parse the year, month, date, hour, minute
+  let [year, month, date] = strDateTime.split("T")[0].split("-")
+  let [hour, minute] = strDateTime.split("T")[1].replace("Z", "").split(":")
+
+  // convert UTC time to CT time of USA
+  let utcTime = new Date(Date.UTC(year, month - 1, date, hour, minute))
+  let ctTimeString = utcTime.toLocaleString("en-US", {timeZone: US_CT_TIMEZONE});
+  let ctTime = new Date(ctTimeString)
+
+  // configure the date time string time format
+  year = ctTime.getFullYear()
+  month = ctTime.getMonth() + 1
+    if (month < 10) month = '0' + month
+  date = ctTime.getDate()
+    if (date < 10)  date = '0' + date
+
+  let hour12: any = (ctTime.getHours() % 12 == 0) ? 12 : ctTime.getHours() % 12
+    if (hour12 < 10)  hour12 = '0' + hour12
+
+  minute = ctTime.getMinutes()
+    if (minute < 10)  minute = '0' + minute
+
+  let strShowDate = month + '/' + date + '/' + year + ' ' + hour12 + ':' + minute
+  if (ctTime.getHours() >= 12)
+    strShowDate += ' PM'
+  else
+    strShowDate += ' AM'
+
+  return strShowDate
+}
+
+/**
+ * convert Centeral Time(MM/DD/YYYY HH:mm A) of USA to Local Time value
+ * @param strDateTime
+ */
+ export function fromCTStrToLocalTime(strDateTime: any) {
+
+  // parse the year, month, date, hour, minute
+  let [month, date, year] = strDateTime.split(" ")[0].split("/")
+  let [hour, minute] = strDateTime.split(" ")[1].split(":")
+  let am = strDateTime.split(" ")[2]
+
+  hour = parseInt(hour, 10)
+  hour = hour % 12
+  if (am === "PM")
+    hour += 12
+  if (hour < 10)
+    hour = '0' + hour
+
+  // config the date time string of CT of USA
+  let ctTimeString = year + '-' + month + '-' + date + ' ' + hour + ':' + minute
+
+  // get local time from CT
+  const localTime = zonedTimeToUtc(ctTimeString, US_CT_TIMEZONE)
+
+  return localTime
+}
+
+/**
+ * synthesis api error messages
+ * @param errList
+ * @returns {string}
+ */
+ export function synthesisErrMsg(errList: any[]){
+
+  let message = ''
+  for (let err of errList) {
+    message += (message == '') ? '' : '\r\n'
+    message += (err.errMsg + "(" + err.errCode + ")")
+    if (err.errPath && err.errPath !== "")
+      message += "(" + err.errPath + ")"
+  }
+
+  return message
+}
+
+/**
+ * retrieves the formatted contact number
+ * @param number
+ * @returns {*}
+ */
+ export function formattedNumber(number: any) {
+  if (number == null || number.length === 0)
+    return ""
+
+  let numList = number.replace(/\ /g, "").split(",")
+  for (let i = 0; i < numList.length; i++) {
+    let num = numList[i]
+
+    num = num.replace(/\-/g, "")
+    if (num.length > 6)
+      num = num.substring(0, 3) + "-" + num.substring(3, 6) + "-" + num.substring(6, Math.max(6, num.length))
+    else if (num.length > 3)
+      num = num.substring(0, 3) + "-" + num.substring(3, num.length)
+
+    numList[i] = num
+  }
+
+  return numList.join(",")
+}
+
+export function fromTimeValueToUTCDateStr(ctTime: any) {
+
+  let year = ctTime.getFullYear()
+  let month = ctTime.getMonth() + 1
+  if (month < 10) month = '0' + month
+  let date = ctTime.getDate()
+  if (date < 10)  date = '0' + date
+
+  return year + '-' + month + '-' + date
 }

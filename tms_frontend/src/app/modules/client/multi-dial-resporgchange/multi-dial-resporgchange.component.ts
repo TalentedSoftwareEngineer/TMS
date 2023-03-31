@@ -2,9 +2,11 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {
   INVALID_NUM_TYPE_COMMON,
   INVALID_NUM_TYPE_NONE, LIMIT_SIXTY_LETTERS_REG_EXP,
+  PAGE_NO_PERMISSION_MSG,
   PHONE_NUMBER_WITH_HYPHEN_REG_EXP,
-  RESPORG_REG_EXP, ROWS_PER_PAGE_OPTIONS,
-  SPECIFICNUM_REG_EXP
+  RESPORG_REG_EXP, rowsPerPageOptions, ROWS_PER_PAGE_OPTIONS,
+  SPECIFICNUM_REG_EXP,
+  SUPER_ADMIN_ROLE_ID
 } from '../../constants';
 import { Router } from '@angular/router';
 import {ConfirmationService, ConfirmEventType, MessageService} from 'primeng/api';
@@ -18,6 +20,7 @@ import {Table} from "primeng/table";
 import {ApiService} from "../../../services/api/api.service";
 import {SseClient} from "angular-sse-client";
 import {environment} from "../../../../environments/environment";
+import { IUser } from 'src/app/models/user';
 
 @Component({
   selector: 'app-multi-dial-resporgchange',
@@ -51,7 +54,7 @@ export class MultiDialResporgchangeComponent implements OnInit {
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any = ROWS_PER_PAGE_OPTIONS
+  rowsPerPageOptions: any = rowsPerPageOptions
 
   progressingReq: any[] = [];
   completedReq: any[] = [];
@@ -71,6 +74,10 @@ export class MultiDialResporgchangeComponent implements OnInit {
   resultTotal: number = -1;
   numberListLoading: boolean = false;
 
+  isSuperAdmin: boolean = false;
+  userOptions: any[] = [];
+  selectUser: string|number = '';
+
   constructor(
     public store: StoreService,
     public api: ApiService,
@@ -81,18 +88,31 @@ export class MultiDialResporgchangeComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
+    await new Promise<void>(resolve => {
+      let mainUserInterval = setInterval(() => {
+        if (this.store.getUser()) {
+          clearInterval(mainUserInterval)
+
+          resolve()
+        }
+      }, 100)
+    })
+
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.MRO)) {
+      if(state.user.permissions?.includes(PERMISSIONS.MULTI_DIAL_NUMBER_RESP_ORG_CHANGE)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
       }
+
+      this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
 
-    this.getData();
+    await this.getData();
+    this.getUsersList();
 
     this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
       if(data.page=='MRO') {
@@ -135,17 +155,16 @@ export class MultiDialResporgchangeComponent implements OnInit {
     let value = input.value.toUpperCase()
     this.inputNewRespOrg = value;
 
-    // let reg = this.gConst.RESPORG_REG_EXP
-    //
-    // if (!reg.test(value) && value.length >= 5) {
-    //   this.roErr = true;
-    // } else {
-    //   this.roErr = false;
-    // }
+    let reg = this.gConst.RESPORG_REG_EXP
+    if (!reg.test(value) && value.length >= 5) {
+      this.roErr = true;
+    } else {
+      this.roErr = false;
+    }
   }
 
   getData = async () => {
-    await this.api.getMroData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue)
+    await this.api.getMroData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
         res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
         this.activityLogs = res;
@@ -166,6 +185,16 @@ export class MultiDialResporgchangeComponent implements OnInit {
       .pipe(tap( res => {
         this.resultsLength = res.count
       })).toPromise();
+  }
+
+  getUsersList = async () => {
+    try {
+      await this.api.getUsersListForFilter()
+        .pipe(tap(async (res: IUser[]) => {
+          this.userOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: item.username, value: item.id}))];
+        })).toPromise();
+    } catch (e) {
+    }
   }
 
   onNumFieldFocusOut = () => {
@@ -215,14 +244,12 @@ export class MultiDialResporgchangeComponent implements OnInit {
   onOpenViewModal = async (event: Event, result: any) => {
     this.csvNumbersContent = '';
     this.viewedResult = result;
-    this.resultTotal = parseInt(result.completed);
 
     await this.api.getMroById(result.id)
       .pipe(tap((response: any[])=>{
-        // response.map(u => u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        // response.map(u => u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        // response.map(u => u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        // response.map(u => u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
+        response.map(u => {
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+        });
 
         this.numberList = response;
         response.forEach((item, index) => {
@@ -233,6 +260,7 @@ export class MultiDialResporgchangeComponent implements OnInit {
         this.inputNumListFilterKey = '';
         this.onInputNumListFilterKey();
         this.flagOpenModal = true;
+        this.resultTotal = this.numberList.length
       })).toPromise();
   }
 
@@ -286,7 +314,7 @@ export class MultiDialResporgchangeComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/^[A-Za-z0-9]$/g, ''), 'contains');
+    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
   }
 
   closeModal = () => {
@@ -299,6 +327,11 @@ export class MultiDialResporgchangeComponent implements OnInit {
       return;
     }
 
+    this.onNumFieldFocusOut();
+    if (this.invalidNumType!=INVALID_NUM_TYPE_NONE) {
+      return;
+    }
+
     let numList = gFunc.retrieveNumList(this.inputDialNumbers);
     if(!LIMIT_SIXTY_LETTERS_REG_EXP.test(this.inputRequestName) && numList.length>1) {
       this.validRequestName = false;
@@ -306,8 +339,7 @@ export class MultiDialResporgchangeComponent implements OnInit {
     }
 
     if (this.inputNewRespOrg.length!=5 || !this.gConst.RESPORG_REG_EXP.test(this.inputNewRespOrg)) {
-      this.showWarn("Resp Org should be the format with 3 uppercase letters and 2 numbers. e.g: AKG01")
-      // this.roErr = true
+      this.roErr = true
       return;
     }
 
@@ -426,18 +458,21 @@ export class MultiDialResporgchangeComponent implements OnInit {
     this.filterValue = (event.target as HTMLInputElement).value;
   }
 
-  onClickFilter = () => this.getData();
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getData()
+  };
 
-  onPagination = async (pageIndex: any) => {
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
     const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    if (pageIndex === this.pageIndex) {return;}
     this.pageIndex = pageIndex;
     await this.getData();
   }
 
   paginate = (event: any) => {
-    this.onPagination(event.page+1);
+    this.onPagination(event.page+1, event.rows);
   }
 
   showWarn = (msg: string) => {

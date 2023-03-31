@@ -23,6 +23,8 @@ export class PhoneFormatPipe implements PipeTransform {
       areaCodeStr = rawNum.slice(2,5);
       midSectionStr = rawNum.slice(5,8);
       lastSectionStr = rawNum.slice(8);
+    } else {
+      return rawNum
     }
 
     return `${countryCodeStr}(${areaCodeStr}) ${midSectionStr}-${lastSectionStr}`;

@@ -8,7 +8,9 @@ import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 
 @authenticate('jwt')
 export class DashboardController {
-  constructor() {}
+  constructor(
+
+  ) {}
 
   @post('/dashboard')
   async dashboard(@inject(SecurityBindings.USER)

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import moment from 'moment';
 import {
   INVALID_TIME_NONE,
@@ -12,8 +12,22 @@ import {
   INVALID_NUM_TYPE_TOO_MANY,
   MAX_REQUESTS_AT_A_TIME_LIMIT,
   WILDCARDNUM_REG_EXP,
-  TFNUM_REG_EXP
- } from '../../constants';
+  SUPER_ADMIN_ROLE_ID,
+  PAGE_NO_PERMISSION_MSG,
+  TFNUM_REG_EXP,
+  rowsPerPageOptions,
+} from '../../constants';
+import {ApiService} from "../../../services/api/api.service";
+import {StoreService} from "../../../services/store/store.service";
+import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
+import {Table} from "primeng/table";
+import {tap} from "rxjs/operators";
+import {PERMISSIONS} from "../../../consts/permissions";
+import {ROUTES} from "../../../app.routes";
+import {environment} from "../../../../environments/environment";
+import {SseClient} from "angular-sse-client";
+import {Router} from "@angular/router";
+import { IUser } from 'src/app/models/user';
 
 @Component({
   selector: 'app-auto-reserve-numbers',
@@ -38,11 +52,12 @@ export class AutoReserveNumbersComponent implements OnInit {
   }
 
   timeDiffCT = 0;
-  inputStartDateTime: Date|number|null = null;
+  inputStartDateTime: any = null;
+
   invalidStartTime: number = INVALID_TIME_NONE;
   minStartDateTime: Date = new Date(moment().add(1, 'minute').valueOf() - this.timeDiffCT);
   inputStartNow: boolean = true;
-  inputEndDateTime: Date|number|null = null;
+  inputEndDateTime: any = null;
   invalidEndTime: number = INVALID_TIME_NONE;
   minEndDateTime: Date = new Date(moment().add(11, 'minute').valueOf() - this.timeDiffCT);
   inputEndNow: boolean = true;
@@ -60,49 +75,118 @@ export class AutoReserveNumbersComponent implements OnInit {
 
   disableSubmit: boolean = true;
 
-  //Auto Reserve Numbers Table
-  autoReserveNumbers: any[] = [];
-  selectedAutoReserveNumbers: any[] = [];
-  autoReserveNumbersLoading: boolean = false;
+  @ViewChild('numbersTable') numbersTable!: Table;
 
-  constructor() { }
+  pageSize = 10;
+  pageIndex = 1
+  filterName = ''
+  filterValue = ''
+  sortActive = 'sub_dt_tm'
+  sortDirection = 'DESC'
+  resultsLength = -1
+  filterResultLength = -1;
+  isLoading = true
+  rowsPerPageOptions: any = rowsPerPageOptions
+
+  activityLogs: any[] = [];
+  activityLogsLoading: boolean = false;
+
+  progressingReq: any[] = [];
+  completedReq: any[] = [];
+
+  viewedResult: any;
+  csvNumbersContent: string = '';
+
+  flagOpenModal: boolean = false;
+  numberList: any[] = [];
+  resultTotal: number = -1;
+  numberListLoading: boolean = false;
+
+  isSuperAdmin: boolean = false;
+  userOptions: any[] = [];
+  selectUser: string|number = '';
+
+  constructor(
+    public store: StoreService,
+    public api: ApiService,
+    private messageService: MessageService,
+    private sseClient: SseClient,
+    private confirmationService: ConfirmationService,
+    public router: Router
+  ) { }
 
   async ngOnInit() {
-    this.roIds = [
-      {name: '', value: ''},
-      {name: 'XQG01', value: 'XQG01'},
-      {name: 'EJT01', value: 'EJT01'},
-      {name: 'TTA01', value: 'TTA01'}
-    ];
+    await new Promise<void>(resolve => {
+      let mainUserInterval = setInterval(() => {
+        if (this.store.getUser()) {
+          clearInterval(mainUserInterval)
 
-    this.autoReserveNumbers = [
-      {
-        id: 1,
-        startTime: '11/23/2022 09:48:01 AM',
-        endTime: '11/23/2022 09:53:01 AM',
-        submitTime: '11/23/2022 09:48:02 AM',
-        Wildcard: '800-***-****',
-        requestsAtATime: '100',
-        status: 'Cancelled',
-        roId: 'XQG01',
-        requestCount: 9095,
-        reservedCount: 0,
-        note: 'Forbidden'
-      },
-      {
-        id: 2,
-        startTime: '10/28/2022 09:08:58 AM',
-        endTime: '10/28/2022 09:13:58 AM',
-        submitTime: '10/28/2022 09:08:58 AM',
-        Wildcard: '877-***-5060',
-        requestsAtATime: '10',
-        status: 'Timeout',
-        roId: 'TTA01',
-        requestCount: 2990,
-        reservedCount: 150,
-        note: ''
+          resolve()
+        }
+      }, 100)
+    })
+
+    this.store.state$.subscribe(async (state)=> {
+      if(state.user?.permissions?.includes(PERMISSIONS.AUTO_RESERVE_NUMBERS)) {
+      } else {
+        // no permission
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
+        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+        this.router.navigateByUrl(ROUTES.dashboard)
+        return
       }
-    ]
+
+      this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
+    })
+
+    await this.getData();
+    this.getUsersList();
+
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+      if(data.page.toUpperCase()=='NAR') {
+        if(data.status.toUpperCase()=='IN PROGRESS') {
+          let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
+          if(progressingReqIndex==-1) {
+            this.progressingReq.push(data);
+          } else {
+            this.progressingReq.splice(progressingReqIndex, 1, data);
+          }
+        } else {
+          if(data.status=='SUCCESS' || data.status=='COMPLETED' || data.status=='FAILED' || data.status=='CANCELED') {
+            // Remove progressingReq Item
+            let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
+            if(progressingReqIndex != -1) {
+              this.progressingReq.splice(progressingReqIndex, 1);
+            }
+
+            //Add completedReq Item
+            let completedReqItem = this.completedReq.find(req=>req.req.id==data.req.id);
+            if(completedReqItem==undefined) {
+              this.completedReq.push(data);
+            }
+
+            // Alert
+            if(data.completed==0) {
+              this.showError(`${data.req.message.slice(0, 69)}`, `Failed`);
+            } else if(data.failed==0) {
+              this.showSuccess('Success!');
+            } else {
+              this.showInfo('Completed!');
+            }
+          }
+        }
+      }
+    })
+  }
+
+  getUsersList = async () => {
+    try {
+      await this.api.getUsersListForFilter()
+        .pipe(tap(async (res: IUser[]) => {
+          this.userOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: item.username, value: item.id}))];
+        })).toPromise();
+    } catch (e) {
+    }
   }
 
   /**
@@ -139,7 +223,7 @@ export class AutoReserveNumbersComponent implements OnInit {
   /**
    * this is called when the focus of end time field is lost
    */
-   onTimeFieldFocusOut = async () => {
+   onTimeFieldFocusOut = () => {
     const startNow = this.inputStartNow
     const endNow = this.inputEndNow
     let startTime = this.inputStartDateTime
@@ -179,10 +263,20 @@ export class AutoReserveNumbersComponent implements OnInit {
     this.setSubmitable()
   }
 
+  onStartIntervalFifteenMin = () => {
+    let d = new Date(this.inputStartDateTime).getTime();
+    this.inputStartDateTime = new Date(Math.ceil(d / 900000) * 900000);
+  }
+
+  onEndIntervalFifteenMin = () => {
+    let d = new Date(this.inputEndDateTime).getTime();
+    this.inputEndDateTime = new Date(Math.ceil(d / 900000) * 900000);
+  }
+
   /**
    * this function is called when the focus of number input field is lost
    */
-   checkWildcardsValidation = async (value: string) => {
+   checkWildcardsValidation = (value: string) => {
     let wildcards = value.replaceAll('-', '')
     while (wildcards.includes("  "))
       wildcards = wildcards.replaceAll("  ", ' ')
@@ -194,7 +288,6 @@ export class AutoReserveNumbersComponent implements OnInit {
       wildcards = wildcards.replaceAll(",,", ',')
 
     if (wildcards !== "") {
-
       if (wildcards.includes('*') || wildcards.includes('&')) { // to wildcard mode
         const wildcardList = wildcards.split(',')
 
@@ -235,15 +328,15 @@ export class AutoReserveNumbersComponent implements OnInit {
         if (invalidNumType === this.gConst.INVALID_NUM_TYPE_NONE) {
           wildcards = ""
           for (let num of wildcardList) {
-            wildcards += wildcards === '' ? '' : ', '
+            wildcards += wildcards === '' ? '' : ','
 
             num = num.replaceAll('-', '')
             wildcards += num.substr(0, 3) + '-' + num.substr(3, 3) + '-' + num.substr(6, 4)
           }
+
           this.invalidNumType = this.gConst.INVALID_NUM_TYPE_NONE;
           this.inputWildcards = wildcards;
-          this.setSubmitable()
-
+          this.setSubmitable();
         } else {
           this.invalidNumType = invalidNumType
           this.disableSubmit = true
@@ -271,7 +364,7 @@ export class AutoReserveNumbersComponent implements OnInit {
         if (invalidNumType === this.gConst.INVALID_NUM_TYPE_NONE) {
           let numbers = ""
           for (let num of numList) {
-            numbers += numbers === '' ? '' : ', '
+            numbers += numbers === '' ? '' : ','
 
             num = num.replaceAll('-', '')
             numbers += num.substr(0, 3) + '-' + num.substr(3, 3) + '-' + num.substr(6, 4)
@@ -315,19 +408,348 @@ export class AutoReserveNumbersComponent implements OnInit {
   }
 
   onInputWildcards = async () => {
-    await this.checkWildcardsValidation(this.inputWildcards);
+    this.checkWildcardsValidation(this.inputWildcards);
     this.setSubmitable()
   }
 
   onSubmit = () => {
+    this.onTimeFieldFocusOut()
+    this.checkWildcardsValidation(this.inputWildcards);
 
+    if (this.invalidStartTime!=INVALID_TIME_NONE || this.invalidEndTime!=INVALID_TIME_NONE)
+      return
+
+    if (!this.validRequestsAtATime)
+      return
+
+    if (this.invalidNumType!=this.gConst.INVALID_NUM_TYPE_NONE)
+      return
+
+    if (this.store.getContactInformation()?.name === "" || this.store.getContactInformation()?.number === "") {
+      this.showWarn("Please input Contact Information")
+      return;
+    }
+
+    let body: any = {
+      ro: this.store.getCurrentRo(),
+      wildCardNum: this.inputWildcards,
+      maxRequest: Number(this.inputRequestsAtATime),
+      afterMin: this.inputAfterMin,
+      contactName: this.store.getContactInformation()?.name,
+      contactNumber: this.store.getContactInformation()?.number.replace(/\-/g, ""),
+    }
+
+    if (this.inputStartNow)
+      body.startAt = new Date().toISOString()
+    else
+      body.startAt = new Date(this.inputStartDateTime!).toISOString()
+
+    if (this.inputEndNow)
+      body.endAt = new Date(new Date().getTime()+this.inputAfterMin*60*1000).toISOString()
+    else
+      body.endAt = new Date(this.inputEndDateTime!).toISOString()
+
+    this.api.submitNar(body).subscribe(res=>{
+      if(res.id)
+        setTimeout(()=>{
+          this.sortActive = 'sub_dt_tm'
+          this.sortDirection = 'DESC'
+          this.getData();
+        }, 100)
+    });
   }
 
   onClear = () => {
+    this.inputStartDateTime = new Date(Math.ceil(new Date().getTime() / 900000) * 900000)
+    this.inputEndDateTime = new Date(Math.ceil(new Date().getTime() / 900000) * 900000)
+    this.inputWildcards = ""
 
+    this.invalidNumType = this.gConst.INVALID_NUM_TYPE_NONE
   }
 
-  onDelete = () => {
+  getData = async () => {
+    this.getTotalCount();
+
+    await this.api.getNarData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
+      .pipe(tap(async (res: any[])=>{
+        res.map(u => {
+          u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : ''
+          u.start_at = u.start_at ? moment(new Date(u.start_at)).format('MM/DD/YYYY h:mm:ss A') : ''
+          u.end_at = u.end_at ? moment(new Date(u.end_at)).format('MM/DD/YYYY h:mm:ss A') : ''
+        });
+        this.activityLogs = res;
+      })).toPromise();
+
+    this.filterResultLength = -1;
+    await this.api.getNarCount(this.filterValue)
+      .pipe(tap( res => {
+        this.filterResultLength = res.count
+      })).toPromise();
   }
 
+  getTotalCount = async () => {
+    this.resultsLength = -1;
+    await this.api.getNarCount('')
+      .pipe(tap( res => {
+        this.resultsLength = res.count
+      })).toPromise();
+  }
+
+  onOpenViewModal = async (event: Event, result: any) => {
+    this.csvNumbersContent = '';
+    this.viewedResult = result;
+
+    await this.api.getNarById(result.id)
+      .pipe(tap((response: any[])=>{
+        let list: any[] = []
+        let obj: any = {num1:'', num2:'', num3:'', num4: '', num5: ''}
+        let ind = 0;
+        response.forEach((item, index) => {
+          if (index%5==0 && index!=0) {
+            list.push({...obj})
+            obj = {num1:'', num2:'', num3:'', num4: '', num5: ''}
+          } else {
+            obj["num"+(index%5+1)] = item.num
+          }
+
+          ind = index;
+        })
+
+        if (ind%5!=0)
+          list.push({...obj})
+
+        this.numberList = [...list];
+
+        this.numberList.forEach((item, index) => {
+          this.csvNumbersContent += `${item.num1},${item.num2},${item.num3},${item.num4},${item.num5}\n`;
+        });
+
+        this.flagOpenModal = true;
+        this.resultTotal = this.numberList.length
+      })).toPromise();
+  }
+
+  onDownloadCsv = async (event: Event, result: any) => {
+    let numsContent = '';
+
+    await this.api.getNarById(result.id).pipe(tap((response: any[])=>{
+      let list: any[] = []
+      let obj: any = {num1:'', num2:'', num3:'', num4: '', num5: ''}
+      let ind = 0;
+      response.forEach((item, index) => {
+        if (index%5==0 && index!=0) {
+          list.push({...obj})
+          obj = {num1:'', num2:'', num3:'', num4: '', num5: ''}
+        } else {
+          obj["num"+(index%5+1)] = item.num
+        }
+
+        ind = index;
+      })
+
+      if (ind%5!=0)
+        list.push({...obj})
+
+      list.forEach((item, index) => {
+        numsContent += `${item.num1},${item.num2},${item.num3},${item.num4},${item.num5}\n`;
+      });
+
+      let data = `${numsContent}`
+      const csvContent = 'data:text/csv;charset=utf-8,' + data;
+      const url = encodeURI(csvContent);
+      let fileName = 'NAR_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
+
+      const tempLink = document.createElement('a');
+      tempLink.href = url;
+      tempLink.setAttribute('download', fileName);
+      tempLink.click();
+    })).toPromise();
+  }
+
+  onViewNumbersDownload = () => {
+    let data = `${this.csvNumbersContent}`
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + data;
+    const url = encodeURI(csvContent);
+    let fileName = 'NAR_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
+
+    const tempLink = document.createElement('a');
+    tempLink.href = url;
+    tempLink.setAttribute('download', fileName);
+    tempLink.click();
+  }
+
+  cancel = (event: Event, id: string) => {
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to cancel this?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.api.cancelNar(id).subscribe(async res=>{
+          this.showSuccess('Successfully canceled!');
+          await this.getData();
+        });
+      },
+      reject: (type: any) => {
+        switch(type) {
+          case ConfirmEventType.REJECT:
+            // this.showInfo('Rejected');
+            break;
+          case ConfirmEventType.CANCEL:
+            // this.showInfo('Cancelled');
+            break;
+        }
+      }
+    });
+  }
+
+  delete = (event: Event, id: string) => {
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to delete this?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.api.deleteNar(id).subscribe(async res=>{
+          this.showSuccess('Successfully deleted!');
+          await this.getData();
+        });
+      },
+      reject: (type: any) => {
+        switch(type) {
+          case ConfirmEventType.REJECT:
+            // this.showInfo('Rejected');
+            break;
+          case ConfirmEventType.CANCEL:
+            // this.showInfo('Cancelled');
+            break;
+        }
+      }
+    });
+  }
+
+  getStatusTagColor = (result: any): string => {
+    let status = this.getStatus(result).toUpperCase();
+    switch(status) {
+      case 'PENDING':
+        return 'default';
+      case 'FAILED':
+        return 'danger';
+      case 'COMPLETED':
+        return 'info';
+      case 'SUCCESS':
+        return 'success';
+      case 'CANCELED':
+        return 'warning';
+      default:
+        return 'success';
+    }
+  }
+
+  closeModal = () => {
+    this.flagOpenModal = false;
+  }
+
+  isProgressing = (result: any) => (this.progressingReq.findIndex(req=>req.req.id==result.id)!=-1 || this.getStatus(result)=='IN PROGRESS');
+
+  getCompletedTagColor = (result: any): string => {
+    let completed = this.getCompleted(result);
+    if(completed==result.total) {
+      return 'success';
+    } else if(completed==0) {
+      return 'danger';
+    } else {
+      return 'info';
+    }
+  }
+
+  getCompleted = (result: any) => {
+    let completedReqItem = this.completedReq.find(req=>req.req.id==result.id);
+    let progressingReqItem = this.progressingReq.find(req=>req.req.id==result.id);
+    if(progressingReqItem!=undefined) {
+      return progressingReqItem.req.completed;
+    } else if(completedReqItem!=undefined) {
+      return completedReqItem.req.completed;
+    } else {
+      return result.completed;
+    }
+  }
+
+  getTotal = (result: any) => {
+    let completedReqItem = this.completedReq.find(req=>req.req.id==result.id);
+    let progressingReqItem = this.progressingReq.find(req=>req.req.id==result.id);
+    if(progressingReqItem!=undefined) {
+      return progressingReqItem.req.total;
+    } else if(completedReqItem!=undefined) {
+      return completedReqItem.req.total;
+    } else {
+      return result.total;
+    }
+  }
+
+  getStatus = (result: any) => {
+    let completedReqItem = this.completedReq.find(req=>req.req.id==result.id);
+    let progressingReqItem = this.progressingReq.find(req=>req.req.id==result.id);
+    if(progressingReqItem!=undefined) {
+      return progressingReqItem.req.status;
+    } else if(completedReqItem!=undefined) {
+      return completedReqItem.req.status;
+    } else {
+      return result.status;
+    }
+  }
+
+  getMessage = (result: any) => {
+    let completedReqItem = this.completedReq.find(req=>req.req.id==result.id);
+    let progressingReqItem = this.progressingReq.find(req=>req.req.id==result.id);
+    if(progressingReqItem!=undefined) {
+      return progressingReqItem.req.message?.slice(0, 69);
+    } else if(completedReqItem!=undefined) {
+      return completedReqItem.req.message?.slice(0, 69);
+    } else {
+      return result.message?.slice(0, 69);
+    }
+  }
+
+  onSortChange = async (name: any) => {
+    this.sortActive = name;
+    this.sortDirection = this.sortDirection === 'ASC' ? 'DESC' : 'ASC';
+    this.pageIndex = 1;
+    await this.getData();
+  }
+
+  onFilter = (event: Event) => {
+    this.pageIndex = 1;
+    this.filterName = (event.target as HTMLInputElement).name;
+    this.filterValue = (event.target as HTMLInputElement).value;
+  }
+
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getData();
+  }
+
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
+    const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
+    if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
+    this.pageIndex = pageIndex;
+    await this.getData();
+  }
+
+  paginate = (event: any) => {
+    this.onPagination(event.page+1, event.rows);
+  }
+
+  showWarn = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'warn', summary: 'Warning', detail: msg });
+  }
+  showError = (msg: string, summary: string) => {
+    this.messageService.add({ key: 'tst', severity: 'error', summary: summary, detail: msg });
+  }
+  showSuccess = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'success', summary: 'Success', detail: msg });
+  };
+  showInfo = (msg: string) => {
+    this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
+  };
 }

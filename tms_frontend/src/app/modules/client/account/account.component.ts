@@ -7,7 +7,7 @@ import {IUser, ICompany, IRole, ISomosUser} from "../../../models/user";
 import {defaultDarkTheme, defaultLightTheme, defaultAvatar, defaultLogo} from "../default-ui-setting-values";
 import { LayoutService } from 'src/app/services/layout/layout.service';
 import { MenuService } from 'src/app/services/menu/menu.service';
-import { SUPER_ADMIN_ID, TMSUserType } from '../../constants';
+import { EMAIL_REG_EXP, SUPER_ADMIN_ID, TMSUserType } from '../../constants';
 
 @Component({
   selector: 'app-account',
@@ -27,6 +27,7 @@ export class AccountComponent implements OnInit {
   input_company_id: any = ''
   input_role_id: any = ''
   input_email: string|number|undefined|null = ''
+  validEmail: boolean = true;
   input_first_name: string|number|undefined|null = ''
   input_last_name: string|number|undefined|null = ''
   input_old_password: string|number|undefined|null = ''
@@ -253,6 +254,15 @@ export class AccountComponent implements OnInit {
     }
   }
 
+  onInputEmail = () => {
+    if(this.input_email!='' && EMAIL_REG_EXP.test(String(this.input_email))) {
+      this.validEmail=true;
+    } else {
+      this.validEmail = false;
+    }
+    
+  }
+
   onMainUpdate = async () => {
     let username = this.input_username;
     let company_id = this.input_company_id?.value;
@@ -262,6 +272,11 @@ export class AccountComponent implements OnInit {
     let last_name = this.input_last_name;
 
     if(username==''||email==''||first_name==''||last_name=='') {
+      return;
+    }
+
+    if(!EMAIL_REG_EXP.test(String(this.input_email))) {
+      this.validEmail = false;
       return;
     }
 
@@ -291,11 +306,11 @@ export class AccountComponent implements OnInit {
   onPasswordUpdate = async () => {
     let password = this.input_password;
     let old_password = this.input_old_password;
-    if(password=='') {
+    if(!Boolean(password)) {
       return;
     }
     if(password != this.input_confirm_password) {
-      this.showInfo('Please confirm password');
+      this.showWarn('Please confirm password');
       return;
     }
     await this.api.updateUserPassword(this.logged_user.id, {
@@ -304,12 +319,6 @@ export class AccountComponent implements OnInit {
     }).pipe(tap(res=>{
       this.showSuccess('Successfully Updated!');
     })).toPromise();
-  }
-
-  passwordReset = () => {
-    this.input_old_password = ''
-    this.input_password = ''
-    this.input_confirm_password = ''
   }
 
   onSomosUpdate = async () => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {StoreService} from "../../../services/store/store.service";
 import {ApiService} from "../../../services/api/api.service";
 import {
@@ -15,15 +15,19 @@ import {
   OCA_NUM_TYPE_SPECIFIC,
   SPECIFICNUM_REG_EXP,
   SVC_ORDR_NUM_REG_EXP,
-  TIME_REG_EXP
- } from '../../constants';
+  TIME_REG_EXP, ROWS_PER_PAGE_OPTIONS, SUPER_ADMIN_ROLE_ID, PAGE_NO_PERMISSION_MSG
+} from '../../constants';
 import { tap } from "rxjs/operators";
 import * as gFunc from 'src/app/utils/utils';
 import moment from 'moment';
 import { Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import {ConfirmationService, ConfirmEventType, MessageService} from 'primeng/api';
 import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ROUTES } from 'src/app/app.routes';
+import {Table} from "primeng/table";
+import {environment} from "../../../../environments/environment";
+import {SseClient} from "angular-sse-client";
+import { IUser } from 'src/app/models/user';
 
 @Component({
   selector: 'app-one-click-activation',
@@ -58,25 +62,33 @@ export class OneClickActivationComponent implements OnInit {
   inputNumberMaskEntry: string = '';
   invalidNumType: number = INVALID_NUM_TYPE_NONE;
 
-  npas: any[] = [];
+  npas: any[] = [
+    {name: 'Toll-Free NPA', value: ''},
+    {name: '800', value: '800'},
+    {name: '833', value: '833'},
+    {name: '844', value: '844'},
+    {name: '855', value: '855'},
+    {name: '866', value: '866'},
+    {name: '877', value: '877'},
+    {name: '888', value: '888'}
+  ];
+
   inputNpa = {name: 'Toll-Free NPA', value: ''}
   inputNxx: string = '';
   validNxx: boolean = true; // the flag to represent that nxx value is valid
   inputLine: string = '';
   validLine: boolean = true;
   templates: any[] = [];
-  inputTemplate = {name: '', value: ''};
+  inputTemplate: any;
   inputServiceOrderNum: string = '';
   validSvcOrdrNum: boolean = true;
   timeZones: any[]  = [];
   inputTimeZone = {name: 'Central (C)', value: 'C'}
   inputNumTermLine: string = '';
   validNumTermLine: boolean = true;
-  inputEffDate: Date|null = null;
+  inputEffDate: any = null;
   validEffDate: boolean = true;
   minEffDate: Date = new Date();
-  inputEffTime: Date|null = null;
-  validEffTime: boolean = true;
   inputNow: boolean = false;
   inputMessage: string = '';
 
@@ -84,11 +96,43 @@ export class OneClickActivationComponent implements OnInit {
 
   numType: string = OCA_NUM_TYPE_RANDOM;
 
-  results: any[] = [];
-  resultLoading: boolean = false;
+  pageSize = 10;
+  pageIndex = 1
+  filterName = ''
+  filterValue = ''
+  sortActive = 'sub_dt_tm'
+  sortDirection = 'DESC'
+  resultsLength = -1
+  filterResultLength = -1;
+  isLoading = true
+  rowsPerPageOptions: any = [10,25, 50]
+
+  progressingReq: any[] = [];
+  completedReq: any[] = [];
+
+  viewedResult: any;
+  csvNumbersContent: string = '';
+
+  activityLogs: any[] = [];
+  activityLogsLoading: boolean = false;
+
+  @ViewChild('numbersTable') numbersTable!: Table;
+
+  flagOpenModal: boolean = false;
+  numberList: any[] = [];
+  filterNumberList: any[] = [];
+  inputNumListFilterKey: string = '';
+  resultTotal: number = -1;
+  numberListLoading: boolean = false;
+
+  isSuperAdmin: boolean = false;
+  userOptions: any[] = [];
+  selectUser: string|number = '';
 
   constructor(
     public store: StoreService,
+    private sseClient: SseClient,
+    private confirmationService: ConfirmationService,
     public api: ApiService,
     public router: Router,
     private messageService: MessageService
@@ -109,11 +153,13 @@ export class OneClickActivationComponent implements OnInit {
       if(state.user.permissions?.includes(PERMISSIONS.ONE_CLICK_ACTIVATE)) {
       } else {
         // no permission
-        this.showWarn("You have no permission for this page")
+        this.showWarn(PAGE_NO_PERMISSION_MSG)
         await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
         this.router.navigateByUrl(ROUTES.dashboard)
         return
       }
+
+      this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
 
     this.timeZones = [
@@ -128,28 +174,89 @@ export class OneClickActivationComponent implements OnInit {
       {name: 'Alaska (Y)', value: 'Y'},
     ];
 
-    this.results = [
-      {
-        id: 1,
-        createdBy: 'XQG01RXK',
-        submitDate: '11/29/2022 05:10 PM',
-        type: 'SPECIFIC',
-        eff_dt: 'NOW',
-        templateName: '*XQG01-0001',
-        total: 1,
-        completed: 1,
-        message: '',
-        progressStatus: true,
+    await this.getTemplate()
+
+    await this.getData();
+    this.getUsersList();
+
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+      if(data.page=='OCA') {
+        if(data.status.toUpperCase()=='IN PROGRESS') {
+          let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
+          if(progressingReqIndex==-1) {
+            this.progressingReq.push(data);
+          } else {
+            this.progressingReq.splice(progressingReqIndex, 1, data);
+          }
+        } else {
+          if(data.total == data.failed + data.completed) {
+            // Remove progressingReq Item
+            let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
+            if(progressingReqIndex != -1) {
+              this.progressingReq.splice(progressingReqIndex, 1);
+            }
+            //Add completedReq Item
+            let completedReqItem = this.completedReq.find(req=>req.req.id==data.req.id);
+            if(completedReqItem==undefined) {
+              this.completedReq.push(data);
+            }
+            // Alert
+            if(data.completed==0) {
+              this.showError(`${data.req.message.slice(0, 69)}`, `Failed`);
+            } else if(data.failed==0) {
+              this.showSuccess('Success!');
+            } else {
+              this.showInfo('Completed!');
+            }
+          }
+        }
       }
-    ];
+    })
+
   }
 
-  createData = (name: string, value: number) => {
-    return {
-      name,
-      value
-    };
+  getData = async () => {
+    this.getTotalCount();
+
+    await this.api.getOcaData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
+      .pipe(tap(async (res: any[])=>{
+        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+        this.activityLogs = res;
+      })).toPromise();
+
+    this.filterResultLength = -1;
+    await this.api.getOcaCount(this.filterValue)
+      .pipe(tap( res => {
+        this.filterResultLength = res.count
+      })).toPromise();
   }
+
+  getTotalCount = async () => {
+    this.resultsLength = -1;
+    await this.api.getOcaCount('')
+      .pipe(tap( res => {
+        this.resultsLength = res.count
+      })).toPromise();
+  }
+
+  getUsersList = async () => {
+    try {
+      await this.api.getUsersListForFilter()
+        .pipe(tap(async (res: IUser[]) => {
+          this.userOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: item.username, value: item.id}))];
+        })).toPromise();
+    } catch (e) {
+    }
+  }
+
+  async getTemplate() {
+    await this.api.getTemplateList(this.store.getCurrentRo()!)
+      .pipe(tap( res => {
+        // this.templates = [ { tmplName:"" }]
+        this.templates = this.templates.concat(res)
+      })).toPromise();
+  }
+
 
   onNumFieldFocusOut = () => {
 
@@ -324,10 +431,13 @@ export class OneClickActivationComponent implements OnInit {
    */
    onNumTermLineFieldFocusOut = () => {
     let line = this.inputNumTermLine;
-    let lineReg = /\d{4}/g
+    let lineReg = /\d{1-4}/g
 
-    if (lineReg.test(line)) {
-      this.validNumTermLine = true;
+    if (!lineReg.test(line)) {
+      if (parseInt(line)>0)
+        this.validNumTermLine = true;
+      else
+        this.validNumTermLine = false;
     } else {
       this.validNumTermLine = false;
     }
@@ -338,34 +448,291 @@ export class OneClickActivationComponent implements OnInit {
    */
    onDateFieldFocusOut = () => {
     let effDate = this.inputEffDate;
-    if (effDate !== null)
+    if (this.inputNow || effDate !== null)
       this.validEffDate = true;
     else
       this.validEffDate = false;
   }
 
-  /**
-   * this is called when the focus of time field is lost
-   */
-  onTimeFieldFocusOut = () => {
-    let timeReg = this.gConst.TIME_REG_EXP
-    let effTime = moment(this.inputEffTime).format('h:mm A');
-    if (this.inputEffTime === null || timeReg.test(effTime))
-      this.validEffTime = true;
-    else
-      this.validEffTime = false;
-  }
+
 
   onCsvXlUploadAuto = (event: any) => {
 
   }
 
   onSearchReserveActivate = () => {
+    this.onNumFieldFocusOut()
+    this.onNumTermLineFieldFocusOut()
+    this.onNXXFieldFocusOut()
+    this.onLineFieldFocusOut()
+    this.onSvcOrderFieldFocusOut()
+    this.onDateFieldFocusOut()
 
+    if (this.invalidNumType != this.gConst.INVALID_NUM_TYPE_NONE)
+      return
+
+    if (!this.validQty || !this.validNxx || !this.validLine || !this.validSvcOrdrNum || !this.validNumTermLine || !this.validEffDate)
+      return
+
+    if (this.store.getContactInformation()?.name === "" || this.store.getContactInformation()?.number === "") {
+      this.showWarn("Please input Contact Information")
+      return;
+    }
+
+    if (this.inputTemplate==null || this.inputTemplate.tmplName==null) {
+      this.showWarn("Please select template")
+      return;
+    }
+
+    // form is valid
+    let body: any = {
+      ro: this.store.getCurrentRo(),
+      type: this.numType,
+      qty: this.input_quantity,
+      cons: this.input_consecutive ? "Y" : "N",
+      npa: this.inputNpa.value,
+      nxx: this.inputNxx,
+      line: this.inputLine,
+      templateName: this.inputTemplate.tmplName,
+      serviceOrder: this.inputServiceOrderNum,
+      numTermLine: Number(this.inputNumTermLine),
+      timezone: this.inputTimeZone.value,
+      contactName: this.store.getContactInformation()?.name,
+      contactNumber: this.store.getContactInformation()?.number.replace(/\-/g, ""),
+    }
+
+    if (this.numType==this.gConst.OCA_NUM_TYPE_WILDCARD)
+      body.wildCardNum = this.inputNumberMaskEntry
+    else if (this.numType == this.gConst.OCA_NUM_TYPE_SPECIFIC)
+      body.specificNums = this.inputNumberMaskEntry.split(",")
+
+    let effDateTime = ""
+    if (this.inputNow)
+      effDateTime = "NOW"
+    else if (this.inputEffDate!=null) {
+      let d = new Date(this.inputEffDate).getTime()
+      effDateTime = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'
+    }
+
+    body.effDtTm = effDateTime
+    console.log(body)
+
+    this.api.submitOca(body).subscribe(res=>{
+      if(res.success)
+        setTimeout(()=>{
+          this.sortActive = 'sub_dt_tm'
+          this.sortDirection = 'DESC'
+          this.getData();
+        }, 100)
+    });
   }
 
   onReset = () => {
+    this.inputServiceOrderNum = ""
+    this.inputNumTermLine = ""
+    this.inputNxx = ""
+    this.inputLine = ""
+    this.inputNumberMaskEntry = ""
+    this.inputEffDate = null
 
+    this.validSvcOrdrNum = true
+    this.invalidNumType = this.gConst.INVALID_NUM_TYPE_NONE
+    this.validNumTermLine = true
+    this.validNxx = true
+    this.validLine = true
+    this.validEffDate = true
+  }
+
+  onOpenViewModal = async (event: Event, result: any) => {
+    this.csvNumbersContent = '';
+    this.viewedResult = result;
+
+    await this.api.getOcaById(result.id)
+      .pipe(tap((response: any[])=>{
+        response.map(u => {
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          // u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : ''
+        });
+
+        this.numberList = response;
+        response.forEach((item, index) => {
+          this.csvNumbersContent += `\n${item.num},${item.status},${item.message==null?'':item.message}`;
+        });
+
+        this.filterNumberList = this.numberList;
+        this.inputNumListFilterKey = '';
+        this.onInputNumListFilterKey();
+        this.flagOpenModal = true;
+        this.resultTotal = this.numberList.length
+      })).toPromise();
+  }
+
+  onDownloadCsv = async (event: Event, result: any) => {
+    let numsContent = '';
+
+    await this.api.getOcaById(result.id).pipe(tap((response: any[])=>{
+      response.map(u => {
+        u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+        // u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : ''
+      });
+
+      response.forEach((item, index) => {
+        numsContent += `\n${item.num},${item.status},${item.message==null?'':item.message}`;
+      });
+
+      let data = `Number,Status,Message${numsContent}\n`
+      const csvContent = 'data:text/csv;charset=utf-8,' + data;
+      const url = encodeURI(csvContent);
+      let fileName = 'OCA_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
+
+      const tempLink = document.createElement('a');
+      tempLink.href = url;
+      tempLink.setAttribute('download', fileName);
+      tempLink.click();
+    })).toPromise();
+  }
+
+  delete = (event: Event, id: string) => {
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to delete this?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.api.deleteOca(id).subscribe(async res=>{
+          this.showSuccess('Successfully deleted!');
+          await this.getData();
+        });
+      },
+      reject: (type: any) => {
+        switch(type) {
+          case ConfirmEventType.REJECT:
+            // this.showInfo('Rejected');
+            break;
+          case ConfirmEventType.CANCEL:
+            // this.showInfo('Cancelled');
+            break;
+        }
+      }
+    });
+  }
+
+  onInputNumListFilterKey = () => {
+    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+  }
+
+  closeModal = () => {
+    this.flagOpenModal = false;
+  }
+
+  getStatusTagColor = (result: any): string => {
+    let status = this.getStatus(result).toUpperCase();
+    switch(status) {
+      case 'FAILED':
+        return 'danger';
+      case 'COMPLETED':
+        return 'info';
+      case 'SUCCESS':
+        return 'success';
+      default:
+        return 'success';
+    }
+  }
+
+  isProgressing = (result: any) => (this.progressingReq.findIndex(req=>req.req.id==result.id)!=-1 || this.getStatus(result)=='IN PROGRESS');
+
+  getCompletedTagColor = (result: any): string => {
+    let completed = this.getCompleted(result);
+    if(completed==result.total) {
+      return 'success';
+    } else if(completed==0) {
+      return 'danger';
+    } else {
+      return 'info';
+    }
+  }
+
+  getCompleted = (result: any) => {
+    let completedReqItem = this.completedReq.find(req=>req.req.id==result.id);
+    let progressingReqItem = this.progressingReq.find(req=>req.req.id==result.id);
+    if(progressingReqItem!=undefined) {
+      return progressingReqItem.req.completed;
+    } else if(completedReqItem!=undefined) {
+      return completedReqItem.req.completed;
+    } else {
+      return result.completed;
+    }
+  }
+
+  getStatus = (result: any) => {
+    let completedReqItem = this.completedReq.find(req=>req.req.id==result.id);
+    let progressingReqItem = this.progressingReq.find(req=>req.req.id==result.id);
+    if(progressingReqItem!=undefined) {
+      return progressingReqItem.req.status;
+    } else if(completedReqItem!=undefined) {
+      return completedReqItem.req.status;
+    } else {
+      return result.status;
+    }
+  }
+
+  getMessage = (result: any) => {
+    let completedReqItem = this.completedReq.find(req=>req.req.id==result.id);
+    let progressingReqItem = this.progressingReq.find(req=>req.req.id==result.id);
+    if(progressingReqItem!=undefined) {
+      return progressingReqItem.req.message?.slice(0, 69);
+    } else if(completedReqItem!=undefined) {
+      return completedReqItem.req.message?.slice(0, 69);
+    } else {
+      return result.message?.slice(0, 69);
+    }
+  }
+
+  onSortChange = async (name: any) => {
+    this.sortActive = name;
+    this.sortDirection = this.sortDirection === 'ASC' ? 'DESC' : 'ASC';
+    this.pageIndex = 1;
+    await this.getData();
+  }
+
+  onFilter = (event: Event) => {
+    this.pageIndex = 1;
+    this.filterName = (event.target as HTMLInputElement).name;
+    this.filterValue = (event.target as HTMLInputElement).value;
+  }
+
+  onClickFilter = () => {
+    this.pageIndex = 1;
+    this.getData()
+  };
+
+  onPagination = async (pageIndex: any, pageRows: number) => {
+    this.pageSize = pageRows;
+    const totalPageCount = Math.ceil(this.filterResultLength / this.pageSize);
+    if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
+    this.pageIndex = pageIndex;
+    await this.getData();
+  }
+
+  paginate = (event: any) => {
+    this.onPagination(event.page+1, event.rows);
+  }
+
+  onViewNumbersDownload = () => {
+    let data = `Number,Status,Message${this.csvNumbersContent}\n`
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + data;
+    const url = encodeURI(csvContent);
+    let fileName = 'OCA_Result'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
+
+    const tempLink = document.createElement('a');
+    tempLink.href = url;
+    tempLink.setAttribute('download', fileName);
+    tempLink.click();
+  }
+
+  onEffDateTimeIntervalFifteenMin = () => {
+    let d = new Date(this.inputEffDate).getTime();
+    this.inputEffDate = new Date(Math.ceil(d / 900000) * 900000);
   }
 
   showWarn = (msg: string) => {

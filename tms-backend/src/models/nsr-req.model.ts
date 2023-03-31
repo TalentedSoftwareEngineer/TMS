@@ -122,4 +122,4 @@ export interface NsrReqRelations {
   // describe navigational properties here
 }
 
-export type NSRReqWithRelations = NsrReq & NsrReqRelations;
+export type NsrReqWithRelations = NsrReq & NsrReqRelations;
