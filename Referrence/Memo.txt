@@ -1,0 +1,30 @@
+***********************   Sample Site  ***********************
+cpsprod.tfnms.com/admin
+sadmin / Temp@o21!!
+=========================================
+https://ecms.call-metrics.com/service/dashboard
+admin / admin
+=========================================
+https://cpsprod.tfnms.com/customer/
+XQG01RXK / Temp@o22!!
+=========================================
+PhpMyAdmin: http://208.76.96.11:4545/phpmyadmin  :  root/D1pv@o22!!
+Jenkins:    http://208.76.96.11:8080/  :  root / D1pv@o22!!
+API:        http://208.76.96.11:3000/api/v1/explorer
+https://developer.somos.com/login : XQG01RXK / Temp@o23!!
+https://sandbox-tfnregistry.somos.com/smsnow-ui/master.html#/home  : XQG01RXK / Temp@o23!!
+https://developer.somos.com/tfn/redoc#tag/Number-Administration/operation/queryTFN
+==========================================
+https://sandbox-api-tfnregistry.somos.com/v3/ip/(num/tfn/update)
+
+***********************   UI Theme  ***********************
+http://primefaces.org/primeng/setup
+https://www.learnrxjs.io/learn-rxjs/operators/creation/of#additional-resources
+https://loopback.io/doc/en/lb3/Where-filter.html
+https://reactstrap.github.io/?path=/docs/components-forms--input
+https://loopback.io/doc/en/lb4/Getting-started.html#starting-the-project
+Icon Texts
+https://unicode.org/emoji/charts-13.0/emoji-style.txt
+https://tw.piliapp.com/emoji/list/
+
+
