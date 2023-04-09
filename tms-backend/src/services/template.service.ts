@@ -203,10 +203,11 @@ export class TemplateService {
     return template
   }
 
-  async getList(ro: string, profile: AuthorizedUserProfile, startTemplateName?: string) {
-    let entity = ro.substring(0, 2)
-    if (startTemplateName!=null && startTemplateName.length>3)
+  async getList(ro: string, entity: string, profile: AuthorizedUserProfile, startTemplateName?: string) {
+    if ((entity==null || entity=="") && startTemplateName!=null && startTemplateName.length>3)
       entity = startTemplateName.substring(1,3)
+    else if (entity==null || entity=="")
+      entity = ro.substring(0, 2)
 
     let response = await this.tfnRegistryApiService.listTemplateRecords(ro, entity, profile, startTemplateName)
     if (response==null) {
@@ -407,10 +408,11 @@ export class TemplateService {
               1, 0, PROGRESSING_STATUS.FAILED)
           this.saveActivityResult(profile, activity.id, TASK_TYPE.TAD, TASK_ACTION.RETRIEVE, "", current_utc_time, activity.status, undefined, message, eff_dt_tm, tmplName)
 
-          if (message.includes("540001"))
-            return { isNew: true }
+          // if (message.includes("540001"))
+          //   return { isNew: true }
+          return response
 
-          throw new HttpErrors.BadRequest(message)
+          // throw new HttpErrors.BadRequest(message)
         }
 
         return null

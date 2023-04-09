@@ -97,6 +97,11 @@ export class ConfigurationController {
     if (!profile.permissions.includes(PERMISSIONS.WRITE_SQL_SCRIPT))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
+    const obj = JSON.parse(config.value)
+    if (obj.remotePath && obj.remotePath.endsWith("/"))
+      obj.remotePath = obj.remotePath.substring(0, obj.remotePath.length-1)
+    config.value = JSON.stringify(obj)
+
     await this.configurationRepository.updateById(CONFIGURATIONS.SQLSCRIPT_SFTP, {value: config.value});
   }
 

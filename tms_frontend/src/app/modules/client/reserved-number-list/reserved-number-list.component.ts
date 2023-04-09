@@ -180,7 +180,7 @@ export class ReservedNumberListComponent implements OnInit {
   }
 
   async getTemplate() {
-    await this.api.getTemplateList(this.store.getCurrentRo()!)
+    await this.api.getTemplateList(this.store.getCurrentRo()!, '')
       .pipe(tap( res => {
         // this.templates = [ { tmplName:"" }]
         this.templates = this.templates.concat(res)

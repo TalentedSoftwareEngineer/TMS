@@ -38,8 +38,10 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
   rowsPerPageOptions: any[] = rowsPerPageOptions;
   noNeedRemoveColumn = true
 
-  input_sftp_hosts: string|undefined|null = ''
-  input_sftp_path: string|undefined|null = ''
+  input_sftp_hosts: any = ''
+  input_sftp_path: any = ''
+  input_sftp_port: any = 21
+
   isSftpEditing: boolean = false
   sql_users: any[] = [];
   noNeedEditColumn = false
@@ -63,7 +65,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
     private confirmationService: ConfirmationService
   ) { }
 
-  async ngOnInit() {    
+  async ngOnInit() {
     await new Promise<void>(resolve => {
       let mainUserInterval = setInterval(() => {
         if (this.store.getUser()) {
@@ -103,6 +105,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
     await this.api.getSftpHosts().pipe(tap(res=>{
       this.input_sftp_hosts = res.host;
       this.input_sftp_path = res.remotePath;
+      this.input_sftp_port = res.port;
     })).toPromise();
   }
 
@@ -177,10 +180,10 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
   }
 
   onSFTPEdit = () => {
-    setTimeout(()=>{ 
+    setTimeout(()=>{
       // this will make the execution after the above boolean has changed
       this.elmnt_sftp_hosts.nativeElement.select();
-    },0);  
+    },0);
     this.isSftpEditing = true;
   }
 
@@ -188,6 +191,7 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
     let send_data = JSON.stringify({
       host: this.input_sftp_hosts,
       remotePath: this.input_sftp_path,
+      port: Number(this.input_sftp_port)
     });
     this.api.updateSftpHosts({
       value: send_data
@@ -314,6 +318,6 @@ export class SqlUsersComponent implements OnInit, AfterViewInit {
   };
   showInfo = (msg: string) => {
     this.messageService.add({ key: 'tst', severity: 'info', summary: 'Info', detail: msg });
-  };  
+  };
 
 }

@@ -320,33 +320,49 @@ export class PointerAdminDataComponent implements OnInit {
 
     if (res) {
       let data = res
-      if (data.num == null) {
-        if (res.isNew && data.numStatus != null && data.numStatus === "RESERVED") {
-          // this.setState({createModalVisible: true})
-          this.confirmationService.confirm({
-            message: 'Do you want to create a new Pointer Record?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-              this.createAction();
-            },
-            reject: (type: any) => {
+      if (data.errList != null && data.errList.length) {
+        let errList = data.errList
+        let errMsg = gFunc.synthesisErrMsg(errList)
+        if (data.num == null) {
+          if (errList[0].errCode === "530001" && data.numStatus != null && data.numStatus === "RESERVED") {
+            this.confirmationService.confirm({
+              message: 'Do you want to create a new Pointer Record?',
+              header: 'Confirmation',
+              icon: 'pi pi-exclamation-triangle',
+              accept: () => {
+                this.createAction();
+              },
+              reject: (type: any) => {
                 switch(type) {
-                    case ConfirmEventType.REJECT:
-                      break;
-                    case ConfirmEventType.CANCEL:
-                      break;
+                  case ConfirmEventType.REJECT:
+                    break;
+                  case ConfirmEventType.CANCEL:
+                    break;
                 }
-            }
-          });
-          return false
+              }
+            });
+            return false
+          } else {
+            this.showError(errMsg, 'Error');
+            this.bRetrieveEnable = true
+            return false
+          }
         }
       }
       this.unlockPointerRecord()
       await this.reflectDataOnPage(num, res)
       // this.backupStateToLastAction()
+      return true
     }
-    return true
+
+    if (res !== undefined && res.errList !== undefined && res.errList.length) {
+      this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+      this.inputMessage = gFunc.synthesisErrMsg(res.errList)
+      this.bRetrieveEnable = true
+      return false;
+    }
+
+    return false;
   }
 
   reflectDataOnPage = async (num: string, data: any) => {

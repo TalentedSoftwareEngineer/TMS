@@ -16,7 +16,7 @@ export class TfnRegistryApiService {
   BASEPATH_PRODUCTION = "https://api-tfnregistry.somos.com/"
 
   VERSION = "v3/ip";
-  ACCEPT_VERSION = "3.8"
+  ACCEPT_VERSION = "3.2"
 
   ErrorCodes = {
     AlreadyLogged: "701003",
@@ -324,8 +324,8 @@ export class TfnRegistryApiService {
 
       await this.tokenRepository.deleteById(token.id)
     } catch (err) {
-      console.log("---------- Exception in closeSession ----------")
-      console.log(err?.response?.data)
+      // console.log("---------- Exception in closeSession ----------")
+      // console.log(err?.response?.data)
 
       const error = this.parseErrorList(err.response)
       return error;
@@ -343,15 +343,15 @@ export class TfnRegistryApiService {
       const now = DateTimeUtils.getCurrentTimestamp();
       if (now <= token.expires_at && now >= token.expires_at - 20)
         token = await this.refreshToken(token, profile.somos)
-      else if (now > token.expires_at - 10)
+      else if (now > token.expires_at)
         isOpen = true
     } else {
       isOpen = true
     }
 
     if (isOpen) {
-      if (token)
-        await this.closeSession(token, profile.somos.client_key, profile.somos.client_secret)
+      // if (token)
+      //   await this.closeSession(token, profile.somos.client_key, profile.somos.client_secret)
 
       if (profile.somos.client_key!=null && profile.somos.client_key!="" && profile.somos.client_secret!=null && profile.somos.client_secret!="") {
         return this.openToken(profile.somos)
@@ -522,8 +522,8 @@ export class TfnRegistryApiService {
           Accept: 'application/json',
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -583,8 +583,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -641,8 +641,8 @@ export class TfnRegistryApiService {
           'Accept': 'application/json; charset=utf-8',
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + token.oouth_token,
-          'ROID': ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // 'ROID': ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -703,8 +703,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -770,8 +770,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -801,8 +801,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -835,8 +835,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -872,8 +872,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -906,8 +906,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -931,8 +931,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -965,8 +965,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1000,8 +1000,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1031,8 +1031,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1067,8 +1067,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1098,8 +1098,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1122,8 +1122,8 @@ export class TfnRegistryApiService {
         data: payload,
         headers: {
           'Authorization': 'Bearer ' + token.oouth_token,
-          'ROID': ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // 'ROID': ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1183,8 +1183,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1211,8 +1211,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1272,8 +1272,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1313,8 +1313,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1341,8 +1341,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1376,8 +1376,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1408,8 +1408,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1448,8 +1448,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1482,8 +1482,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1515,8 +1515,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1547,8 +1547,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1579,8 +1579,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1611,8 +1611,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1643,8 +1643,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1675,8 +1675,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1707,8 +1707,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1739,8 +1739,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1771,8 +1771,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1803,8 +1803,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1835,8 +1835,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1867,8 +1867,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1903,8 +1903,8 @@ export class TfnRegistryApiService {
         method: 'delete',
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1945,8 +1945,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1979,8 +1979,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2017,8 +2017,8 @@ export class TfnRegistryApiService {
         data: payload,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2049,8 +2049,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2081,8 +2081,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2113,8 +2113,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2149,8 +2149,8 @@ export class TfnRegistryApiService {
         method: 'delete',
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2181,8 +2181,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2213,8 +2213,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2245,8 +2245,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2277,8 +2277,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2309,8 +2309,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2341,8 +2341,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2373,8 +2373,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2405,8 +2405,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2437,8 +2437,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2469,8 +2469,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2505,8 +2505,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2539,8 +2539,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2570,8 +2570,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2607,8 +2607,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2645,8 +2645,8 @@ export class TfnRegistryApiService {
         data: payload,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2671,8 +2671,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2703,8 +2703,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2729,8 +2729,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2761,8 +2761,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2787,8 +2787,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2823,8 +2823,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2855,8 +2855,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2891,8 +2891,8 @@ export class TfnRegistryApiService {
         method: 'delete',
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2923,8 +2923,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2955,8 +2955,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2987,8 +2987,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3019,8 +3019,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3051,8 +3051,8 @@ export class TfnRegistryApiService {
         data: data,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3083,8 +3083,8 @@ export class TfnRegistryApiService {
         },
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3119,8 +3119,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3153,8 +3153,8 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          ROID: ro,
-          'Accept-Version': this.ACCEPT_VERSION,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 

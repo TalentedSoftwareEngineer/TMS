@@ -179,6 +179,15 @@ export class StoreService {
     return this.store.currentRo
   }
 
+  public getEntities() {
+    let entities: any = [];
+    this.store.user.ro.split(',').map(item=>(item.slice(0, 2))).forEach(item=>{
+      if(!Boolean(entities.find((finded: any)=>finded.value==item)))
+        entities.push({name: item, value: item});
+    });
+    return entities;
+  }
+
   public removeCurrentRo() {
     this.localdb.removeItem(DBKEYS.CURRENT_RO);
     this.store = {...this.store, currentRo: undefined};

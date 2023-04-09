@@ -34,14 +34,13 @@
 </p-panel>
 
 <p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="bRetrieveCardIconHidden" [collapsed]="!bExpResult" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-    <ng-template pTemplate="icons" *ngIf="!bEffDtTmListHidden">
+    <ng-template pTemplate="icons" *ngIf="bEffDtTmListHidden">
         <span>
             <button pButton pRipple class="p-button-text" label="Import CPR Report Data" icon="pi pi-file-import" (click)="fileInput.click()" [disabled]="disable"></button>
             <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".csv"/>
         </span>
         <span>
             <p-dropdown
-                *ngIf="!bEffDtTmListHidden"
                 [options]="getEffDtTmStatusOptions(effDtTmStatList)"
                 [(ngModel)]="selectEffDtTmStat"
                 id="effDtTmStat"
@@ -58,7 +57,6 @@
     </ng-template>
 
     <div class="pt-2">
-
         <div class="card">
             <p-tabView [(activeIndex)]="activeMainTab">
                 <p-tabPanel header="Basic" tooltip="Basic">

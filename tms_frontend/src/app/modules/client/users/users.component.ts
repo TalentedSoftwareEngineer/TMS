@@ -325,6 +325,7 @@ export class UsersComponent implements OnInit {
         username: username,
         company_id: company_id,
         role_id: role_id,
+        timezone: timezone,
         email: email,
         first_name: first_name,
         last_name: last_name,
@@ -486,7 +487,8 @@ export class UsersComponent implements OnInit {
       first_name: first_name,
       last_name: last_name,
       company_id: company_id,
-      role_id: role_id
+      role_id: role_id,
+      timezone: timezone
     }).pipe(tap(res=>{
       this.showSuccess('Successfully Updated!');
       this.closeUserModal();

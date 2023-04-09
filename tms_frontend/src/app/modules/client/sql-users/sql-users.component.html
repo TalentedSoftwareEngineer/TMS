@@ -10,6 +10,11 @@
                 <input type="text" id="sftp_path" name="sftp_path" pInputText [(ngModel)]="input_sftp_path" [disabled]="!isSftpEditing">
                 <label for="sftp_path">Sftp Path</label>
             </span>
+
+            <span class="field p-float-label">
+                <input type="number" id="sftp_port" name="sftp_port" pInputText [(ngModel)]="input_sftp_port" [disabled]="!isSftpEditing">
+                <label for="sftp_port">Sftp Port</label>
+            </span>
         </div>
     </ng-template>
     <ng-template pTemplate="footer">

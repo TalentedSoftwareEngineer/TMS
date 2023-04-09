@@ -2,6 +2,8 @@ import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { CONTACT_NAME_REG_EXP, CONTACT_NUMBER_REG_EXP } from 'src/app/modules/constants';
 import {StoreService} from "../../../services/store/store.service";
 import { ApiService } from 'src/app/services/api/api.service';
+import { Router } from '@angular/router';
+import { ROUTES } from 'src/app/app.routes';
 
 @Component({
   selector: 'contact-information-modal',
@@ -19,6 +21,8 @@ export class ContactInformationModalComponent implements OnInit {
   inputNotes: string = '';
   inputChangeDefaultContactInformation: boolean = false;
 
+  timeout_id: any;
+
   @HostListener('document:click', ['$event'])
   clickWindow(event: any) {
     if(event.target.id=='btn_contactInformation') {
@@ -30,15 +34,43 @@ export class ContactInformationModalComponent implements OnInit {
       this.inputChangeDefaultContactInformation = false;
       this.openModal = true;
     }
+
+    clearTimeout(this.timeout_id);
+    this.timeout_id = setTimeout(()=>{
+      this.onSignout();
+    }, 900000);
+  }
+
+  @HostListener('window:keyup', ['$event'])
+  keyEvent(event: KeyboardEvent) {
+    clearTimeout(this.timeout_id);
+    this.timeout_id = setTimeout(()=>{
+      this.onSignout();
+    }, 900000);
   }
 
   constructor(
     public store: StoreService,
     public api: ApiService,
+    private route: Router,
   ) { }
 
   async ngOnInit() {
+    this.timeout_id = setTimeout(()=>{
+      this.onSignout();
+    }, 900000);
 
+    this.api.test().subscribe(res=>{
+      console.log(res);
+    });
+  }
+
+  onSignout = () => {
+    this.store.removeCurrentRo();
+    this.store.removeToken();
+    this.store.removeUser();
+
+    this.route.navigateByUrl(ROUTES.login);
   }
 
   onInputContactName = () => {

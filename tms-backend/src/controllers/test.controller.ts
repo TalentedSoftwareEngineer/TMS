@@ -9,16 +9,22 @@ import {inject, service} from "@loopback/core";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
 import {NSRRequest} from "../models/nsr.request";
 import {NumberService} from "../services";
+import * as fs from "fs";
+import {repository} from "@loopback/repository";
+import {ScriptResultRepository, ScriptSqlRepository} from "../repositories";
+import {ScriptResult} from "../models";
+import {PROGRESSING_STATUS} from "../constants/number_adminstration";
+import {SUPER_ADMIN} from "../constants/configurations";
 
-@authenticate('jwt')
 export class TestController {
   constructor(
-      @service(NumberService)
-      public numberService: NumberService,
+      @service(NumberService) public numberService: NumberService,
+      @repository(ScriptResultRepository) public scriptResultRepository: ScriptResultRepository,
+      @repository(ScriptSqlRepository) public scriptSqlRepository: ScriptSqlRepository,
   ) {}
 
-  @post('/test/NSR', {
-  description: 'Search and Reserve SOMOS Number',
+  @post('/test/import', {
+  description: 'Import Number',
   responses: {
     '200': {
       description: 'NSRRequest ID',
@@ -37,13 +43,7 @@ export class TestController {
     }
   }
 })
-  async nsr(@inject(SecurityBindings.USER) currentUserProfile: UserProfile,) {
-    const profile = JSON.parse(currentUserProfile[securityId]);
-    let req: NSRRequest = {
-      cons: "N", contactName: "Ricky Keele", contactNumber: "7272008240", qty: 1, ro: "XQG01", submitType: "SEARCH & RESERVE", type: "RANDOM"
-    }
-
-    return this.numberService.searchAndReserve(req, profile)
+  async import() {
   }
 
 }

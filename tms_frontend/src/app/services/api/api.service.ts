@@ -18,6 +18,11 @@ export class ApiService {
     this.coreApi = environment.base_uri;
   }
 
+  test(): Observable<any> {
+    const url = `${this.coreApi}/test/import`;
+    return this.http.post<any>(url, {});
+  }
+
   public login(data: IUserLogin, rememberedIf: boolean): Observable<object> {
     return this.http.post<IUserToken>(`${this.coreApi}/authenticate`, data).pipe(
       tap(token => this.store.storeToken({ ...token, rememberedIf })),
@@ -795,9 +800,10 @@ export class ApiService {
   }
 
 
-  getTemplateList(ro: string, startTemplateName?: string): Observable<any> {
+  getTemplateList(ro: string, entity: string, startTemplateName?: string): Observable<any> {
     const parametersQuery = new URLSearchParams({
       ro: `${ro}`,
+      entity: `${entity}`,
       startingTemplateName: `${startTemplateName}`
     }).toString();
     return this.http.get<any>(`${this.coreApi}/templates/list?${parametersQuery}`);
@@ -974,12 +980,12 @@ export class ApiService {
     return this.http.get<any[]>(url);
   }
 
-  cancelNumImporting(ids: string): Observable<any[]> {
+  cancelNumImporting(ids: string): Observable<any> {
     const parametersQuery = new URLSearchParams({
       ids: `${ids}`,
     }).toString();
     const url = `${this.coreApi}/number_list/script_cancel?${parametersQuery}`;
-    return this.http.get<any[]>(url);
+    return this.http.post<any>(url, {});
   }
 
   //Template Admin Data

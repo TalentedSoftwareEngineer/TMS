@@ -661,9 +661,8 @@ export class TemplateAdminDataComponent implements OnInit {
             tmp[node.rowIndex-1][node.colIndex-1] = node.values.toString();
           });
           return tmp;
-        });
-  
-        this.noCPR = false
+        });  
+        this.noCPR = false;
       }
       this.selectPriIntraLT = Boolean(data.priIntraLT) ? data.priIntraLT : '';
       this.selectPriInterLT = Boolean(data.priInterLT) ? data.priInterLT : '';
@@ -888,6 +887,44 @@ export class TemplateAdminDataComponent implements OnInit {
     this.bRetrieveEnable = true;
     if(res) {
       this.unlockTemplateRecord()
+      let errList = res.errList
+      let errCode = ""
+
+      // if no result, shows the message if moves to create mode
+      if (errList && errList[0].errLvl === "ERROR") {
+        errCode = errList[0].errCode
+        if (errCode === "540002") {
+          let errMsg = gFunc.synthesisErrMsg(errList)
+          this.showError(errMsg, 'Error');
+        } else {
+          if (errCode === "540001") {
+            // this.setState({createModalVisible: true, })
+            this.confirmationService.confirm({
+              message: 'Do you want to create a new Template Record?',
+              header: 'No Results',
+              icon: 'pi pi-exclamation-triangle',
+              accept: () => {
+                this.createAction();
+              },
+              reject: (type: any) => {
+                switch(type) {
+                  case ConfirmEventType.REJECT:
+                    break;
+                  case ConfirmEventType.CANCEL:
+                    break;
+                }
+              }
+            });
+            this.bRetrieveEnable = true
+          } else {
+            let errMsg = gFunc.synthesisErrMsg(errList)
+            this.showError(errMsg, '')
+            this.bRetrieveEnable = true
+          }
+          return false
+        }
+      }
+
       if(res.isNew) {
         this.createModalVisible = true;
       }
@@ -897,9 +934,80 @@ export class TemplateAdminDataComponent implements OnInit {
     } else {
       return false;
     }
-
-    return false;
   };
+
+  createAction = async () => {
+    let retrieveCardTitle = "Create a New Template: " + this.inputSearchTmplName
+    this.action = this.gConst.ACTION_CREATE;
+    this.disable = false;
+    this.tmplName = this.inputSearchTmplName;
+    this.retrieveCardTitle = retrieveCardTitle;
+    this.bRetrieveCardIconHidden = true;
+    this.bExpRetrieve = false;
+    this.bExpResult = true;
+
+    this.bEditEnable = false;
+    this.bCopyEnable = false;
+    this.bTransferEnable = false;
+    this.bDeleteEnable = false;
+
+    this.clearAllData();
+    // get user information from the server and set the mail.
+    this.inputContactName = this.store.getContactInformation()?.name;
+    this.inputContactNumber = gFunc.formattedNumber(this.store.getContactInformation()?.number);
+    this.noCR = false;
+  };
+
+  clearAllData = () => {
+    this.initBasicData()
+    this.initCPRData()
+    this.ladGridData = Array(9).fill('').map(dd=>([]));
+  }
+
+  initBasicData = () => {
+    this.inputCreateEffDtTm = '',       // effective date time value for creating
+    this.inputCreateNow = false,    // now check value
+
+    this.inputRespOrg = String(this.store.getCurrentRo()),       // resp organization
+    this.inputPriority = false,    // high priority
+    this.inputDscInd = false,    // disconnect instruction
+
+    this.inputTemplateId = '',       // template id
+    this.inputDescription = '',       // template description
+    this.inputLine = '',       // numTermLine
+
+    this.inputContactName = '',       // contact name
+    this.inputContactNumber = '',       // contact telephone
+    this.inputNotes = '',       // notes
+
+    this.inputNetwork = '',       // Area of Service: network
+    this.inputState = '',       // Area of Service: state
+    this.inputNpa = ''       // Area of Service: npa
+    this.inputLata = ''       // Area of Service: lata
+    this.inputLabel = ''       // Area of Service: label
+    this.choiceModalList = [],      // list that is displayed on the choice list modal
+    this.choiceList = [],      // list of the choice index on the choice list modal
+    this.choiceModalHeaderTitle = '',      // the title of list header on the choice list modal
+    this.choiceModalVisible = false    //  choice modal visible
+    this.npaChoiceModalVisible = false    // NPA modal visible
+    this.npaChoiceModalList = [],      // tree list of the NPA choice index on the NPA choice list modal
+    this.npaChecked = [],      // checked list on the NPA choice list modal
+    this.npaExpanded = [],      // expanded list on the NPA choice list modal
+
+    this.inputInterLATACarrier = '',      // interLATACarrier
+    this.inputIntraLATACarrier = '',      // intraLATACarrier
+
+    this.noCR = true
+
+    this.noNetworks = true
+    this.noStates = true
+    this.noNPAs = true
+    this.noLATAs = true
+    this.noLabels = true
+    this.noIAC = true
+    this.noIEC = true
+    this.inputMessage = ''
+  }
 
   getEffDtTmStatusOptions = (effDtTmStatList: any[]) => {
     return effDtTmStatList.map(item=>({name: item, value: item}));

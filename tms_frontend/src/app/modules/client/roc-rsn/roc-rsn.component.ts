@@ -35,6 +35,16 @@ export class RocRsnComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
+    await new Promise<void>(resolve => {
+      let mainUserInterval = setInterval(() => {
+        if (this.store.getUser()) {
+          clearInterval(mainUserInterval)
+
+          resolve()
+        }
+      }, 100)
+    })
+    
     this.store.state$.subscribe(async (state)=> {
       if(state.user.permissions?.includes(PERMISSIONS.ROC_SUBSCRIBER_NOTIFICATIONS)) {
       } else {

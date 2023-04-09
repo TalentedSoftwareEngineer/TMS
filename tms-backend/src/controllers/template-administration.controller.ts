@@ -46,6 +46,7 @@ export class TemplateAdministrationController {
   async template_list(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
       @param.query.string('ro') ro: string,
+      @param.query.string('entity') entity: string,
       @param.query.string('startTemplateName') startTemplateName?: string,
   ): Promise<any> {
     const profile = JSON.parse(currentUserProfile[securityId]);
@@ -53,7 +54,7 @@ export class TemplateAdministrationController {
       throw new HttpErrors.BadRequest(MESSAGES.MISSING_PARAMETERS)
 
     // GET: cus/tpl/list/entity?entity=XQ&startTmplName=&roId=
-    return this.templateService.getList(ro, profile, startTemplateName)
+    return this.templateService.getList(ro, entity, profile, startTemplateName)
   }
 
   @get('/templates/query', {

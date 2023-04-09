@@ -142,6 +142,7 @@ export class HeaderComponent implements OnInit {
 
   getRos = () => {
     let loggedUser_ros = this.store.getUser().ro.split(',');
+    loggedUser_ros.sort();
     this.ros = loggedUser_ros.map((item, index)=>{
       return this.createData(
         item,
@@ -265,23 +266,23 @@ export class HeaderComponent implements OnInit {
     let seleted_ro = event.value;
 
     this.confirmationService.confirm({
-        message: 'Are you sure you want to select this ro?',
-        header: 'Confirmation',
-        icon: 'pi pi-exclamation-triangle',
-        accept: () => {
-          this.store.storeCurrentRo(seleted_ro.name);
-          // setTimeout(() => {
-          //   location.reload();
-          // }, 300)
-        },
-        reject: (type: any) => {
-            switch(type) {
-                case ConfirmEventType.REJECT:
-                  break;
-                case ConfirmEventType.CANCEL:
-                  break;
-            }
+      message: 'You are about to change your Acting As Resp Org. Would you like to continue?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.store.storeCurrentRo(seleted_ro.name);
+        // setTimeout(() => {
+        //   location.reload();
+        // }, 300)
+      },
+      reject: (type: any) => {
+        switch(type) {
+          case ConfirmEventType.REJECT:
+            break;
+          case ConfirmEventType.CANCEL:
+            break;
         }
+      }
     });
   }
 }

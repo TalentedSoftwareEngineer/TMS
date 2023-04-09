@@ -2,7 +2,7 @@ import {injectable, /* inject, */ BindingScope} from '@loopback/core';
 import {repository} from "@loopback/repository";
 import {ConfigurationRepository} from "../repositories";
 import {CONFIGURATIONS} from "../constants/configurations";
-import {TEMPORARY} from "../config";
+import {SCRIPT_HOME, TEMPORARY} from "../config";
 import * as fs from "fs";
 
 @injectable({scope: BindingScope.TRANSIENT})
@@ -15,78 +15,75 @@ export class FtpService {
   async upload(user: any, filename: string) {
     // TODO - upload file to FTP
     // https://www.npmjs.com/package/ftp
-    const config: any = await this.configurationRepository.findById(CONFIGURATIONS.SQLSCRIPT_SFTP);
-    if (!config)
+    const conf: any = await this.configurationRepository.findById(CONFIGURATIONS.SQLSCRIPT_SFTP);
+    if (!conf)
       return {success: false, message: 'FTP Configuration is invalid.'}
 
-    return this.put(config.value.host, config.value.port, config.value.remotePath, user.username, user.password, filename)
+    const config = JSON.parse(conf.value)
+    return this.put(config.host, Number(config.port), config.remotePath, user.username, user.password, filename)
+  }
+
+  private async getConfig(host: string, port: number, username: string, password: string) {
+    let config: any = {
+      host,
+      port,
+      username,
+      password
+    }
+
+    return config
   }
 
   private async put(host: string, port: number, path: string, username: string, password: string, filename: string): Promise<any> {
-    return new Promise((resolve) => {
-      const Client = require('ftp')
+    return new Promise(async (resolve) => {
+      const Client = require('ssh2-sftp-client')
       let client = new Client()
 
-      client.on('ready', async () => {
-        client.put(TEMPORARY + filename, path + username + "/" + filename, (err: any) => {
-          if (err)
-            resolve({success: false, message: err?.message})
-          else {
+      const config = await this.getConfig(host, port, username, password)
+
+      client.connect(config)
+          .then(() => {
+            return client.put(SCRIPT_HOME + filename, path + "/" + username + "/" + filename)
+          })
+          .finally(() => {
             client.end()
             resolve({success: true, message: "Success"})
-          }
-        })
-      })
-      .on('error', (err: any) => {
-        console.log("error", err)
-        resolve({success: false, message: err?.message})
-      })
-
-      client.connect({
-        host: host,
-        port: port,
-        secure: true,
-        user: username,
-        password: password,
-      })
+          })
+          .catch( (err: any) => {
+            resolve({success: false, message: err?.message})
+          })
     })
   }
 
   async list(user: any, filename: string) {
-    const config: any = await this.configurationRepository.findById(CONFIGURATIONS.SQLSCRIPT_SFTP);
-    if (!config)
+    const conf: any = await this.configurationRepository.findById(CONFIGURATIONS.SQLSCRIPT_SFTP);
+    if (!conf)
       return {success: false, message: 'FTP Configuration is invalid.'}
 
-    return this.ls(config.value.host, config.value.port, config.value.remotePath, user.username, user.password, filename)
+    const config = JSON.parse(conf.value)
+    return this.ls(config.host, Number(config.port), config.remotePath, user.username, user.password, filename)
   }
 
   private async ls(host: string, port: number, path: string, username: string, password: string, filename: string): Promise<any> {
-    return new Promise((resolve) => {
-      const Client = require('ftp')
+    return new Promise(async (resolve) => {
+      const Client = require('ssh2-sftp-client')
       let client = new Client()
 
-      client.on('ready', async () => {
-        client.list(path + username, (err: any, list: any[]) => {
-          if (err)
-            resolve({success: false, message: err?.message})
-          else {
-            client.end()
-            resolve({success: true, message: "Success", list})
-          }
-        })
-      })
-      .on('error', (err: any) => {
-        console.log("error", err)
-        resolve({success: false, message: err?.message})
-      })
+      const config = await this.getConfig(host, port, username, password)
 
-      client.connect({
-        host: host,
-        port: port,
-        secure: true,
-        user: username,
-        password: password,
-      })
+      client.connect(config)
+          .then(() => {
+            return client.list(path + "/" + username)
+          })
+          .then((data: any) => {
+            resolve({success: true, message: "Success", list: data})
+          })
+          .finally(() => {
+            client.end()
+          })
+          .catch( (err: any) => {
+            resolve({success: false, message: err?.message})
+          })
     })
   }
 
@@ -94,41 +91,32 @@ export class FtpService {
     // TODO - upload file to FTP
     // https://www.npmjs.com/package/ftp
 
-    const config: any = await this.configurationRepository.findById(CONFIGURATIONS.SQLSCRIPT_SFTP);
-    if (!config)
+    const conf: any = await this.configurationRepository.findById(CONFIGURATIONS.SQLSCRIPT_SFTP);
+    if (!conf)
       return {success: false, message: 'FTP Configuration is invalid.'}
 
-    return this.get(config.value.host, config.value.port, config.value.remotePath, user.username, user.password, filename)
+    const config = JSON.parse(conf.value)
+    return this.get(config.host, Number(config.port), config.remotePath, user.username, user.password, filename)
   }
 
   private async get(host: string, port: number, path: string, username: string, password: string, filename: string): Promise<any> {
-    return new Promise((resolve) => {
-      const Client = require('ftp')
+    return new Promise(async (resolve) => {
+      const Client = require('ssh2-sftp-client')
       let client = new Client()
 
-      client.on('ready', async () => {
-        const file = await client.get(path + username + "/" + filename)
-        const ws = fs.createWriteStream(TEMPORARY + filename)
-        file.pipe(ws).on('end', ()=> {
+      const config = await this.getConfig(host, port, username, password)
+
+      client.connect(config)
+          .then(() => {
+            return client.get(path + "/" + username + "/" + filename, SCRIPT_HOME + filename)
+          })
+          .finally(() => {
+            client.end()
             resolve({success: true, message: "Success"})
           })
-          .on('error', (err: any) => {
-            console.log("error", err)
+          .catch( (err: any) => {
             resolve({success: false, message: err?.message})
           })
-      })
-      .on('error', (err: any) => {
-        console.log("error", err)
-        resolve({success: false, message: err?.message})
-      })
-
-      client.connect({
-        host: host,
-        port: port,
-        secure: true,
-        user: username,
-        password: password,
-      })
     })
   }
 

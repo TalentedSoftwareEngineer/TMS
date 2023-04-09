@@ -20,16 +20,17 @@ export const startEventStreamServer = (env: any, options: any) => {
 
     const events = require('events')
     const em = new events.EventEmitter()
-    em.setMaxListeners(env=='production' ? 100 : 10)
+    em.setMaxListeners(env=='production' ? 100 : 30)
 
     const consumer = new Consumer(RSMQ_CONFIG)
-    let users: any[] = [];
+    // let users: any[] = [];
 
     consumer.consume(RSMQ_QUEUE, (message, cb) => {
         // console.log("RSMQ Consuming....", message.getBody())
             // @ts-ignore
         if (users.includes(message.getBody().user_id)) {
-            em.emit('consumer', message.getBody())
+            // @ts-ignore
+            em.emit('consumer-'+ message.getBody().user_id, message.getBody())
             cb()
         } else {
             cb(new ConsumerError("no users"))
@@ -51,30 +52,33 @@ export const startEventStreamServer = (env: any, options: any) => {
 
     app.get("/stream/:userId", (req: any, res: any) => {
         let userId = Number(req.params.userId)
-        if (!users.includes(userId))
-            users.push(userId)
+        // if (!users.includes(userId))
+        //     users.push(userId)
         // console.log(users)
 
         res.writeHead(200, SSE_RESPONSE_HEADER);
         res.write(`:\n\n`);
 
-        em.on('consumer', (data: any) => {
+        let handler = (data: any) => {
             if (data.user_id == userId) {
                 res.write(`data: ${JSON.stringify(data)}\n\n`)
                 res.write(`:\n\n`);
             }
-        })
+        }
+        em.on('consumer-'+userId, handler)
 
         req.on('close', () => {
-            const index = users.findIndex(item => item==userId)
-            if (index>-1)
-                users.splice(index, 1)
+            // const index = users.findIndex(item => item==userId)
+            // if (index>-1)
+            //     users.splice(index, 1)
             // console.log("EventStream Server: disconnected user....")
+            em.removeListener('consumer-'+userId, handler)
         })
 
         req.on('end', () => {
-            users = []
+            // users = []
             // console.log("EventStream Server is ended....")
+            em.removeAllListeners('consumer-'+userId)
         })
     })
 

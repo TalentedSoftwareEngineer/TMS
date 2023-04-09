@@ -65,6 +65,7 @@
     "pm2": "^5.2.2",
     "redis-smq": "^7.2.0",
     "redis-smq-common": "^1.0.5",
+    "ssh2-sftp-client": "^9.0.4",
     "tslib": "^2.0.0"
   },
   "devDependencies": {

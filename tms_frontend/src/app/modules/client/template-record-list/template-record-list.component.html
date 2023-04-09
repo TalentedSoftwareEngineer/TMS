@@ -2,13 +2,27 @@
 
 <p-panel header="Retrieve" [toggleable]="true" [collapsed]="bExpRetrieve" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="grid pt-2">
-        <div class="lg:col-12 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="template" name="template" pInputText (input)="handleUppercase()" [(ngModel)]="inputTemplate" (blur)="onTemplateFieldFocusOut()">
-                <label for="template">Starting Template Name</label>
-            </span>
-            <p *ngIf="!validTemplate" class="p-error">Template Name: Must start with '*', then a valid 2 character Entity ID, followed by 1-12 alphanumerics. Must be 4-15 characters wide. Dashes are optional in the 4th-15th character positions.</p>
-        </div>
+      <div class="lg:col-6 col-12 p-fluid">
+        <span class="p-float-label">
+          <p-dropdown
+            [options]="entityOptions"
+            [(ngModel)]="selectEntity"
+            optionLabel="name"
+            optionValue="value"
+            scrollHeight="150px"
+            [filter]="true"
+            filterBy="name"
+          ></p-dropdown>
+          <label>Entity</label>
+        </span>
+      </div>
+      <div class="lg:col-6 col-12 p-fluid">
+        <span class="p-float-label">
+            <input type="text" id="template" name="template" pInputText (input)="handleUppercase()" [(ngModel)]="inputTemplate">
+            <label for="template">Starting Template Name</label>
+        </span>
+        <p *ngIf="!validTemplate" class="p-error">Template Name: Must start with '*', then a valid 2 character Entity ID, followed by 1-12 alphanumerics. Must be 4-15 characters wide. Dashes are optional in the 4th-15th character positions.</p>
+      </div>
     </div>
     <div class="flex justify-content-end">
         <button pButton pRipple (click)="retrieveTemplates()" icon="pi pi-search" label="Retrieve" class="p-button-text"></button>

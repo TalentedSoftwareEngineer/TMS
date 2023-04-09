@@ -196,14 +196,14 @@ export class PointerRecordService {
                 this.saveActivityResult(profile, activity.id, TASK_TYPE.PAD, TASK_ACTION.RETRIEVE, num, current_utc_time, activity.status, undefined, message, eff_dt_tm)
 
               // new record
-                if (message.includes("540001"))
-                    return {isNew: true}
+              //   if (message.includes("540001"))
+              //       return {isNew: true}
 
                 // multiple entity
-                if (message.includes("505004") || message.includes("530004"))
+                // if (message.includes("505004") || message.includes("530004"))
                     return response
 
-                throw new HttpErrors.BadRequest(message)
+                // throw new HttpErrors.BadRequest(message)
             }
 
             return null

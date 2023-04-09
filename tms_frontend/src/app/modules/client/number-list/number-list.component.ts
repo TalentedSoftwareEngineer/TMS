@@ -88,7 +88,6 @@ export class NumberListComponent implements OnInit {
   scriptSortActive = 'id'
   scriptSortDirection = 'ASC'
   selectedSQLScripts: any[] =[];
-  canceled: boolean = true;
   allFinish: boolean = false;
 
   autoRunStatuses: any[] = [];
@@ -110,6 +109,10 @@ export class NumberListComponent implements OnInit {
   minEffDate: Date = new Date();
   inputNow: boolean = false;
   ids: string[] = [];
+
+  bBtnConfirmVisible: boolean = false;
+  bBtnCancelVisible: boolean = false;
+  bBtnSubmitEnable: boolean = true;
 
   constructor(
     private store: StoreService,
@@ -164,7 +167,7 @@ export class NumberListComponent implements OnInit {
   }
 
   async getTemplate() {
-    await this.api.getTemplateList(this.store.getCurrentRo()!)
+    await this.api.getTemplateList(this.store.getCurrentRo()!, '')
       .pipe(tap( res => {
         // this.templates = [ { tmplName:"" }]
         this.templates = this.templates.concat(res)
@@ -215,7 +218,7 @@ export class NumberListComponent implements OnInit {
         .pipe(tap(async (sql_scriptsRes: any) => {
           this.sql_scripts = [];
           for (let sql_script of sql_scriptsRes) {
-            this.sql_scripts.push(sql_script)
+            this.sql_scripts.push({...sql_script, status: '', imported: '', message: ''})
           }
         })).toPromise();
 
@@ -305,16 +308,22 @@ export class NumberListComponent implements OnInit {
       console.log(data);
       if(data.page=='SER') {
         this.allFinish = true;
-        this.sql_scripts = this.sql_scripts.map(item=>{
-          if(data.sql_id == item.id) {
-            return {...item, status: data.status, imported: data.imported, message: data.message};
-          } else {
-            return {...item, status: '', imported: '', message: ''};
-          }
-        });
+
+        let index = this.sql_scripts.findIndex(item=>(item.id==data.sql_id));
+        let tmp = this.sql_scripts;
+        this.sql_scripts.splice(index, 1, {...tmp[index], status: data.status, imported: data.imported.toString(), message: data.message});
 
         if(!this.ids.includes(data.id)) {
           this.ids.push(data.id);
+        }
+        
+        if(
+          data.status==NUM_IMPRT_STAT_COMPLETED || 
+          data.status==NUM_IMPRT_STAT_FAILED || 
+          data.status==NUM_IMPRT_STAT_SUCCESS
+        ) {
+          this.bBtnCancelVisible = true;
+          this.bBtnSubmitEnable = false;
         }
       }
     })
@@ -323,10 +332,13 @@ export class NumberListComponent implements OnInit {
   submit = async () => {
     let ids = this.selectedSQLScripts.map(item => (item.id));
 
+    if(!ids.length) {
+      this.showInfo('Please select Sql Script.');
+      return;
+    }
+
     this.api.importNumberList(JSON.stringify(ids)).subscribe(async res => {
       if (res) {
-        this.showSuccess('Processing...');
-        this.canceled = false;
       }
     });
   };
@@ -334,16 +346,10 @@ export class NumberListComponent implements OnInit {
   confirm = async () => {
     await this.getNumberList()
 
-    // let res = await new Promise<any>(resolve=>{
-    //   this.api.confirmNumImporting().subscribe(res=>{
-    //     resolve(res);
-    //   });
-    // });
-    
-    // if (res) {
-    //   this.canceled = true
-    // }
     this.allFinish = false;
+    this.bBtnCancelVisible = false;
+    this.bBtnConfirmVisible = false;
+    this.bBtnSubmitEnable = true;
   }
 
   onCancel = () => {
@@ -373,8 +379,8 @@ export class NumberListComponent implements OnInit {
     });
     
     if (res) {
-      this.canceled = true;
-      this.allFinish = false;
+      this.bBtnConfirmVisible = true;
+      this.bBtnCancelVisible = false;
       this.showWarn("Canceled");
     }
   }

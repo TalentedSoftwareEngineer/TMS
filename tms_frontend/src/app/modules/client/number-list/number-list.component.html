@@ -79,11 +79,15 @@
                 <ng-container *ngIf="allFinish">
                     <td class="text-align-center">
                         <span class="p-column-title">Import Status</span>
-                        <p-tag [severity]="getImportStatusColor(sql_script.status)" [value]="sql_script.status"></p-tag>
+                        <ng-container *ngIf="sql_script.status!=''">
+                            <p-tag [severity]="getImportStatusColor(sql_script.status)" [value]="sql_script.status"></p-tag>
+                        </ng-container>
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Imported</span>
-                        <p-tag [severity]="sql_script.imported>0?'success':'danger'" [value]="sql_script.imported"></p-tag>
+                        <ng-container *ngIf="sql_script.imported!=''">
+                            <p-tag [severity]="sql_script.imported>0?'success':'danger'" [value]="sql_script.imported"></p-tag>
+                        </ng-container>
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Message</span>
@@ -103,9 +107,9 @@
     <ng-template pTemplate="footer">
         <div class="flex justify-content-end">
             <span class="p-buttonset">
-                <button pButton pRipple (click)="confirm()" [disabled]="!allFinish" label="Confirm" icon="pi pi-check" class="p-button-text"></button>
-                <button pButton pRipple (click)="onCancel()" [disabled]="!allFinish" label="Cancel" icon="pi pi-times" class="p-button-text"></button>
-                <button pButton pRipple (click)="submit()" [disabled]="allFinish" label="Submit" icon="pi pi-send" class="p-button-text"></button>
+                <button pButton pRipple (click)="confirm()" *ngIf="bBtnConfirmVisible" label="Confirm" icon="pi pi-check" class="p-button-text"></button>
+                <button pButton pRipple (click)="onCancel()" *ngIf="bBtnCancelVisible" label="Cancel" icon="pi pi-times" class="p-button-text"></button>
+                <button pButton pRipple (click)="submit()" [disabled]="!bBtnSubmitEnable" label="Submit" icon="pi pi-send" class="p-button-text"></button>
             </span>
         </div>
     </ng-template>
@@ -225,7 +229,6 @@
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Action</span>
-
                         </td>
                     </tr>
                 </ng-template>
@@ -253,7 +256,6 @@
         </div>
     </ng-template>
 </p-panel>
-
 
 <p-dialog styleClass="c-modal pt-2" [(visible)]="flagOpenActivateModal" (onHide)="closeActivateModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '60vw'}" [modal]="true" [draggable]="false" [resizable]="false">
     <ng-template pTemplate="header">

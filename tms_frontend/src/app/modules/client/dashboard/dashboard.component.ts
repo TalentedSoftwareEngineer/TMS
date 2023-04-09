@@ -26,7 +26,6 @@ export class DashboardComponent implements OnInit {
       let mainUserInterval = setInterval(() => {
         if (this.store.getUser()) {
           clearInterval(mainUserInterval)
-
           resolve()
         }
       }, 100)

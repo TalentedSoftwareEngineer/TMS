@@ -8,6 +8,7 @@ import {defaultDarkTheme, defaultLightTheme, defaultAvatar, defaultLogo} from ".
 import { LayoutService } from 'src/app/services/layout/layout.service';
 import { MenuService } from 'src/app/services/menu/menu.service';
 import { EMAIL_REG_EXP, SUPER_ADMIN_ID, TMSUserType } from '../../constants';
+import {Location} from '@angular/common';
 
 @Component({
   selector: 'app-account',
@@ -26,6 +27,7 @@ export class AccountComponent implements OnInit {
   input_username: string|number|undefined|null = ''
   input_company_id: any = ''
   input_role_id: any = ''
+  input_timezone: any = 0
   input_email: string|number|undefined|null = ''
   validEmail: boolean = true;
   input_first_name: string|number|undefined|null = ''
@@ -48,6 +50,11 @@ export class AccountComponent implements OnInit {
 
   companies: any[] = []
   roles: any[] = []
+  timezones: any[] = [
+    {name: 'Auto Detect', value: 0},
+    {name: 'CST', value: -6},
+    {name: 'EST', value: -5}
+  ]
   sms_users: any[] = []
   required = true;
   logged_user: any;
@@ -113,6 +120,7 @@ export class AccountComponent implements OnInit {
     private confirmationService: ConfirmationService,
     public layoutService: LayoutService,
     private menuService: MenuService,
+    private location: Location,
   ) { }
 
   async ngOnInit() {
@@ -132,6 +140,7 @@ export class AccountComponent implements OnInit {
       this.input_username = res.username;
       this.input_company_id = {name: res.company?.name, value: res.company?.id};
       this.input_role_id = {name: res.role?.name, value: res.role?.id};
+      this.input_timezone = res.timezone;
       this.input_email = res.email;
       this.input_first_name = res.first_name;
       this.input_last_name = res.last_name;
@@ -267,6 +276,7 @@ export class AccountComponent implements OnInit {
     let username = this.input_username;
     let company_id = this.input_company_id?.value;
     let role_id = this.input_role_id?.value;
+    let timezone = this.input_timezone
     let email = this.input_email;
     let first_name = this.input_first_name;
     let last_name = this.input_last_name;
@@ -286,7 +296,8 @@ export class AccountComponent implements OnInit {
       first_name: first_name,
       last_name: last_name,
       company_id: company_id,
-      role_id: role_id
+      role_id: role_id,
+      timezone: timezone
     }).pipe(tap(res=>{
       this.showSuccess('Successfully Updated!');
     })).toPromise();
@@ -297,6 +308,7 @@ export class AccountComponent implements OnInit {
       this.input_username = res.username;
       this.input_company_id = {name: res.company?.name, value: res.company?.id};
       this.input_role_id = {name: res.role?.name, value: res.role?.id};
+      this.input_timezone = 0
       this.input_email = res.email;
       this.input_first_name = res.first_name;
       this.input_last_name = res.last_name;
@@ -643,6 +655,10 @@ export class AccountComponent implements OnInit {
     this.layoutService.applyTheme(scheme=='dark' ? this.selectedDarkTheme.key : this.selectedLightTheme.key,
       scheme=='dark' ? this.selectedDarkTheme.mode : this.selectedLightTheme.mode,
       scheme=='dark' ? this.selectedDarkTheme.pace : this.selectedLightTheme.pace)
+  }
+
+  onBack = () => {
+    this.location.back();
   }
 
   showWarn = (msg: string) => {

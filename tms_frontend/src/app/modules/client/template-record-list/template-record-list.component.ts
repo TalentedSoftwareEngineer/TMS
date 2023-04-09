@@ -32,6 +32,8 @@ export class TemplateRecordListComponent implements OnInit {
 
   inputNumListFilterKey: string = '';
 
+  entityOptions: any[] = [];
+  selectEntity: string = '';
   inputTemplate: string = '';
   validTemplate: boolean = true;
 
@@ -74,22 +76,46 @@ export class TemplateRecordListComponent implements OnInit {
         this._router.navigateByUrl(ROUTES.dashboard)
         return
       }
+
+      this.entityOptions = this.store.getEntities();
+      this.entityOptions.sort((firstItem: any, secondItem: any): any => {
+        if(firstItem.name > secondItem.name) {
+          return 1;
+        }
+        if(firstItem.name < secondItem.name) {
+          return -1;
+        }
+        return 0;
+      });
     })
   }
 
 
   retrieveTemplates = async () => {
-    this.onTemplateFieldFocusOut()
-    if (!this.validTemplate)
-      return
+    
+    if(this.selectEntity === "") {
+      this.showWarn("Please input entity.");
+      return;
+    }
 
-    await this.api.getTemplateList(this.store.getCurrentRo()!, this.inputTemplate)
+    // check if the template name value is proper to the rule of the template name
+    let reg = RegExp(`^\\*${this.selectEntity}[A-Z|-]{1}`)
+    const template = this.inputTemplate.trim();
+
+    if (template !== '' && !reg.test(template)) {
+      this.validTemplate = false;
+      return;
+    } else {
+      this.validTemplate = true
+    }
+
+    await this.api.getTemplateList(this.store.getCurrentRo()!, this.selectEntity, this.inputTemplate)
       .pipe(tap( (res: any[]) => {
         res.map(u => {
           u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('YYYY/MM/DD h:mm:ss A') : '';
           u.numbers = 0
         })
-        this.retrieveResults = res
+        this.retrieveResults = res  
       })).toPromise();
   }
 
@@ -100,6 +126,9 @@ export class TemplateRecordListComponent implements OnInit {
   //Get the input value on change event
   handleUppercase = () => {
     this.inputTemplate = this.inputTemplate.toUpperCase()
+    // if(this.inputTemplate[0]!='*') {
+    //   this.inputTemplate = '*' + this.inputTemplate;
+    // }
     this.validTemplate = true;
   };
 

@@ -23,8 +23,7 @@ import {QueueManager} from "redis-smq";
 import {EQueueType} from "redis-smq/dist/types";
 import {CronComponent, CronJob} from "@loopback/cron";
 import {AutoReserve} from "./jobs/auto-reserve";
-import {UploadScript} from "./jobs/upload-script";
-import {DownloadScript} from "./jobs/download-script";
+import {AutoImportScript} from "./jobs/auto-import-script";
 export {ApplicationConfig};
 
 export class BackendApplication extends BootMixin(
@@ -91,13 +90,10 @@ export class BackendApplication extends BootMixin(
     this.service(CustomerRecordService);
     this.service(PointerRecordService);
 
-    const auto_reserve_job = createBindingFromClass(AutoReserve)
-    this.add(auto_reserve_job)
+    const autoReserveBinding = createBindingFromClass(AutoReserve)
+    this.add(autoReserveBinding)
 
-    const upload_script = createBindingFromClass(UploadScript)
-    this.add(upload_script)
-
-    const download_script = createBindingFromClass(DownloadScript)
-    this.add(download_script)
+    const autoImportScriptBinding = createBindingFromClass(AutoImportScript)
+    this.add(autoImportScriptBinding)
   }
 }

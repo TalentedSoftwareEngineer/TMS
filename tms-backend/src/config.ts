@@ -3,6 +3,7 @@ export const PRIVATE_KEY = '/etc/letsencrypt/live/tmsdev.tfnms.com/privkey.pem'
 export const SERVER = "tmsdev.tfnms.com"
 
 export const TEMPORARY = process.env.NODE_ENV=='production' ? '/tmp/' : 'e:/tmp/'
+export const SCRIPT_HOME = process.env.NODE_ENV=='production' ? '/home/tfnmadmin/script/' : 'e:/tmp/'
 
 export const RSMQ_QUEUE = "activities"
 export const RSMQ_CONFIG: any = {

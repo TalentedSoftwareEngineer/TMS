@@ -546,8 +546,14 @@ export class CustomerAdminDataComponent implements OnInit {
           this.unlockCustomerRecord()
           this.reflectDataOnPage(num, res)
           // this.backupStateToLastAction()
-          resolve(true)
-  
+          resolve(true)  
+        }
+
+        if (res !== undefined && res.errList !== undefined && res.errList.length) {
+          this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+          this.inputMessage = gFunc.synthesisErrMsg(res.errList);
+          this.bRetrieveEnable = true
+          resolve(false);
         } else {
           let message = "An unknown error occurred."
           this.showError(message, 'Error');
@@ -977,11 +983,8 @@ export class CustomerAdminDataComponent implements OnInit {
         this.bRetrieveEnable = true
         if (res.createStatus.statusMessages)
           this.showError("", res.createStatus.statusMessages[0].errMsg)
-
         return
       }
-
-      // if (res.data.errList && res.dat)
     }
 
     let retrieveCardTitle = "Create a New Customer Record: " + gFunc.formattedNumber(this.inputSearchNum)
@@ -1645,7 +1648,7 @@ export class CustomerAdminDataComponent implements OnInit {
     let body = { custRecAction: this.gConst.ACTION_UPDATE, srcNum: this.num, srcEffDtTm: UTCTimeStr, custRecCompPart: this.custRecCompPart }
     this.api.lockCadRec({body: JSON.stringify(body), ro: ro}).subscribe(res => {
       if (res) {
-        if (res.data.updateStatus.isAllowed === 'Y') {
+        if (res.updateStatus.isAllowed === 'Y') {
           this.lockParam = body;
           this.action = this.gConst.ACTION_UPDATE;
 
@@ -1827,7 +1830,7 @@ export class CustomerAdminDataComponent implements OnInit {
       }
 
       // no error, update successful
-      if (await this.retrieveCustomerRecord(body.tgtNum, res.data.effDtTm)) {
+      if (await this.retrieveCustomerRecord(body.tgtNum, res.effDtTm)) {
         this.showSuccess(CAD_DISCONNECT_SUCCESSFUL);
         this.inputMessage = CAD_DISCONNECT_SUCCESSFUL
         this.action = this.gConst.ACTION_NONE
@@ -1858,7 +1861,7 @@ export class CustomerAdminDataComponent implements OnInit {
       }
     } else {
       // no error, update successful
-      if (await this.retrieveCustomerRecord(body.tgtNum, res.data.effDtTm)) {
+      if (await this.retrieveCustomerRecord(body.tgtNum, res.effDtTm)) {
         this.showSuccess(CAD_COPY_SUCCESSFUL);
         this.inputMessage = CAD_COPY_SUCCESSFUL
         this.action = this.gConst.ACTION_NONE
@@ -1958,10 +1961,9 @@ export class CustomerAdminDataComponent implements OnInit {
         }
       }
 
-    } else if (res.data != undefined) {
-
+    } else if (res != undefined) {
       // if there is any error
-      let errList = res.data.errList
+      let errList = res.errList
       if (errList != undefined && errList != null) {
 
         let message = gFunc.synthesisErrMsg(errList)
@@ -3210,7 +3212,7 @@ export class CustomerAdminDataComponent implements OnInit {
 
         let bOverwrite = false
 
-        if (res.data.effDtTm === this.lockParam.tgtEffDtTm) {
+        if (res.effDtTm === this.lockParam.tgtEffDtTm) {
 
           // if cpr data of target record exits, should overwrite.
           if (this.portionCPR && data.cprSectName && data.cprSectName.length)

@@ -34,6 +34,10 @@
     </div>
 </div> -->
 
+<div class="flex mb-4 align-items-center justify-content-end">
+    <button pButton pRipple type="button" size="large" (click)="onBack()" label="Back" icon="pi pi-chevron-left" class="p-button-text"></button>
+</div>
+
 <div class="card">
     <p-tabView [(activeIndex)]="accountTabIndex">
         <p-tabPanel header="Main Information">
@@ -49,6 +53,10 @@
                 <span class="field p-float-label">
                     <p-dropdown [options]="roles" id="role_id" name="role_id" [(ngModel)]="input_role_id" placeholder="Role" optionLabel="name" scrollHeight="150px"  [required]="required" [disabled]="true"></p-dropdown>
                     <label for="role_id">Role</label>
+                </span>
+                <span class="field p-float-label">
+                    <p-dropdown [options]="timezones" id="timezone" name="timezone" [(ngModel)]="input_timezone" optionLabel="name" optionValue="value" scrollHeight="150px" styleClass="w-100"></p-dropdown>
+                    <label for="timezone">Time Zone</label>
                 </span>
                 <span class="field p-float-label">
                     <input type="text" id="email" name="email" pInputText [(ngModel)]="input_email" [ngClass]="{'ng-dirty': !validEmail, 'ng-invalid': !validEmail}" (input)="onInputEmail()"> 

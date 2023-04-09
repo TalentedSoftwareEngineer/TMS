@@ -56,7 +56,7 @@ import {
 import {MessageQueueService} from "./message-queue.service";
 import {PAGES} from "../constants/pages";
 import {NQURequest} from "../models/nqu.request";
-import {REQ_SIZE} from "../constants/configurations";
+import {REQ_SIZE, SUPER_ADMIN} from "../constants/configurations";
 import {TRQRequest} from "../models/trq.request";
 import {MNQRequest} from "../models/mnq.request";
 import {MNDRequest} from "../models/mnd.request";
@@ -68,7 +68,7 @@ import {MailService} from "./mail.service";
 import {Secure382ApiService} from "./secure-382-api.service";
 import {FtpService} from "./ftp.service";
 import * as fs from "fs";
-import {TEMPORARY} from "../config";
+import {SCRIPT_HOME, TEMPORARY} from "../config";
 
 @injectable({scope: BindingScope.TRANSIENT})
 export class NumberService {
@@ -144,8 +144,8 @@ export class NumberService {
     return error_message
   }
 
-  private async saveNumber(profile: AuthorizedUserProfile, num: string, status?: string, sub_dt_tm?: string, resp_org?: string, template_name?: string, eff_dt_tm?: string, last_act_dt?: string, res_until_dt?: string, disc_until_dt?: string) {
-    let created_by = profile.user.id
+  private async saveNumber(profile?: AuthorizedUserProfile, num?: string, status?: string, sub_dt_tm?: string, resp_org?: string, template_name?: string, eff_dt_tm?: string, last_act_dt?: string, res_until_dt?: string, disc_until_dt?: string) {
+    let created_by = profile ? profile.user.id : SUPER_ADMIN
     let created_at = new Date().toISOString()
 
     let numObj: any = await this.numbersRepository.findOne({where: {num: num}})
@@ -173,7 +173,7 @@ export class NumberService {
 
     numObj = new Numbers()
     numObj.num = num
-    numObj.user_id = profile.user.id
+    numObj.user_id = profile ? profile.user.id : SUPER_ADMIN
 
     if (resp_org!=null) {
       numObj.entity = resp_org.substring(0, 2)
@@ -201,7 +201,7 @@ export class NumberService {
     numObj.created_at = created_at
     numObj.created_by = created_by
     numObj.updated_at = new Date().toISOString()
-    numObj.updated_by = profile.user.id!
+    numObj.updated_by = profile? profile.user.id! : SUPER_ADMIN
 
     await this.numbersRepository.create(numObj)
   }
@@ -924,7 +924,7 @@ export class NumberService {
     payload.requestDesc = req.requestDesc
     payload.email = profile.user.email
 
-    const req_size = 500
+    const req_size = 10
 
     while (total>0) {
       if (numList.length>req_size) {
@@ -943,7 +943,6 @@ export class NumberService {
 
       if (response==null) {
         failed += payload.qty
-
         error_message = this.appendErrorMessage(error_message, MESSAGES.EMPTY_RESPONSE)
       }
       else if (response.errList!=null) {
@@ -2760,10 +2759,7 @@ export class NumberService {
 
 
 
-  async executeScript(sr: ScriptResult, user: any, profile: AuthorizedUserProfile) {
-    let completed: string[] = []
-    let download: any = {}
-
+  async executeScript(sr: ScriptResult, user: any, profile?: AuthorizedUserProfile) {
     while (true) {
       const status = await this.scriptResultRepository.getProgress(sr.id)
       if (DataUtils.isFinished(status)) {
@@ -2817,7 +2813,7 @@ export class NumberService {
             + Math.random().toString(36).substring(2, 15)
 
         try {
-          fs.writeFileSync(TEMPORARY + filename + ".sql", content)
+          fs.writeFileSync(SCRIPT_HOME + filename + ".sql", content)
 
           // TODO: upload sql content to ftp server
           const result = await this.ftpService.upload(user, filename+".sql")
@@ -2859,13 +2855,11 @@ export class NumberService {
               // TODO: read all content from downloaded file or read several lines on next step
               if (sr.out_filename) {
                 const result = await this.ftpService.download(user, sr.out_filename!)
-                sr.status = PROGRESSING_STATUS.FAILED
                 sr.message = result.message
               }
 
               if (sr.err_filename) {
                 const result = await this.ftpService.download(user, sr.err_filename!)
-                sr.status = PROGRESSING_STATUS.FAILED
                 sr.message = result.message
               }
             }
@@ -2878,9 +2872,69 @@ export class NumberService {
       else if (sr.status==PROGRESSING_STATUS.IMPORTING) {
         // check downloaded file
         try {
-          if (sr.out_filename && fs.existsSync(TEMPORARY + sr.out_filename)) {
+          if (sr.out_filename && fs.existsSync(SCRIPT_HOME + sr.out_filename)) {
             // TODO: update number list from downloaded file
 
+            const buffer = fs.readFileSync(SCRIPT_HOME + sr.out_filename)
+            let content = buffer.toString()
+            if (content!="") {
+              // TODO - parse content
+              let blockList = content.split("EN ORG")
+
+              let roIdList: any[] = [];
+              let numberList: any[] = [];
+              let statusList: any[] = [];
+
+              let results: any[] = [];
+
+              if(blockList.length > 1) {
+                blockList.forEach(block=>{
+                  let rowList = block.split("\n")
+
+                  if (rowList.length > 3) {
+                    for(let i=2; i <= rowList.length - 2; i++) {
+                      if(!Boolean(rowList[i]) || !(rowList[i][0] != ' ' && rowList[i][1] != ' ' && rowList[i][2] == ' ')) break
+
+                      var line: string = rowList[i].replace("\t", " ").replace("\t", " ")
+
+                      while (line.includes("  "))
+                        line = line.replace("  ", " ")
+
+                      let itemList = line.split(" ")
+
+                      if (itemList.length != 4) continue
+
+                      let status = NUMBER_STATUS.SPARE
+                      if (itemList[3]=="A")
+                        status = NUMBER_STATUS.ASSIGNED
+                      else if (itemList[3]=='P')
+                        status = NUMBER_STATUS.SUSPEND
+                      else if (itemList[3]=='D')
+                        status = NUMBER_STATUS.DISCONNECT
+                      else if (itemList[3]=='R')
+                        status = NUMBER_STATUS.RESERVED
+                      else if (itemList[3]=='T')
+                        status = NUMBER_STATUS.TRANSITIONAL
+                      else if (itemList[3]=='U')
+                        status = NUMBER_STATUS.UNAVAILABLE
+                      else if (itemList[3]=='W')
+                        status = NUMBER_STATUS.WORKING
+
+                      results.push({roId: itemList[0] + itemList[1], number: itemList[2], status});
+                    }
+                  }
+                });
+              }
+
+              for (let item of results) {
+                this.saveNumber(profile, item.nuumber, item.status, sr.created_at, item.roId)
+                sr.imported += 1
+                if(sr.imported%10==0)
+                  this.messageQueueService.pushScriptExecution(sr)
+              }
+
+              this.messageQueueService.pushScriptExecution(sr)
+            }
 
             // TODO: if read all, update status to "COMPLETED"
             sr.status = PROGRESSING_STATUS.COMPLETED
@@ -2891,26 +2945,45 @@ export class NumberService {
         }
 
         try {
-          if (sr.out_filename && fs.existsSync(TEMPORARY + sr.out_filename)) {
+          if (sr.err_filename && fs.existsSync(SCRIPT_HOME + sr.err_filename)) {
             // TODO: update error from downloaded file
-
-            // TODO: if read all, update status to "COMPLETED"
-            sr.status = PROGRESSING_STATUS.COMPLETED
+            const buffer = fs.readFileSync(SCRIPT_HOME + sr.err_filename)
+            sr.message = buffer.toString()
           }
         } catch (err) {
           sr.message = err?.message
           sr.status = PROGRESSING_STATUS.FAILED
         }
+
+        if (sr.status != PROGRESSING_STATUS.COMPLETED)
+          sr.status = PROGRESSING_STATUS.FAILED
       }
 
       sr.updated_at = new Date().toISOString()
       await this.scriptResultRepository.save(sr)
+
       this.messageQueueService.pushScriptExecution(sr)
 
       await DataUtils.sleep(100)
 
-      if (DataUtils.isFinished(sr.status))
+      if (DataUtils.isFinished(sr.status)) {
+        // TODO - delete all files
+        try {
+          if (sr.filename)
+            fs.rm(SCRIPT_HOME + sr.filename + ".sql", ()=>{})
+        } catch (err) {}
+
+        try {
+          if (sr.out_filename)
+            fs.rm(SCRIPT_HOME + sr.out_filename, ()=>{})
+        } catch (err) {}
+
+        try {
+          if (sr.err_filename)
+            fs.rm(SCRIPT_HOME + sr.err_filename, ()=>{})
+        } catch (err) {}
         return
+      }
     }
   }
 

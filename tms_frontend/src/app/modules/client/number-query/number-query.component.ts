@@ -73,7 +73,17 @@ export class NumberQueryComponent implements OnInit {
     public router: Router
   ) { }
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    await new Promise<void>(resolve => {
+      let mainUserInterval = setInterval(() => {
+        if (this.store.getUser()) {
+          clearInterval(mainUserInterval)
+
+          resolve()
+        }
+      }, 100)
+    })
+
     this.store.state$.subscribe(async (state)=> {
       if(state.user.permissions?.includes(PERMISSIONS.NUMBER_QUERY)) {
       } else {
