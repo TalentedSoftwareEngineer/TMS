@@ -227,10 +227,10 @@
             <td class="text-align-center">
               <span class="p-column-title">Action</span>
               <span class="p-buttonset">
-                <button pButton pRipple title="Detail" type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
-                <button pButton pRipple title="Download" *ngIf="result.status!='IN PROGRESS'" type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
-                <button pButton pRipple title="Cancel" *ngIf="result.status=='IN PROGRESS'" type="button" icon="pi pi-stop" class="p-button-rounded p-button-warning p-button-outlined" (click)="cancel($event, result.id)"></button>
-                <button pButton pRipple title="Delete" type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
+                <button pButton pRipple [disabled]="isProgressing(result)" title="Detail" type="button" icon="pi pi-eye" class="p-button-rounded p-button-outlined" (click)="onOpenViewModal($event, result)"></button>
+                <button pButton pRipple [disabled]="isProgressing(result)" title="Download" *ngIf="result.status!='IN PROGRESS'" type="button" icon="pi pi-download" class="p-button-rounded p-button-success p-button-outlined" (click)="onDownloadCsv($event, result)"></button>
+                <button pButton pRipple [disabled]="isProgressing(result)" title="Cancel" *ngIf="result.status=='IN PROGRESS'" type="button" icon="pi pi-stop" class="p-button-rounded p-button-warning p-button-outlined" (click)="cancel($event, result.id)"></button>
+                <button pButton pRipple [disabled]="isProgressing(result)" title="Delete" type="button" icon="pi pi-times" class="p-button-rounded p-button-secondary p-button-outlined" (click)="delete($event, result.id)"></button>
               </span>
             </td>
           </tr>

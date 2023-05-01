@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {ConfirmationService, ConfirmEventType, MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { StoreService } from 'src/app/services/store/store.service';
@@ -18,7 +18,11 @@ import {
   OCA_NUM_TYPE_SPECIFIC,
   SPECIFICNUM_REG_EXP,
   SVC_ORDR_NUM_REG_EXP,
-  TIME_REG_EXP, PAGE_NO_PERMISSION_MSG
+  TIME_REG_EXP, 
+  PAGE_NO_PERMISSION_MSG, 
+  SQL_TYPE_OPTIONS,
+  RECORD_PAGE_ACTION_RETRIEVE,
+  RECORD_PAGE_ACTION_CREATE
 } from '../../constants';
 import { ApiService } from 'src/app/services/api/api.service';
 import { tap } from 'rxjs/operators';
@@ -26,6 +30,8 @@ import moment from 'moment';
 import {ISqlScript} from "../../../models/user";
 import {closeEventSource, SseClient} from "angular-sse-client";
 import {environment} from "../../../../environments/environment";
+import * as gFunc from 'src/app/utils/utils';
+import Cookies from "universal-cookie";
 
 const NUM_IMPRT_STAT_COMPLETED     = "COMPLETED"
 const NUM_IMPRT_STAT_FAILED     = "FAILED"
@@ -37,27 +43,33 @@ const NUM_IMPRT_STAT_CANCELED     = "CANCELED"
   templateUrl: './number-list.component.html',
   styleUrls: ['./number-list.component.scss']
 })
-export class NumberListComponent implements OnInit {
+export class NumberListComponent implements OnInit, OnDestroy {
 
   pageSize = 10
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  sortActive = 'id'
-  sortDirection = 'ASC'
+  sortActive = 'sub_dt_tm'
+  sortDirection = 'DESC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
   rowsPerPageOptions: any[] = [10, 25, 50, 100];
 
   respOrgIdOptions: any[] = [];
+  respOrgIds: any[] = [];
   selectRespOrgId: any = '';
   entityOptions: any[] = [];
+  entities: any[] = [];
   selectEntity: string = '';
   tmplNameOptions: any[] = [];
+  tmplNames: any[] = [];
   selectTmplName = '';
   statusOptions: any[] = [];
   selectStatus = '';
+  companyOptions: any[] = [];
+  selectCompany: string = '';
+  companies: any[] = [];
 
   selectUsername: string = '';
   usernameOptions: any[] = []
@@ -76,12 +88,15 @@ export class NumberListComponent implements OnInit {
     OCA_NUM_TYPE_SPECIFIC,
     SPECIFICNUM_REG_EXP,
     SVC_ORDR_NUM_REG_EXP,
-    TIME_REG_EXP
+    TIME_REG_EXP,
+    RECORD_PAGE_ACTION_RETRIEVE,
+    RECORD_PAGE_ACTION_CREATE
   }
 
   sql_scripts: any[] = [];
   scriptLength: number = -1
   scriptFilterValue = ''
+  scriptFilterName = ''
   filteredScriptLength: number = -1
   scriptPageSize = 10
   scriptPageIndex = 1
@@ -114,6 +129,11 @@ export class NumberListComponent implements OnInit {
   bBtnCancelVisible: boolean = false;
   bBtnSubmitEnable: boolean = true;
 
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
+
+  sqlTypeOptions: any[] = SQL_TYPE_OPTIONS;
+  selectSqlType: string = ''
+
   constructor(
     private store: StoreService,
     private messageService: MessageService,
@@ -134,17 +154,18 @@ export class NumberListComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user?.permissions?.includes(PERMISSIONS.NUMBER_LIST)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
+    if(this.store.getUser()?.permissions?.includes(PERMISSIONS.NUMBER_LIST)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
-      this.selectRespOrgId = state.currentRo;
+    this.store.state$.subscribe(async (state)=> {
+      // this.selectRespOrgId = state.currentRo;
+      await this.getCompaniesList();
       this.getTotalNumberList();
       this.getNumberList();
     })
@@ -160,10 +181,12 @@ export class NumberListComponent implements OnInit {
 
     this.getTotalSqlScriptsCount()
     this.getSqlScriptsList()
-
-
     // this.getTotalNumberList();
     // this.getNumberList();
+  }
+
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
   }
 
   async getTemplate() {
@@ -182,12 +205,14 @@ export class NumberListComponent implements OnInit {
         .pipe(tap(async (res: any[]) => {
           this.numberList = [];
           res.map(u => {
-            u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '';
-            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
           });
 
           for (let record of res) {
-            this.numberList.push(record)
+            let company = this.companies.find(item=>item.resp_org_id==record.resp_org);
+            record.company = company ? company.name + ' (' + company.code + ')' : '';
+            this.numberList.push(record);
           }
         })).toPromise();
 
@@ -234,7 +259,7 @@ export class NumberListComponent implements OnInit {
 
   getTotalSqlScriptsCount = async () => {
     this.scriptLength = -1
-    await this.api.getSqlScriptsCount('').pipe(tap( res => {
+    await this.api.getSqlScriptsCount('', '').pipe(tap( res => {
       this.scriptLength = res.count
     })).toPromise();
   }
@@ -258,9 +283,11 @@ export class NumberListComponent implements OnInit {
       await this.api.getRespOrgOfNumberList()
         .pipe(tap(async (res: any[]) => {
           this.respOrgIdOptions = [{name: 'All', value: ''}]
+          this.respOrgIds = [];
           res.forEach((item) => {
             if (item.resp_org!=null && item.resp_org!="")
               this.respOrgIdOptions.push({name: item.resp_org, value: item.resp_org})
+              this.respOrgIds.push({name: item.resp_org, value: item.resp_org})
           })
         })).toPromise();
     } catch (e) {
@@ -269,14 +296,28 @@ export class NumberListComponent implements OnInit {
 
   getEntities = async () => {
     try {
-      await this.api.getEntityOfNumberList()
-        .pipe(tap(async (res: any[]) => {
-          this.entityOptions = [{name: 'All', value: ''}]
-          res.forEach((item) => {
-            if (item.entity!=null && item.entity!="")
-              this.entityOptions.push({name: item.entity, value: item.entity})
-          })
-        })).toPromise();
+      // await this.api.getEntityOfNumberList()
+      //   .pipe(tap(async (res: any[]) => {
+      //     this.entityOptions = [{name: 'All', value: ''}]
+      //     res.forEach((item) => {
+      //       if (item.entity!=null && item.entity!="")
+      //         this.entityOptions.push({name: item.entity, value: item.entity})
+      //     })
+      //   })).toPromise();
+
+      this.entities = this.store.getEntities();
+      this.entities.sort((firstItem: any, secondItem: any): any => {
+        if(firstItem.name > secondItem.name)
+          return 1;
+
+        if(firstItem.name < secondItem.name)
+          return -1;
+
+        return 0;
+      });
+
+      this.entityOptions = [{name: 'All', value: ''}, ...this.entities];
+      this.entities = [{name: 'All', value: ''}, ...this.entities];
     } catch (e) {
     }
   }
@@ -285,9 +326,11 @@ export class NumberListComponent implements OnInit {
     await this.api.getTemplateOfNumberList()
       .pipe(tap( res => {
         this.tmplNameOptions = [{name: 'All', value: ''}]
+        this.tmplNames = []
         res.forEach((item) => {
           if (item.template_name!=null && item.template_name!="")
-            this.tmplNameOptions.push({name: item.template_name, value: item.template_name})
+            this.tmplNameOptions.push({name: item.template_name, value: item.template_name});
+            this.tmplNames.push({name: item.template_name, value: item.template_name});
         })
       })).toPromise();
   }
@@ -303,11 +346,25 @@ export class NumberListComponent implements OnInit {
       })).toPromise();
   }
 
+  getCompaniesList = async () => {
+    try {
+      await this.api.getCompaniesListForFilter()
+        .pipe(tap(async (res: any[]) => {
+          this.companyOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: item.name, value: item.resp_org_id}))];
+          this.companies = res;
+        })).toPromise();
+    } catch (e) {
+    }
+  }
+
   backPressureEvent = () => {
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       console.log(data);
       if(data.page=='SER') {
         this.allFinish = true;
+        this.bBtnCancelVisible = true;
+        this.bBtnConfirmVisible = false;
+        this.bBtnSubmitEnable = false;
 
         let index = this.sql_scripts.findIndex(item=>(item.id==data.sql_id));
         let tmp = this.sql_scripts;
@@ -322,11 +379,41 @@ export class NumberListComponent implements OnInit {
           data.status==NUM_IMPRT_STAT_FAILED || 
           data.status==NUM_IMPRT_STAT_SUCCESS
         ) {
-          this.bBtnCancelVisible = true;
+          this.bBtnConfirmVisible = true;
+          this.bBtnCancelVisible = false;
           this.bBtnSubmitEnable = false;
         }
       }
     })
+  }
+
+  onChangeEntity = (event: any) => {
+    this.respOrgIdOptions = [{name: 'All', value: ''}, ...this.respOrgIds.filter(item=>item?.name?.includes(event.value) && Boolean(item?.name))];
+    this.tmplNameOptions = [{name: 'All', value: ''}, ...this.tmplNames.filter(item=>item?.name?.slice(0, 3)==('*'+event.value) && Boolean(item?.name))];
+    this.onClickFilter();
+  }
+
+  onChangeRespOrgId = (event: any) => {
+    this.tmplNameOptions = [
+      {name: 'All', value: ''}, 
+      ...this.tmplNames.filter(item=>item?.name?.includes(event.value) && Boolean(item?.name))
+    ];
+
+    if(this.companyOptions.find(item=>(item.value==event.value) == undefined))
+      this.selectCompany = '';
+    else
+      this.selectCompany = event.value;
+
+    this.onClickFilter();
+  }
+
+  onChangeCompany = (event: any) => {
+    if(this.respOrgIdOptions.find(item=>(item.value==event.value) == undefined))
+      this.selectRespOrgId = '';
+    else
+      this.selectRespOrgId = event.value;
+
+    this.onClickFilter();
   }
 
   submit = async () => {
@@ -346,6 +433,8 @@ export class NumberListComponent implements OnInit {
   confirm = async () => {
     await this.getNumberList()
 
+    this.selectedNumbers = [];
+
     this.allFinish = false;
     this.bBtnCancelVisible = false;
     this.bBtnConfirmVisible = false;
@@ -358,6 +447,7 @@ export class NumberListComponent implements OnInit {
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
+        this.selectedNumbers = [];
         this.cancelSqlScript();
       },
       reject: (type: any) => {
@@ -379,9 +469,11 @@ export class NumberListComponent implements OnInit {
     });
     
     if (res) {
-      this.bBtnConfirmVisible = true;
+      this.bBtnConfirmVisible = false;
       this.bBtnCancelVisible = false;
-      this.showWarn("Canceled");
+      this.bBtnSubmitEnable  = true;
+      this.showSuccess("Canceled");
+      
     }
   }
 
@@ -403,7 +495,7 @@ export class NumberListComponent implements OnInit {
           'Template': u.template_name!=null ? u.template_name : "",
           'Number': u.num,
           'Status': u.status,
-          'Submit Date': u.sub_dt_tm!=null ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '',
+          'Submit Date': u.sub_dt_tm!=null ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '',
         }));
 
         import("xlsx").then(xlsx => {
@@ -527,8 +619,9 @@ export class NumberListComponent implements OnInit {
     if (this.inputNow)
       effDateTime = "NOW"
     else if (this.inputEffDate!=null) {
-      let d = new Date(this.inputEffDate).getTime()
-      effDateTime = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'
+      // let d = new Date(this.inputEffDate).getTime()
+      // effDateTime = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'
+      effDateTime = gFunc.fromCTTimeToUTCStr(new Date(this.inputEffDate));
     }
 
     body.effDtTm = effDateTime
@@ -543,6 +636,55 @@ export class NumberListComponent implements OnInit {
 
   onModalCancel = () => {
     this.closeActivateModal()
+  }
+
+  onClickTmplName = (tmplName: string) => {
+    if(Boolean(tmplName))
+      this.gotoTADPage(tmplName)
+  }
+
+  onClickCAD = (number: string, status: string) => {
+    if(Boolean(number)) {
+      if (status == 'WORKING')
+        this.gotoCADPage(number)
+      else if (status == 'RESERVED')
+        this.createCad(number)
+    }
+  }
+
+  onClickPAD = (number: string, status: string) => {
+    if (Boolean(number) && status == 'WORKING')
+      this.gotoPADPage(number)
+  }
+
+  gotoTADPage = (tmplName: string) => {
+    const cookies = new Cookies();
+    cookies.set("tmplName", tmplName);
+    cookies.set("effDtTm", "");
+    this.router.navigateByUrl('/service/tad');
+  }
+
+  gotoCADPage = (number: string) => {
+    const cookies = new Cookies();
+    cookies.set("cusNum", number);
+    cookies.set("cusEffDtTm", "");
+    cookies.set("action", this.gConst.RECORD_PAGE_ACTION_RETRIEVE);
+    this.router.navigateByUrl(ROUTES.customerAdmin.cad)
+  }
+
+  gotoPADPage = (number: string) => {
+    const cookies = new Cookies();
+    cookies.set("ptrNum", number);
+    cookies.set("ptrEffDtTm", "");
+    cookies.set("action", this.gConst.RECORD_PAGE_ACTION_RETRIEVE);
+    this.router.navigateByUrl(ROUTES.customerAdmin.pad)
+  }
+
+  createCad = (number: string) => {
+    const cookies = new Cookies();
+    cookies.set("cusNum", number);
+    cookies.set("action", this.gConst.RECORD_PAGE_ACTION_CREATE)
+    this.router.navigateByUrl(ROUTES.customerAdmin.cad)
   }
 
   getImportStatusColor = (status: string) => {
@@ -593,21 +735,34 @@ export class NumberListComponent implements OnInit {
     this.onPagination(event.page+1, event.rows);
   }
 
-  onScriptClickFilter = () => {
-    this.onScriptPagination(1)
+  onScriptSortChange = async (name: any) => {
+    this.scriptSortActive = name;
+    this.scriptSortDirection = this.scriptSortDirection === 'ASC' ? 'DESC' : 'ASC';
+    this.scriptPageIndex = 1;
+    await this.getSqlScriptsList();
   }
 
-  onScriptPagination = async (pageIndex: any) => {
+  onScriptFilter = (event: Event) => {
+    this.scriptPageIndex = 1;
+    this.scriptFilterName = (event.target as HTMLInputElement).name;
+    this.scriptFilterValue = (event.target as HTMLInputElement).value;
+  }
+
+  onScriptClickFilter = () => {
+    this.scriptPageIndex = 1;
+    this.getSqlScriptsList();
+  }
+
+  onScriptPagination = async (pageIndex: any, pageRows: number) => {
+    this.scriptPageSize = pageRows;
     const totalPageCount = Math.ceil(this.filteredScriptLength / this.scriptPageSize);
-    console.log("----", this.scriptPageIndex, totalPageCount)
     if (pageIndex === 0 || pageIndex > totalPageCount) { return; }
-    // if (pageIndex === this.scriptPageIndex) {return;}
     this.scriptPageIndex = pageIndex;
     await this.getSqlScriptsList();
   }
 
   scriptPaginate = (event: any) => {
-    this.onScriptPagination(event.page+1);
+    this.onScriptPagination(event.page+1, event.rows);
   }
 
   showWarn = (msg: string) => {

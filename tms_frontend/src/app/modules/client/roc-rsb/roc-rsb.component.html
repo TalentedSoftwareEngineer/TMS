@@ -1,5 +1,5 @@
 <h4 class="page_title m-0">Submit Resp Org Change Request</h4>
-<h5 class="m-0">The Resp Org Change will only change the controlling Resp Org of the number, the carrier will not be updated.</h5>
+<h6 class="m-0">The Resp Org Change will only change the controlling Resp Org of the number, the carrier will not be updated.</h6>
 
 <div class="card mt-5">
     <div class="flex justify-content-end">
@@ -7,7 +7,7 @@
     </div>
 
     <div class="grid mt-5">
-        <div class="col p-fluid">
+        <div class="md:col-6 col-12 p-fluid">
             <span class="p-float-label">
                 <p-dropdown
                     [options]="requestTypeOptions"
@@ -31,7 +31,7 @@
                     [(ngModel)]="inputEffDate"
                     dateFormat="mm/dd/yy"
                     [showButtonBar]="true"
-                    [numberOfMonths]="3"
+                    [numberOfMonths]="1"
                     [showTransitionOptions]="'0ms'"
                     [hideTransitionOptions]="'0ms'"
                 ></p-calendar>
@@ -98,17 +98,39 @@
 
     <p-divider></p-divider>
     <div class="grid">
-        <div class="col-3">
-            <!-- <p class="mb-2">CSV File: </p> -->
-            <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
-            <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
-        </div>
-        <div class="col-9 p-fluid">
-            <span class="field p-float-label mt-5">
-                <textarea class="pt-4" id="tollFreeNumbers" name="tollFreeNumbers" [(ngModel)]="inputTollFreeNumbers" (blur)="onNumFieldFocusOut()" rows="5" cols="30" pInputTextarea></textarea>
-                <label for="tollFreeNumbers">Toll-Free Numbers*</label>
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown
+                    [options]="respOrgIDOptions"
+                    [(ngModel)]="selectRespOrgID"
+                    optionLabel="name"
+                    optionValue="value"
+                    scrollHeight="150px"
+                    [virtualScroll]="true"
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label for="attachmentType">New Resp Org ID *</label>
             </span>
-            <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+
+            <span class="field p-float-label mt-4">
+                <textarea class="pt-4" id="notes" name="notes" aria-describedby="notes-help" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea></textarea>
+                <label for="notes">Notes / Alternative Contact Information</label>
+                <!-- <small id="notes-help" class="block">You may add additional notes or information for an alternate contact.</small> -->
+            </span>
+        </div>
+        <div class="md:col-6 col-12">
+            <div>
+                <!-- <p class="mb-2">CSV File: </p> -->
+                <button pButton pRipple label="Choose File" (click)="fileInput.click()"></button>
+                <input #fileInput type="file" (change)="onCsvXlUploadAuto($event)" style="display: none" accept=".csv"/>
+            </div>
+            <div class="p-fluid mt-4">
+                <span class="field p-float-label">
+                    <textarea class="pt-4" id="tollFreeNumbers" name="tollFreeNumbers" [(ngModel)]="inputTollFreeNumbers" (blur)="onNumFieldFocusOut()" rows="5" cols="30" pInputTextarea></textarea>
+                    <label for="tollFreeNumbers">Toll-Free Numbers*</label>
+                </span>
+                <strong *ngIf="invalidNumType === gConst.INVALID_NUM_TYPE_COMMON" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'. Allowed delimiters are comma or return.</strong>
+            </div>
         </div>
     </div>
 
@@ -117,7 +139,7 @@
         <h5 class="mb-0">LOA Attachment</h5>
         <small>If the allowed size limit is reached the document(s) will be compressed.</small>
         <div class="grid mt-3">
-            <div class="col p-fluid">
+            <div class="col-6 p-fluid">
                 <span class="p-float-label">
                     <p-dropdown
                         [options]="attachmentTypeOptions"
@@ -136,120 +158,136 @@
             </div>
             <div *ngIf="selectAttachmentType=='LoaA'" class="col">
                 <button pButton pRipple class="p-button-text" icon="pi pi-upload" label="Upload" (click)="attachFileInput.click()"></button>
-                <input #attachFileInput type="file" (change)="onUploadAttachmentFile()" style="display: none" accept=".pdf,.tiff"/>
+                <input #attachFileInput type="file" (click)="onClickUploadAttachmentFile($event)" (change)="onUploadAttachmentFile($event)" style="display: none" accept=".pdf,.tiff"/>
             </div>
             <div *ngIf="selectAttachmentType=='LoaG'" class="col">
-                <button pButton pRipple class="p-button-text" icon="pi pi-" label="Generate" (click)="onClickGenerate()" [disabled]="inputTollFreeNumbers==''"></button>
+                <span class="p-buttonset">
+                    <button pButton pRipple class="p-button-text" icon="pi pi-" label="Generate" (click)="onClickGenerate()" [disabled]="inputTollFreeNumbers=='' || invalidNumType === gConst.INVALID_NUM_TYPE_COMMON"></button>
+                    <button pButton pRipple class="p-button-text" icon="pi pi-" label="Download" (click)="onClickGeneratedLoaDownload()" [disabled]="!isLoaGenerate"></button>
+                </span>
             </div>
         </div>
 
-        <h5 class="mb-0">Add Related Documents</h5>
-        <div>
+        <h5>Add Related Documents</h5>
+        <!-- <div>
             <button pButton pRipple class="p-button-text" icon="pi pi-upload" label="Upload Documents" (click)="docFileInput.click()"></button>
-            <input #docFileInput type="file" (change)="onUploadDocFile()" style="display: none" accept=".pdf,.tiff"/>
-        </div>
+            <input #docFileInput type="file" (click)="onClickUploadDocFile($event)" (change)="onUploadDocFile($event)" style="display: none" accept=".pdf,.tiff" multiple/>
+        </div> -->
+        <p-fileUpload 
+            name="myfile[]" 
+            accept=".pdf,.tiff"
+            [maxFileSize]="1024*1024*2"
+            (onSelect)="onSelectDocFile($event)"
+            (onRemove)="onRemoveDocFile($event)"
+            [customUpload]="true"
+            [multiple]="true" 
+            [showUploadButton]="false"
+            [showCancelButton]="false"
+        ></p-fileUpload>
     </div>
 </div>
 
 <div class="flex justify-content-end mb-3">
     <span class="p-buttonset">
         <button pButton pRipple type="button" (click)="onCancel()" icon="pi pi-times" label="Cancel" class="p-button-text p-button-danger"></button>
-        <button pButton pRipple type="button" (click)="onSubmit()" icon="pi pi-send" label="Submit" class="p-button-text"></button>
+        <button pButton pRipple type="button" (click)="onSubmit()" icon="pi pi-send" label="Submit" class="p-button-text" [disabled]="isSubmitDisable(selectAttachmentType)"></button>
     </span>
 </div>
 
 <p-dialog header="Standard LOA Information" styleClass="c-modal" [(visible)]="flagOpenModal" (onHide)="closeModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
-    <div class="grid">
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="firstName" name="firstName" [ngClass]="{'ng-dirty': !validFirstName, 'ng-invalid': !validFirstName}" pInputText (input)="validFirstName=inputFirstName!=''" [(ngModel)]="inputFirstName" required>
-                <label for="firstName">Toll-Free Subscriber First Name *</label>
+    <form [formGroup]="standardLoaForm" (ngSubmit)="onModalSubmit()">
+        <div class="grid">
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="custName" class="{{isStandardLoaFormFieldValid('custName') ? 'ng-invalid ng-dirty' : ''}}" id="firstName" name="firstName" pInputText (input)="validFirstName=inputFirstName!=''" [(ngModel)]="inputFirstName" required>
+                    <label for="firstName">Toll-Free Subscriber First Name *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="lastName" class="{{isStandardLoaFormFieldValid('lastName') ? 'ng-invalid ng-dirty' : ''}}" id="lastName" name="lastName" pInputText (input)="validLastName=inputLastName!=''" [(ngModel)]="inputLastName" required>
+                    <label for="lastName">Toll-Free Subscriber Last Name *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="cmpyAddress1" class="{{isStandardLoaFormFieldValid('cmpyAddress1') ? 'ng-invalid ng-dirty' : ''}}" id="cmpyAddress1" name="cmpyAddress1" pInputText (input)="validCmpyAddress1=inputCmpyAddress1!=''" [(ngModel)]="inputCmpyAddress1" required>
+                    <label for="cmpyAddress1">Subscriber Address 1 *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="cmpyAddress2" class="{{isStandardLoaFormFieldValid('cmpyAddress2') ? 'ng-invalid ng-dirty' : ''}}" id="cmpyAddress2" name="cmpyAddress2" pInputText [(ngModel)]="inputCmpyAddress2">
+                    <label for="cmpyAddress2">Subscriber Address 2</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="city" class="{{isStandardLoaFormFieldValid('city') ? 'ng-invalid ng-dirty' : ''}}" id="city" name="city" pInputText (input)="validCity=inputCity!=''" [(ngModel)]="inputCity" required>
+                    <label for="city">Subscriber City *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="zipCode" class="{{isStandardLoaFormFieldValid('zipCode') ? 'ng-invalid ng-dirty' : ''}}" id="zipCode" name="zipCode" pInputText (input)="validZipCode=inputZipCode!=''" [(ngModel)]="inputZipCode" required>
+                    <label for="zipCode">Subscriber Zip Code *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="state" class="{{isStandardLoaFormFieldValid('state') ? 'ng-invalid ng-dirty' : ''}}" id="state" name="state" pInputText (input)="validState=inputState!=''" [(ngModel)]="inputState" required>
+                    <label for="state">Subscriber State *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="authCusContact" class="{{isStandardLoaFormFieldValid('authCusContact') ? 'ng-invalid ng-dirty' : ''}}" id="authCusContact" name="authCusContact" pInputText (input)="validAuthCusContact=inputAuthCusContact!=''" [(ngModel)]="inputAuthCusContact" required>
+                    <label for="authCusContact">Authorized Contact Name *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="authCusTitle" class="{{isStandardLoaFormFieldValid('authCusTitle') ? 'ng-invalid ng-dirty' : ''}}" id="authCusTitle" name="authCusTitle" pInputText (input)="validAuthCusTitle=inputAuthCusTitle!=''" [(ngModel)]="inputAuthCusTitle" required>
+                    <label for="authCusTitle">Contact Title *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="authCusPhone" class="{{isStandardLoaFormFieldValid('authCusPhone') ? 'ng-invalid ng-dirty' : ''}}" id="authCusPhone" name="authCusPhone" pInputText (input)="validAuthCusPhone=inputAuthCusPhone!=''" [(ngModel)]="inputAuthCusPhone" required>
+                    <label for="authCusPhone">Contact Telephone # *</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" maxlength="5" formControlName="authCusExt" class="{{isStandardLoaFormFieldValid('authCusExt') ? 'ng-invalid ng-dirty' : ''}}" id="authCusExt" name="authCusExt" pInputText [(ngModel)]="inputAuthCusExt">
+                    <label for="authCusExt">Ext #</label>
+                </span>
+            </div>
+            <div class="lg:col-4 md:col-6 col-12 p-fluid">
+                <span class="p-float-label">
+                    <input type="text" formControlName="email" class="{{isStandardLoaFormFieldValid('email') ? 'ng-invalid ng-dirty' : ''}}" id="email" name="email" pInputText [(ngModel)]="inputEmail">
+                    <label for="email">Email</label>
+                </span>
+            </div>
+            <div class="md:col col-12 p-fluid">
+                <span class="p-float-label">
+                    <textarea class="pt-4" formControlName="respOrgInst" class="{{isStandardLoaFormFieldValid('respOrgInst') ? 'ng-invalid ng-dirty' : ''}}" id="respOrgInst" name="respOrgInst" [(ngModel)]="inputRespOrgInst" rows="5" cols="30" pInputTextarea></textarea>
+                    <label for="respOrgInst">Resp Org Instructions</label>
+                </span>
+            </div>
+            <div class="md:col col-12 p-fluid">
+                <span class="p-float-label">
+                    <textarea class="pt-4" formControlName="endUsrInf" class="{{isStandardLoaFormFieldValid('endUsrInf') ? 'ng-invalid ng-dirty' : ''}}" id="endUsrInf" name="endUsrInf" [(ngModel)]="inputEndUsrInf" rows="5" cols="30" pInputTextarea></textarea>
+                    <label for="endUsrInf">End User Information</label>
+                </span>
+            </div>
+        </div>
+    
+        <div class="flex justify-content-end">
+            <span class="p-buttonset">
+                <button pButton pRipple type="submit" icon="pi pi-send" label="Submit" class="p-button-text"></button>
+                <button pButton pRipple type="button" (click)="closeModal()" icon="pi pi-times" label="Cancel" class="p-button-text p-button-danger"></button>
             </span>
         </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="lastName" name="lastName" [ngClass]="{'ng-dirty': !validLastName, 'ng-invalid': !validLastName}" pInputText (input)="validLastName=inputLastName!=''" [(ngModel)]="inputLastName" required>
-                <label for="lastName">Toll-Free Subscriber Last Name *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="cmpyAddress1" name="cmpyAddress1" [ngClass]="{'ng-dirty': !validCmpyAddress1, 'ng-invalid': !validCmpyAddress1}" pInputText (input)="validCmpyAddress1=inputCmpyAddress1!=''" [(ngModel)]="inputCmpyAddress1" required>
-                <label for="cmpyAddress1">Subscriber Address 1 *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="cmpyAddress2" name="cmpyAddress2" pInputText [(ngModel)]="inputCmpyAddress2">
-                <label for="cmpyAddress2">Subscriber Address 2</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="city" name="city" [ngClass]="{'ng-dirty': !validCity, 'ng-invalid': !validCity}" pInputText (input)="validCity=inputCity!=''" [(ngModel)]="inputCity" required>
-                <label for="city">Subscriber City *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="zipCode" name="zipCode" [ngClass]="{'ng-dirty': !validZipCode, 'ng-invalid': !validZipCode}" pInputText (input)="validZipCode=inputZipCode!=''" [(ngModel)]="inputZipCode" required>
-                <label for="zipCode">Subscriber Zip Code *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="state" name="state" [ngClass]="{'ng-dirty': !validState, 'ng-invalid': !validState}" pInputText (input)="validState=inputState!=''" [(ngModel)]="inputState" required>
-                <label for="state">Subscriber State *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="authCusContact" name="authCusContact" [ngClass]="{'ng-dirty': !validAuthCusContact, 'ng-invalid': !validAuthCusContact}" pInputText (input)="validAuthCusContact=inputAuthCusContact!=''" [(ngModel)]="inputAuthCusContact" required>
-                <label for="authCusContact">Authorized Contact Name *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="authCusTitle" name="authCusTitle" [ngClass]="{'ng-dirty': !validAuthCusTitle, 'ng-invalid': !validAuthCusTitle}" pInputText (input)="validAuthCusTitle=inputAuthCusTitle!=''" [(ngModel)]="inputAuthCusTitle" required>
-                <label for="authCusTitle">Contact Title *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="authCusPhone" name="authCusPhone" [ngClass]="{'ng-dirty': !validAuthCusPhone, 'ng-invalid': !validAuthCusPhone}" pInputText (input)="validAuthCusPhone=inputAuthCusPhone!=''" [(ngModel)]="inputAuthCusPhone" required>
-                <label for="authCusPhone">Contact Telephone # *</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="authCusExt" name="authCusExt" pInputText [(ngModel)]="inputAuthCusExt">
-                <label for="authCusExt">Ext #</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <input type="text" id="email" name="email" pInputText [(ngModel)]="inputEmail">
-                <label for="email">Email</label>
-            </span>
-        </div>
-        <div class="md:col col-12 p-fluid">
-            <span class="p-float-label">
-                <textarea class="pt-4" id="respOrgInst" name="respOrgInst" [(ngModel)]="inputRespOrgInst" rows="5" cols="30" pInputTextarea></textarea>
-                <label for="respOrgInst">Resp Org Instructions</label>
-            </span>
-        </div>
-        <div class="md:col col-12 p-fluid">
-            <span class="p-float-label">
-                <textarea class="pt-4" id="endUsrInf" name="endUsrInf" [(ngModel)]="inputEndUsrInf" rows="5" cols="30" pInputTextarea></textarea>
-                <label for="endUsrInf">End User Information</label>
-            </span>
-        </div>
-    </div>
-
-    <div class="flex justify-content-end">
-        <span class="p-buttonset">
-            <button pButton pRipple type="button" (click)="onModalSubmit()" icon="pi pi-send" label="Submit" class="p-button-text"></button>
-            <button pButton pRipple type="button" (click)="closeModal()" icon="pi pi-times" label="Cancel" class="p-button-text p-button-danger"></button>
-        </span>
-    </div>
+    </form>
 </p-dialog>

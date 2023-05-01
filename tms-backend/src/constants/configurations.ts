@@ -9,3 +9,5 @@ export const REQ_SIZE = 10
 
 export const SUPER_ADMIN = 1
 export const SUPER_ADMIN_ROLE = 1
+
+export const DEFAULT_TIMEOUT = 60

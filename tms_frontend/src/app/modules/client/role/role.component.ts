@@ -79,16 +79,16 @@ export class RoleComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.READ_ROLE)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.READ_ROLE)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
+    this.store.state$.subscribe(async (state)=> {
       if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_ROLE) == -1)
         this.write_permission = false;
       else
@@ -124,8 +124,8 @@ export class RoleComponent implements OnInit {
         .pipe(tap(async (rolesRes: IRole[]) => {
           this.roles = [];
           rolesRes.map(u => {
-            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
-            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
           });
 
           let allNotEditable = true

@@ -20,6 +20,11 @@ export class ScriptSql extends Entity {
   content: string;
 
   @property({
+    type: 'string',
+  })
+  type?: string;
+
+  @property({
     type: 'boolean',
     required: true,
   })

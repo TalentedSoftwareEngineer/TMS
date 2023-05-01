@@ -7,6 +7,8 @@ import DateTimeUtils from "../utils/datetime";
 import axios, {HttpStatusCode} from "axios";
 import {HttpErrors} from "@loopback/rest";
 import {MESSAGES} from "../constants/messages";
+import FormData from "form-data";
+import doc = Mocha.reporters.doc;
 
 @injectable({scope: BindingScope.TRANSIENT})
 export class TfnRegistryApiService {
@@ -17,6 +19,7 @@ export class TfnRegistryApiService {
 
   VERSION = "v3/ip";
   ACCEPT_VERSION = "3.2"
+  ROC_ACCEPT_VERSION = "3.11"
 
   ErrorCodes = {
     AlreadyLogged: "701003",
@@ -52,6 +55,8 @@ export class TfnRegistryApiService {
     SearchAndReserveRandomNumbers: '/num/tfn/srchres/random',
     SearchAndReserveWildcardNumbers: '/num/tfn/srchres/wildcard',
     SearchAndReserveSpecificNumbers: '/num/tfn/srchres/specific',
+
+    RetrieveBulkSearchAndReserve: '/sys/bsr/blkId/',
 
     QueryNumberData: '/num/tfn/query',
     QueryNumberDataByBulkId: '/sys/mnq/blkId/',
@@ -115,11 +120,36 @@ export class TfnRegistryApiService {
     OneClickActivationByBlkID: '/sys/oca/blkId/',
 
     ReservedNumberList: '/num/rnl',
+
+    ListBulkRequest: '/sys/bulk/lst',
+
+    // ROC
+    GenerateLOAFileRequest: '/roc/generateLoa',
+    UploadLOAFileRequest: '/roc/uploadLOA',
+    UploadAdditionalDocumentRequest: '/roc/uploadDoc',
+    UploadFileRequest: '/roc/uploadFile',
+
+    SubmitROCRequest: '/roc/submit',
+    SearchROCRequest: '/roc/search',
+    SearchROCByTransactionIDRequest: '/roc/searchTxn',
+    RetrieveROCRequest: '/roc/retrieve/txnid/',
+    RetrieveROCRequestByReqId: '/roc/retrieve',
+    RetrieveDocumentRequest: '/roc/retrieveDocument',
+    RemoveTFNRequest: '/roc/removeTfn',
+    CancelROCRequest: '/roc/cancel',
+    ProcessROCRequest: '/roc/processRoc',
+    CheckinROCRequest: '/roc/checkin',
+    CheckoutROCRequest: '/roc/checkout',
+    EscalateROCRequest: '/roc/escalate',
+    ResubmitHDIRequest: 'roc/resubmitHDI',
+
+    SubscriptionRequest: '/roc/subscription',
+    RetrieveListOfFailedNotificationRequest: '/roc/resendRetrieve',
+    ResendFailedNotificationRequest: '/roc/resendNtfn',
   }
 
   constructor(
-      @repository(TfnRegistryTokenRepository)
-      public tokenRepository: TfnRegistryTokenRepository,
+      @repository(TfnRegistryTokenRepository) public tokenRepository: TfnRegistryTokenRepository,
   ) {}
 
   getBasePath() {
@@ -565,7 +595,7 @@ export class TfnRegistryApiService {
     let data = {...payload}
     if (data.qty)
       delete data.qty
-    return await this.searchNumbers(this.getBasePath() + this.EndPoints.SearchSpecificNumbers, ro, payload, profile)
+    return await this.searchNumbers(this.getBasePath() + this.EndPoints.SearchSpecificNumbers, ro, data, profile)
   }
 
   private async retrieveSearchNumbers(url: string, ro: string, reqId: string, profile: AuthorizedUserProfile) {
@@ -744,6 +774,37 @@ export class TfnRegistryApiService {
    */
   async retrieveSearchAndReserveSpecificNumbers(ro: string, reqId: string, profile: AuthorizedUserProfile) {
     return await this.retrieveSearchAndReserveNumbers(this.getBasePath() + this.EndPoints.SearchAndReserveSpecificNumbers, ro, reqId, profile)
+  }
+
+  /**
+   * retrieve the Bulk ID retrieved when user tries to search and reserve more than configurable quantity of Toll-Free Numbers.
+   * @param ro
+   * @param blkId
+   * @param profile
+   */
+  async retrieveBulkSearchAndReserve(ro: string, blkId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveBulkSearchAndReserve+blkId, {
+        method: 'get',
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveBulkSearchAndReserve ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
   }
 
   /**
@@ -1925,7 +1986,7 @@ export class TfnRegistryApiService {
    * @param num
    * @param profile
    */
-  async queryCustomerRecord(ro: string, num: string, effDtTm: string, profile: AuthorizedUserProfile) {
+  async queryCustomerRecord(ro: string, num: string, profile: AuthorizedUserProfile, effDtTm?: string) {
     const token = await this.getToken(profile)
     if (token.code && token.message)
       return token
@@ -3166,4 +3227,1183 @@ export class TfnRegistryApiService {
     }
   }
 
+
+  /**
+   * retrieve the list of bulk requests that are initiated by the user’s Resp Org.
+   * @param ro
+   * @param profile
+   */
+  async listBulkRequest(ro: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ListBulkRequest, {
+        method: 'get',
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveBulkRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  /**
+   * The following rules must be adhered to
+   *    1. Request submitted for more than one number will be stored in the ROC System as an individual request for each number and will be associated with each other by a single transaction ID (TxnID).
+   *        For example A request submitted with five numbers will have five individual requests recorded in the system but will be associated with the same TxnID.
+   *    2. DialNumberList parameter should include a list of unique numbers.
+   *    3. DialNumberList parameter cannot include any numbers with Spare or Unavailable status.
+   *    4. Can only submit a ROC request to gain a TFN for a Resp Org ID within your Entity.
+   *    5. The ROC documents (i.e. the LOA and other supporting documents).
+   *        Please Note Only Portable . Document Format (PDF) and Tagged Image File Format (TIF/TIFF) file types can be attached to the request. If TIF or TIFF file types are attached, the file(s) will be automatically converted to a PDF file type.
+   *        Total size of all files cannot exceed 2 MB; this is a configurable limit.
+   * @param payload
+   * @param profile
+   */
+  async submitROCRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SubmitROCRequest, {
+        method: 'post',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in submitROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  /**
+   * The following rules must be adhered to
+   *    1. Request submitted for more than one number will be stored in the ROC System as an individual request for each number and will be associated with each other by a single transaction ID (TxnID).
+   *        For example A request submitted with five numbers will have five individual requests recorded in the system but will be associated with the same TxnID.
+   *    2. DialNumberList parameter should include a list of unique numbers.
+   *    3. DialNumberList parameter cannot include any numbers with Spare or Unavailable status.
+   *    4. Can only submit a ROC request to gain a TFN for a Resp Org ID within your Entity.
+   *    5. The ROC documents (i.e. the LOA and other supporting documents).
+   *        Please Note Only Portable . Document Format (PDF) and Tagged Image File Format (TIF/TIFF) file types can be attached to the request. If TIF or TIFF file types are attached, the file(s) will be automatically converted to a PDF file type.
+   *        Total size of all files cannot exceed 2 MB; this is a configurable limit.
+   * @param reqId
+   * @param profile
+   */
+  async submitROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SubmitROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in submitROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async resubmitHDIRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ResubmitHDIRequest, {
+        method: 'post',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in resubmitHDIRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async resubmitHDIRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ResubmitHDIRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in resubmitHDIRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  /**
+   * This functionality allows a submitting Resp Org to generate a Standard LOA cover document.
+   *    DialNumberList parameter should include a list of unique numbers.
+   *    Resp Org will sign the LOA and create a request using SubmitRespOrgChange() method with LOA and include the signed Standard LOA.
+   * @param payload
+   * @param profile
+   */
+  async generateLOAFileRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.GenerateLOAFileRequest, {
+        method: 'post',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in generateLOAFileRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  /**
+   * This functionality allows a submitting Resp Org to generate a Standard LOA cover document.
+   *    DialNumberList parameter should include a list of unique numbers.
+   *    Resp Org will sign the LOA and create a request using SubmitRespOrgChange() method with LOA and include the signed Standard LOA.
+   * @param reqId
+   * @param profile
+   */
+  async generateLOAFileRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SubmitROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in generateLOAFileRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  /**
+   * This operation allows a submitting Resp Org to add a document to a particular Resp Org Change request.
+   * The following rules must be adhered to:
+   *    1. The Resp Org adding the document must be a participant as a submitting Resp Org within the Entity to change transaction related to the document.
+   *    2. The Resp Org can only add the document when all numbers are in a Pending, Overdue, or Declined status with rejection status code 16.
+   *    3. The ROC documents (i.e. the LOA and other supporting documents). Please Note: Only Portable Document Format (PDF) and Tagged Image File Format (TIF/TIFF) file types can be attached to the request.
+   *        If TIF or TIFF file types are attached, the file(s) will be automatically converted to a PDF file type.
+   *        Total size of all files cannot exceed 2 MB; this is a configurable limit.
+   * @param filename
+   * @param profile
+   */
+  async uploadLOAFileRequest(filename: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    const fs = require('fs')
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.UploadLOAFileRequest, {
+        method: 'post',
+        data: {
+          file: fs.createReadStream(filename)
+        },
+        headers: {
+          // Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in uploadLOAFileRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  /**
+   * This operation allows a submitting Resp Org to add a document to a particular Resp Org Change request.
+   * The following rules must be adhered to:
+   *    1. The Resp Org adding the document must be a participant as a submitting Resp Org within the Entity to change transaction related to the document.
+   *    2. The Resp Org can only add the document when all numbers are in a Pending, Overdue, or Declined status with rejection status code 16.
+   *    3. The ROC documents (i.e. the LOA and other supporting documents). Please Note: Only Portable Document Format (PDF) and Tagged Image File Format (TIF/TIFF) file types can be attached to the request.
+   *        If TIF or TIFF file types are attached, the file(s) will be automatically converted to a PDF file type.
+   *        Total size of all files cannot exceed 2 MB; this is a configurable limit.
+   * @param reqId
+   * @param profile
+   */
+  async uploadLOAFileRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.UploadLOAFileRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in uploadLOAFileRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async uploadFileRequest(filename: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    const fs = require('fs')
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.UploadFileRequest, {
+        method: 'post',
+        data: {
+          file: fs.createReadStream(filename)
+        },
+        headers: {
+          // Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in uploadFileRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async uploadFileRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.UploadFileRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in uploadFileRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async uploadAdditionalDocumentRequest(ro: string, payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.UploadAdditionalDocumentRequest, {
+        method: 'post',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in uploadAdditionalDocumentRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async uploadAdditionalDocumentRequestByReqId(ro: string, reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.UploadAdditionalDocumentRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          // 'Accept-Version': this.ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in uploadAdditionalDocumentRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async searchROCRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SearchROCRequest, {
+        method: 'post',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in searchROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async searchROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SearchROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in searchROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async searchROCByTransactionIDRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SearchROCByTransactionIDRequest, {
+        method: 'post',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in searchROCByTransactionIDRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async searchROCByTransactionIDRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SearchROCByTransactionIDRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in searchROCByTransactionIDRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async retrieveROCRequest(txnId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveROCRequest+txnId, {
+        method: 'get',
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async retrieveROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveROCRequestByReqId, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async retrieveDocumentRequest(profile: AuthorizedUserProfile, loaID?: string, docId?: string, reqId?: string) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let params: any = {}
+
+    if (loaID)
+      params.loaID = loaID
+
+    if (docId)
+      params.docId = docId
+
+    if (reqId)
+      params.reqId = reqId
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveDocumentRequest, {
+        method: 'get',
+        params: params,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in resendDocumentRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async removeTFNRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RemoveTFNRequest, {
+        method: 'put',
+        data: payload,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in removeTFNRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async removeTFNRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RemoveTFNRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in removeTFNRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async cancelROCRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.CancelROCRequest, {
+        method: 'put',
+        data: payload,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in cancelROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async cancelROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.CancelROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in cancelROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async processROCRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ProcessROCRequest, {
+        method: 'put',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in processROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async processROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ProcessROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in processROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async checkinROCRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.CheckinROCRequest, {
+        method: 'put',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in checkinROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async checkinROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.CheckinROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in checkinROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async checkoutROCRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.CheckoutROCRequest, {
+        method: 'put',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in checkoutROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async checkoutROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.CheckoutROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in checkoutROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async escalateROCRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    let data = { ... payload }
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.EscalateROCRequest, {
+        method: 'post',
+        data: data,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in escalateROCRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async escalateROCRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.EscalateROCRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in escalateROCRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async retrieveSubscriptionRequest(entity: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SubscriptionRequest + "/" + entity, {
+        method: 'get',
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveSubscriptionRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async retrieveSubscriptionRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SubscriptionRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveSubscriptionRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async createSubscriptionRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SubscriptionRequest, {
+        method: 'post',
+        data: payload,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in createSubscriptionRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async updateSubscriptionRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.SubscriptionRequest, {
+        method: 'put',
+        data: payload,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in updateSubscriptionRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async retrieveListOfFailedNotificationRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveListOfFailedNotificationRequest, {
+        method: 'put',
+        data: payload,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveListOfFailedNotificationRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async retrieveListOfFailedNotificationRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveListOfFailedNotificationRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in retrieveListOfFailedNotificationRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async resendFailedNotificationRequest(payload: any, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ResendFailedNotificationRequest, {
+        method: 'put',
+        data: payload,
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in resendFailedNotificationRequest ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async resendFailedNotificationRequestByReqId(reqId: string, profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ResendFailedNotificationRequest, {
+        method: 'get',
+        params: {
+          reqId: reqId,
+        },
+        headers: {
+          // Accept: 'application/json',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer ' + token.oouth_token,
+          // ROID: ro,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in resendFailedNotificationRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
 }

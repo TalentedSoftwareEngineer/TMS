@@ -351,20 +351,22 @@ export class ApiService {
   }
 
   //SqlScripts APIs
-  getSqlScriptsList(active: string, direction: string, page: number, size: number, filterValue: string): Observable<ISqlScript[]> {
+  getSqlScriptsList(active: string, direction: string, page: number, size: number, filterValue: string, sqlType: string): Observable<ISqlScript[]> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      sqlType: `${sqlType}`,
     }).toString();
     const url = `${this.coreApi}/script-sqls?${parametersQuery}`;
     return this.http.get<ISqlScript[]>(url);
   }
 
-  getSqlScriptsCount(filterValue: string): Observable<any> {
+  getSqlScriptsCount(filterValue: string, sqlType: string): Observable<any> {
     const parametersQuery = new URLSearchParams({
-      value: `${filterValue}`
+      value: `${filterValue}`,
+      sqlType: `${sqlType}`,
     }).toString();
     return this.http.get<any>(`${this.coreApi}/script-sqls/count?${parametersQuery}`);
   }
@@ -395,7 +397,7 @@ export class ApiService {
       value: `${filterValue}`,
       userIdFilter: `${userIdFilterValue}`,
       resultFilter: `${resultFilterValue}`,
-      sqlIdFilter: `${sqlIdFilterValue}`,
+      sqlType: `${sqlIdFilterValue}`,
     }).toString();
     const url = `${this.coreApi}/script-results?${parametersQuery}`;
     return this.http.get<IScriptResults[]>(url);
@@ -406,7 +408,7 @@ export class ApiService {
       value: `${filterValue}`,
       userIdFilter: `${userIdFilterValue}`,
       resultFilter: `${resultFilterValue}`,
-      sqlIdFilter: `${sqlIdFilterValue}`,
+      sqlType: `${sqlIdFilterValue}`,
     }).toString();
     return this.http.get<any>(`${this.coreApi}/script-results/count?${parametersQuery}`);
   }
@@ -1133,4 +1135,89 @@ export class ApiService {
   resultOfConvertedPtrRec(data: any): Observable<any> {
     return this.http.put<any>(`${this.coreApi}/pointer-record/convert`, data);
   }
+
+  //ROC
+  generateLOAFile(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/generate_loa`, data);
+  }
+
+  uploadDoc(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/upload_file`, data);
+  }
+
+  uploadLOA(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/upload_loa`, data);
+  }
+
+  submitROC(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/submit_roc_request`, data);
+  }
+
+  retrieveSubscription(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/retrieve_subscription_request`, data);
+  }
+
+  updateSubscription(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/update_subscription_request`, data);
+  }
+
+  createSubscription(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/create_subscription_request`, data);
+  }
+
+  //RRN
+  retrieveListOfFailedNotification(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/retrieve_list_of_failed_notification`, data);
+  }
+
+  resendFailedNotification(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/resend_failed_notification`, data);
+  }
+
+  //RSR
+  searchRocRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/search_roc_request`, data);
+  }
+
+  retrieveRocRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/retrieve_roc_request`, data);
+  }
+
+  searchRocByTransaction(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/search_roc_by_transaction`, data);
+  }
+
+  checkOutRocRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/check_out_roc_request`, data);
+  }
+
+  checkInRocRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/check_in_roc_request`, data);
+  }
+
+  processRocRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/process_roc_request`, data);
+  }
+
+  cancelRocRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/cancel_roc_request`, data);
+  }
+
+  resubmitRocRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/resubmit_roc_request`, data);
+  }
+
+  removeTfnRequest(data: any): Observable<any> {
+    return this.http.post<any>(`${this.coreApi}/resp_org/remove_tfn_request`, data);
+  }
+
+  retrieveDocument(loaID: string, docId: string, reqId: string): Observable<any> {
+    const parametersQuery = new URLSearchParams({
+      loaID: `${loaID}`,
+      docId: `${docId}`,
+      reqId: `${reqId}`
+    }).toString();
+    return this.http.get<any>(`${this.coreApi}/resp_org/retrieve_document?${parametersQuery}`);
+  }
+
 }

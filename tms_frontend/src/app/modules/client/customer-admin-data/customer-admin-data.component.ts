@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   ACTION_NONE,
   ACTION_ALL,
@@ -94,7 +94,7 @@ import moment from 'moment';
   templateUrl: './customer-admin-data.component.html',
   styleUrls: ['./customer-admin-data.component.scss']
 })
-export class CustomerAdminDataComponent implements OnInit {
+export class CustomerAdminDataComponent implements OnInit, OnDestroy {
   gFunc = gFunc;
   gConst = {
     ACTION_NONE,
@@ -327,7 +327,6 @@ export class CustomerAdminDataComponent implements OnInit {
   inputTgtNum: string = '';
   inputTgtEffDtTm: any;
   inputCopyNow: boolean = false;
-  radioCopyAction: string = this.gConst.COPYACTION_CHANGE;
   portionEntire: boolean = false;
   portionCR: boolean = false;
   portionCPR: boolean = false;
@@ -358,6 +357,8 @@ export class CustomerAdminDataComponent implements OnInit {
 
   tgtRetrieveData: any = {};     // retrieve data of target record
 
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
+
   initialState = produce({
     selectPriIntraLT: this.selectPriIntraLT,
     selectPriInterLT: this.selectPriInterLT,
@@ -385,21 +386,23 @@ export class CustomerAdminDataComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.CUSTOMER_ADMIN_DATA)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-    })
+    // this.store.state$.subscribe(async (state)=> {
+
+    // })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.CUSTOMER_ADMIN_DATA)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
     this.intraLATACarrierOptions = this.gConst.CARRIER_LIST.map(item=>({name: item, value: item}));
     this.interLATACarrierOptions = this.gConst.CARRIER_LIST.map(item=>({name: item, value: item}));
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
     })
 
@@ -488,8 +491,8 @@ export class CustomerAdminDataComponent implements OnInit {
     }
   }
 
-  async ngOnDestroy() {
-    
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
   }
 
   getPriIntraLTOptions = () => {
@@ -547,9 +550,7 @@ export class CustomerAdminDataComponent implements OnInit {
           this.reflectDataOnPage(num, res)
           // this.backupStateToLastAction()
           resolve(true)  
-        }
-
-        if (res !== undefined && res.errList !== undefined && res.errList.length) {
+        } else if (res !== undefined && res.errList !== undefined && res.errList.length) {
           this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
           this.inputMessage = gFunc.synthesisErrMsg(res.errList);
           this.bRetrieveEnable = true
@@ -2778,9 +2779,9 @@ export class CustomerAdminDataComponent implements OnInit {
     // gets target date time
     let tgtEffDtTm = "NOW"
     if (!this.inputCopyNow) {
-      // tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
     }
 
     // configs component part
@@ -2969,9 +2970,9 @@ export class CustomerAdminDataComponent implements OnInit {
         this.showWarn('Please input effective date/time');
         return
       }
-      // tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
     }
 
     this.convertCustomerRecord()
@@ -3288,9 +3289,9 @@ export class CustomerAdminDataComponent implements OnInit {
     // gets target date time
     let tgtEffDtTm = "NOW"
     if (!this.inputCopyNow) {
-      // tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
     }
 
     // configs component part
@@ -3506,9 +3507,9 @@ export class CustomerAdminDataComponent implements OnInit {
     // gets target date time
     let tgtEffDtTm = "NOW"
     if (!this.inputCopyNow) {
-      // tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
     }
 
     // configs parameter for calling lock api

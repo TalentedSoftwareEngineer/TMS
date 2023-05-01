@@ -122,7 +122,10 @@ export class CustomerRecordService {
 
       created_by = numObj.created_by
       created_at = numObj.created_at
+
       await this.numbersRepository.deleteById(numObj.id)
+      if (status==NUMBER_STATUS.SPARE)
+        return
     }
 
     numObj = new Numbers()
@@ -678,7 +681,7 @@ export class CustomerRecordService {
     } else if (response.reqId!=null) {
       let reqId = response.reqId
       // while (response==null || response.effDtTm==null) {
-      //   await DataUtils.sleep(100)
+      //   await DataUtils.sleep(10)
       //   response = await this.tfnRegistryApiService.disconnectTemplateRecordByReqId(ro, reqId, profile)
       // }
 

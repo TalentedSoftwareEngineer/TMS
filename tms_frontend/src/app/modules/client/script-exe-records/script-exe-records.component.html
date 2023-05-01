@@ -2,22 +2,22 @@
 <div class="card pb-3">
   <div class="grid">
     <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
-        <span class="p-float-label">
-            <p-dropdown [options]="sql_scripts" id="sql_search" [(ngModel)]="sqlIdFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
-            <label for="sql_search">SQL</label>
-        </span>
+      <span class="p-float-label">
+        <p-dropdown [options]="sqlTypeOptions" [(ngModel)]="selectSqlType" optionLabel="name" optionValue="value"></p-dropdown>
+        <label>Type</label>
+      </span>
     </div>
     <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
-        <span class="p-float-label">
-            <p-dropdown [options]="sql_users" id="user_search" [(ngModel)]="userIdFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
-            <label for="user_search">User</label>
-        </span>
+      <span class="p-float-label">
+        <p-dropdown [options]="sql_users" id="user_search" [(ngModel)]="userIdFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
+        <label for="user_search">User</label>
+      </span>
     </div>
     <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
-        <span class="p-float-label">
-            <p-dropdown [options]="sql_results" id="result_search" [(ngModel)]="resultFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
-            <label for="result_search">Result</label>
-        </span>
+      <span class="p-float-label">
+        <p-dropdown [options]="sql_results" id="result_search" [(ngModel)]="resultFilterValue" [filter]="true" filterBy="name" optionLabel="name" scrollHeight="150px"></p-dropdown>
+        <label for="result_search">Status</label>
+      </span>
     </div>
     <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
         <div class="p-inputgroup">
@@ -33,11 +33,23 @@
   <p-table [value]="script_exe_records" responsiveLayout="stack" [responsive]="true">
     <ng-template pTemplate="header">
       <tr>
+        <th class="text-align-center" [ngClass]="sortActive === 'updated_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('updated_at')">Execution Time</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'user_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('user_id')">User Name</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'type' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+            <a (click)="onSortChange('type')">Type</a>
+        </th>
         <th class="text-left" [ngClass]="sortActive === 'sql_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('sql_id')">Sql Script</a>
         </th>
-        <th class="text-align-center" [ngClass]="sortActive === 'result' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
-          <a (click)="onSortChange('result')">Result</a>
+        <th class="text-align-center" [ngClass]="sortActive === 'ro' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('ro')">Ro</a>
+        </th>
+        <th class="text-align-center" [ngClass]="sortActive === 'status' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+          <a (click)="onSortChange('status')">Status</a>
         </th>
         <th class="text-align-center" [ngClass]="sortActive === 'imported' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('imported')">Imported</a>
@@ -45,23 +57,33 @@
         <th class="text-align-center" [ngClass]="sortActive === 'message' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
           <a (click)="onSortChange('message')">Message</a>
         </th>
-        <th class="text-align-center" [ngClass]="sortActive === 'user_id' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
-          <a (click)="onSortChange('user_id')">User Name</a>
-        </th>
-        <th class="text-align-center" [ngClass]="sortActive === 'executed_at' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
-          <a (click)="onSortChange('executed_at')">Execution Time</a>
-        </th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-script_exe_record>
       <tr>
         <td class="text-align-center">
+          <span class="p-column-title">Execution Time</span>
+          {{ script_exe_record.updated_at }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">User Name</span>
+          {{ script_exe_record.user?.username }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Type</span>
+          <pre class="text-left">{{ script_exe_record?.type }}</pre>
+        </td>
+        <td class="text-align-center">
           <span class="p-column-title">Sql Script</span>
           <pre class="text-left">{{ script_exe_record.sql?.content }}</pre> 
         </td>
         <td class="text-align-center">
-          <span class="p-column-title">Result</span>
-          {{ script_exe_record.result }}
+          <span class="p-column-title">Ro</span>
+          {{ script_exe_record?.ro }}
+        </td>
+        <td class="text-align-center">
+          <span class="p-column-title">Status</span>
+          <p-tag styleClass="mr-2" [severity]="getStatusColor(script_exe_record.status)" [value]="script_exe_record.status"></p-tag>
         </td>
         <td class="text-align-center">
           <span class="p-column-title">Imported</span>
@@ -70,14 +92,6 @@
         <td class="text-align-center">
           <span class="p-column-title">Message</span>
           {{ script_exe_record.message }}
-        </td>
-        <td class="text-align-center">
-          <span class="p-column-title">User Name</span>
-          {{ script_exe_record.user?.username }}
-        </td>
-        <td class="text-align-center">
-          <span class="p-column-title">Execution Time</span>
-          {{ script_exe_record.executed_at }}
         </td>
       </tr>
     </ng-template>

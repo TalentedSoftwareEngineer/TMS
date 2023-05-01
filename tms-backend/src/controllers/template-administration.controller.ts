@@ -18,10 +18,8 @@ import {TemplateRepository} from "../repositories";
 @authenticate('jwt')
 export class TemplateAdministrationController {
   constructor(
-      @repository(TemplateRepository)
-      public templateRepository: TemplateRepository,
-      @service(TemplateService)
-      public templateService: TemplateService,
+      @repository(TemplateRepository) public templateRepository: TemplateRepository,
+      @service(TemplateService) public templateService: TemplateService,
   ) {
   }
 
@@ -54,7 +52,14 @@ export class TemplateAdministrationController {
       throw new HttpErrors.BadRequest(MESSAGES.MISSING_PARAMETERS)
 
     // GET: cus/tpl/list/entity?entity=XQ&startTmplName=&roId=
-    return this.templateService.getList(ro, entity, profile, startTemplateName)
+    let result = []
+    let tmplList = await this.templateService.getList(ro, entity, profile, startTemplateName)
+    for (let item of tmplList) {
+      const count = await this.templateService.getCountOfNumbers(item.tmplName)
+      result.push({...item, numbers: count ? count.count : 0 })
+    }
+
+    return result
   }
 
   @get('/templates/query', {

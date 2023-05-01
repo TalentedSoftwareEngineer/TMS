@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ConfirmationService, ConfirmEventType, MessageService} from 'primeng/api';
 import { Router } from '@angular/router';
 import { StoreService } from 'src/app/services/store/store.service';
@@ -20,20 +20,27 @@ import {
   OCA_NUM_TYPE_SPECIFIC,
   SPECIFICNUM_REG_EXP,
   SVC_ORDR_NUM_REG_EXP,
-  TIME_REG_EXP, ROWS_PER_PAGE_OPTIONS, SUPER_ADMIN_ROLE_ID, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions
+  TIME_REG_EXP, 
+  ROWS_PER_PAGE_OPTIONS, 
+  SUPER_ADMIN_ROLE_ID, 
+  PAGE_NO_PERMISSION_MSG, 
+  rowsPerPageOptions,
+  RECORD_PAGE_ACTION_CREATE
 } from '../../constants';
 import {Table} from "primeng/table";
 import moment from "moment";
-import {SseClient} from "angular-sse-client";
+import {closeEventSource, SseClient} from "angular-sse-client";
 import {environment} from "../../../../environments/environment";
 import { IUser } from 'src/app/models/user';
+import * as gFunc from 'src/app/utils/utils';
+import Cookies from "universal-cookie";
 
 @Component({
   selector: 'app-reserved-number-list',
   templateUrl: './reserved-number-list.component.html',
   styleUrls: ['./reserved-number-list.component.scss']
 })
-export class ReservedNumberListComponent implements OnInit {
+export class ReservedNumberListComponent implements OnInit, OnDestroy {
 
   gConst = {
     OCA_NUM_TYPE_RANDOM,
@@ -49,7 +56,8 @@ export class ReservedNumberListComponent implements OnInit {
     OCA_NUM_TYPE_SPECIFIC,
     SPECIFICNUM_REG_EXP,
     SVC_ORDR_NUM_REG_EXP,
-    TIME_REG_EXP
+    TIME_REG_EXP,
+    RECORD_PAGE_ACTION_CREATE
   }
 
   @ViewChild('reservedNumberListTable') reservedNumberListTable!: Table;
@@ -87,7 +95,6 @@ export class ReservedNumberListComponent implements OnInit {
   completedReq: any[] = [];
 
   viewedResult: any;
-  csvNumbersContent: string = '';
 
   activityLogs: any[] = [];
   activityLogsLoading: boolean = false;
@@ -104,6 +111,8 @@ export class ReservedNumberListComponent implements OnInit {
   isSuperAdmin: boolean = false;
   userOptions: any[] = [];
   selectUser: string|number = '';
+
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
 
   constructor(
     private store: StoreService,
@@ -144,7 +153,7 @@ export class ReservedNumberListComponent implements OnInit {
     await this.getData();
     this.getUsersList();
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       if(data.page=='MNA') {
         if(data.status.toUpperCase()=='IN PROGRESS') {
           let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
@@ -177,6 +186,10 @@ export class ReservedNumberListComponent implements OnInit {
         }
       }
     })
+  }
+
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
   }
 
   async getTemplate() {
@@ -295,8 +308,9 @@ export class ReservedNumberListComponent implements OnInit {
     if (this.inputNow)
       effDateTime = "NOW"
     else if (this.inputEffDate!=null) {
-      let d = new Date(this.inputEffDate).getTime()
-      effDateTime = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'
+      // let d = new Date(this.inputEffDate).getTime()
+      // effDateTime = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'
+      effDateTime = gFunc.fromCTTimeToUTCStr(new Date(this.inputEffDate))
     }
 
     body.effDtTm = effDateTime
@@ -334,7 +348,7 @@ export class ReservedNumberListComponent implements OnInit {
 
     await this.api.getMnaData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
         this.activityLogs = res;
       })).toPromise();
 
@@ -364,20 +378,16 @@ export class ReservedNumberListComponent implements OnInit {
   }
 
   onOpenViewModal = async (event: Event, result: any) => {
-    this.csvNumbersContent = '';
     this.viewedResult = result;
 
     await this.api.getMnaById(result.id)
       .pipe(tap((response: any[])=>{
         response.map(u => {
-          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
-          u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : ''
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : ''
         });
 
         this.numberList = response;
-        response.forEach((item, index) => {
-          this.csvNumbersContent += `\n${item.num},${item.eff_dt_tm==null?'':item.eff_dt_tm},${item.status},${item.message==null?'':item.message}`;
-        });
 
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
@@ -392,8 +402,8 @@ export class ReservedNumberListComponent implements OnInit {
 
     await this.api.getMnaById(result.id).pipe(tap((response: any[])=>{
       response.map(u => {
-        u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
-        u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : ''
+        u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+        u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : ''
       });
 
       response.forEach((item, index) => {
@@ -437,7 +447,18 @@ export class ReservedNumberListComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    // this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
+    this.filterNumberList = this.numberList.filter(item=>{
+      let a = item.num?.includes(omittedPhoneNumber);
+      let b = item.status?.includes(this.inputNumListFilterKey);
+      let c = item.message?.includes(this.inputNumListFilterKey);
+      if (omittedPhoneNumber=='') {
+        return b || c;
+      } else {
+        return a || b || c;
+      }
+    });
   }
 
   closeModal = () => {
@@ -543,7 +564,11 @@ export class ReservedNumberListComponent implements OnInit {
   }
 
   onViewNumbersDownload = () => {
-    let data = `Number,Effective Date/Time,Status,Message${this.csvNumbersContent}\n`
+    let numbersContent = '';
+    this.filterNumberList.forEach((item, index) => {
+      numbersContent += `\n${item.num},${item.eff_dt_tm==null?'':item.eff_dt_tm},${item.status},${item.message==null?'':item.message}`;
+    });
+    let data = `Number,Effective Date/Time,Status,Message${numbersContent}\n`
 
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);
@@ -553,6 +578,13 @@ export class ReservedNumberListComponent implements OnInit {
     tempLink.href = url;
     tempLink.setAttribute('download', fileName);
     tempLink.click();
+  }
+
+  createCAD = (num: string) => {
+    const cookies = new Cookies();
+    cookies.set("cusNum", num);
+    cookies.set("action", this.gConst.RECORD_PAGE_ACTION_CREATE)
+    this.router.navigateByUrl(ROUTES.customerAdmin.cad)
   }
 
   showWarn = (msg: string) => {

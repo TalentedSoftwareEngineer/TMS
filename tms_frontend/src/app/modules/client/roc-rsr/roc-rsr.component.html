@@ -4,7 +4,7 @@
     <div class="grid pt-2">
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
             <span class="p-float-label">
-                <input type="text" id="tollFreeNumber" name="tollFreeNumber" [ngClass]="{'ng-dirty': !validTollFreeNumber, 'ng-invalid': !validTollFreeNumber}" (blur)="onNumFieldFocusOut()" pInputText [(ngModel)]="inputTollFreeNumber"> 
+                <input type="text" id="tollFreeNumber" name="tollFreeNumber" [ngClass]="{'ng-dirty': !validTollFreeNumber, 'ng-invalid': !validTollFreeNumber}" (blur)="onNumFieldFocusOut()" (input)="onInputTollFreeNumber()" pInputText [(ngModel)]="inputTollFreeNumber"> 
                 <label for="tollFreeNumber">Toll-Free Number</label>
             </span>
             <strong *ngIf="!validTollFreeNumber" class="p-error">Number or Mask Entry: Must be 10 alphanumeric characters and optionally two dashes '-'.</strong>
@@ -15,8 +15,8 @@
                     [options]="statusOptions" 
                     id="status" 
                     name="status" 
-                    (onChange)="onChangeStatus()" 
                     [(ngModel)]="selectStatus" 
+                    (onChange)="onChangeStatus()"
                     optionLabel="name" 
                     optionValue="value"
                     scrollHeight="150px" 
@@ -26,6 +26,25 @@
                     [itemSize]="40"
                 ></p-dropdown>
                 <label for="status">Status</label>
+            </span>
+        </div>
+        <div class="lg:col-4 md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <p-dropdown 
+                    [options]="rejectReasonOptions" 
+                    id="rejectReason" 
+                    name="rejectReason" 
+                    [(ngModel)]="selectRejectReason" 
+                    (onChange)="onChangeRejectReason()"
+                    optionLabel="name" 
+                    optionValue="value"
+                    scrollHeight="150px" 
+                    [filter]="true" 
+                    filterBy="name"
+                    [virtualScroll]="true" 
+                    [itemSize]="40"
+                ></p-dropdown>
+                <label for="rejectReason">Reject Reason</label>
             </span>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
@@ -55,27 +74,9 @@
                     dateFormat="mm/dd/yy" 
                     [readonlyInput]="true"
                     [(ngModel)]="dateRangeSubmitted" 
+                    (onSelect)="initialResultTable()"
                 ></p-calendar>
                 <label for="submittedDateRange">Submitted Date Range</label>
-            </span>
-        </div>
-        <div class="lg:col-4 md:col-6 col-12 p-fluid">
-            <span class="p-float-label">
-                <p-dropdown 
-                    [options]="rejectReasonOptions" 
-                    id="rejectReason" 
-                    name="rejectReason" 
-                    (onChange)="onChangeRejectReason()" 
-                    [(ngModel)]="selectRejectReason" 
-                    optionLabel="name" 
-                    optionValue="value"
-                    scrollHeight="150px" 
-                    [filter]="true" 
-                    filterBy="name"
-                    [virtualScroll]="true" 
-                    [itemSize]="40"
-                ></p-dropdown>
-                <label for="rejectReason">Reject Reason</label>
             </span>
         </div>
         <div class="lg:col-4 md:col-6 col-12 p-fluid">
@@ -84,8 +85,8 @@
                     [options]="typeOptions" 
                     id="type" 
                     name="type" 
-                    (onChange)="onChangeType()" 
                     [(ngModel)]="selectType" 
+                    (onChange)="initialResultTable()"
                     optionLabel="name" 
                     optionValue="value"
                     scrollHeight="150px" 
@@ -99,8 +100,8 @@
                     [options]="progressOptions" 
                     id="progress" 
                     name="progress" 
-                    (onChange)="onChangeProgress()" 
                     [(ngModel)]="selectProgress" 
+                    (onChange)="initialResultTable()"
                     optionLabel="name" 
                     optionValue="value"
                     scrollHeight="150px" 
@@ -114,8 +115,8 @@
                     [options]="respOrgOptions" 
                     id="respOrg" 
                     name="respOrg" 
-                    (onChange)="onChangeRespOrg()" 
                     [(ngModel)]="selectRespOrg" 
+                    (onChange)="initialResultTable()"
                     optionLabel="name" 
                     optionValue="value"
                     scrollHeight="150px" 
@@ -137,14 +138,15 @@
     </div>
 </p-panel>
 
-<p-panel header="Results" styleClass="mt-5" [toggleable]="true" [collapsed]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
+<p-panel header="Results" styleClass="mt-5" [toggleable]="true" [collapsed]="false" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="grid">
         <div class="col-3 flex align-items-center">
             <label class="" for="expidited">
                 <p-inputSwitch
-                    id="expidited" 
-                    name="expidited" 
+                    id="expidited"
+                    name="expidited"
                     [(ngModel)]="switchExpidited"
+                    (onChange)="onChangeExpedited($event)"
                 ></p-inputSwitch>
                 Expedited Requests
             </label>
@@ -155,6 +157,7 @@
                     id="checkShow" 
                     name="checkShow" 
                     [(ngModel)]="switchCheckShow"
+                    (onChange)="onChangeCheckedOut($event)"
                 ></p-inputSwitch>
                 Show Checked Out Requests
             </label>
@@ -171,7 +174,361 @@
             </label>
         </div>
         <div class="col-3 flex justify-content-end  align-items-center">
-            <button pButton pRipple (click)="onClickExportCSV()" label="Export CSV" icon="pi pi-download" class="p-button-text"></button>
+            <button pButton pRipple (click)="onClickExportCSV()" label="Download" icon="pi pi-download" class="p-button-text"></button>
         </div>
     </div>
+
+    <p-table 
+        #resultTable
+        [value]="resultTableData" 
+        responsiveLayout="scroll"
+        [paginator]="true" 
+        [rows]="10" 
+        [rowsPerPageOptions]="[10,25,50]"
+        [showCurrentPageReport]="true" 
+        currentPageReportTemplate="" 
+        [scrollable]="true"
+        selectionMode="single"
+        dataKey="txnID"
+        [(selection)]="selectedResult"
+        (onRowSelect)="onRowSelect($event)" 
+    >
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="tfnCount" class="justify-content-center">
+                    <div class="flex justify-content-center align-items-center">
+                        Count
+                        <p-sortIcon field="tfnCount"></p-sortIcon>
+                    </div>
+                </th>
+                <th pSortableColumn="submittedDateTime" class="justify-content-center">
+                    <div class="flex justify-content-center align-items-center">
+                        Submitted On
+                        <p-sortIcon field="submittedDateTime"></p-sortIcon>
+                    </div>
+                </th>
+                <th pSortableColumn="submittingRespOrg" class="justify-content-center">
+                    <div class="flex justify-content-center align-items-center">
+                        Submitting Resp Org
+                        <p-sortIcon field="submittingRespOrg"></p-sortIcon>
+                    </div>
+                </th>
+                <th pSortableColumn="futureDateTime" class="justify-content-center">
+                    <div class="flex justify-content-center align-items-center">
+                        Future Dated
+                        <p-sortIcon field="futureDateTime"></p-sortIcon>
+                    </div>
+                </th>
+                <th pSortableColumn="dueDate" class="justify-content-center">
+                    <div class="flex justify-content-center align-items-center">
+                        Due Date
+                        <p-sortIcon field="dueDate"></p-sortIcon>
+                    </div>
+                </th>
+                <th pSortableColumn="statusCode" class="justify-content-center">
+                    <div class="flex justify-content-center align-items-center">
+                        Progress
+                        <p-sortIcon field="statusCode"></p-sortIcon>
+                    </div>
+                </th>
+                <th pSortableColumn="closedOn" class="justify-content-center">
+                    <div class="flex justify-content-center align-items-center">
+                        Closed On
+                        <p-sortIcon field="closedOn"></p-sortIcon>
+                    </div>
+                </th>
+                <ng-container *ngIf="selectType=='INCOMING'">
+                    <th pSortableColumn="expediteROC" class="justify-content-center">
+                        <div class="flex justify-content-center align-items-center">
+                            Expedited
+                            <p-sortIcon field="expediteROC"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="isRequestCheckedOut" class="justify-content-center">
+                        <div class="flex justify-content-center align-items-center">
+                            Checked Out
+                            <p-sortIcon field="isRequestCheckedOut"></p-sortIcon>
+                        </div>
+                    </th>
+                </ng-container>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-result>
+            <tr [pSelectableRow]="result">
+                <td class="justify-content-center">
+                    {{result.tfnCount}}
+                </td>
+                <td class="justify-content-center">
+                    {{result.submittedDateTime}}
+                </td>
+                <td class="justify-content-center">
+                    {{result.submittingRespOrg}}
+                </td>
+                <td class="justify-content-center">
+                    {{result.futureDateTime}}
+                </td>
+                <td class="justify-content-center">
+                    {{result.dueDate}}
+                </td>
+                <td class="justify-content-center">
+                    {{result.statusCode}}
+                </td>
+                <td class="justify-content-center">
+                    {{result.closedOn}}
+                </td>
+                <ng-container *ngIf="selectType=='INCOMING'">
+                    <td class="justify-content-center">
+                        {{result.expediteROC}}
+                    </td>
+                    <td class="justify-content-center">
+                        <i *ngIf="result.isRequestCheckedOut=='YES';else no" class="pi pi-check"></i>
+                        <ng-template #no><i class="pi pi-times"></i></ng-template>
+                    </td>
+                </ng-container>
+            </tr>
+        </ng-template>
+    </p-table>
 </p-panel>
+
+<p-dialog [header]="selectType=='INCOMING' ? 'Incoming Resp Org Change' : 'Outgoing Resp Org Change'" styleClass="c-modal" [(visible)]="flag_openDialog" (onHide)="onCloseModal()" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <h5><b>Transaction ID: </b> {{selectedResult?.txnID}}</h5>
+
+    <ng-container *ngIf="incomingRespOrgChangeModalData?.isRequestCheckedOut == 'YES' && incomingRespOrgChangeModalData?.statusCode=='OPEN' && selectType=='INCOMING'">
+        <p-messages severity="success">
+            <ng-template pTemplate>
+                <div class="w-full flex justify-content-between align-items-center">
+                    <p class="mb-0 text-lg font-semibold"><i class="pi pi-check mr-2 font-bold text-xl"></i> <span>This request was checked out by {{incomingRespOrgChangeModalData?.requestCheckedOutBy}} on {{incomingRespOrgChangeModalData?.checkoutDateTime}}.</span></p>
+                    <button pButton pRipple (click)="onClickCheckIn(selectedResult?.txnID)" label="Check In" class="p-button-sm p-button-raised p-button-success font-semibold"></button>
+                </div>
+            </ng-template>
+        </p-messages>
+    </ng-container>
+
+    <ng-container *ngIf="incomingRespOrgChangeModalData?.isRequestCheckedOut == 'NO' && incomingRespOrgChangeModalData?.statusCode=='OPEN' && selectType=='INCOMING'">
+        <p-messages severity="error">
+            <ng-template pTemplate>
+                <div class="w-full flex justify-content-between align-items-center">
+                    <p class="mb-0 text-lg font-semibold"><i class="pi pi-times mr-2 font-bold text-xl"></i> <span>This request is currently NOT checked out</span></p>
+                    <button pButton pRipple (click)="onClickCheckOut(selectedResult?.txnID)" label="Check Out" class="p-button-sm p-button-raised p-button-danger font-semibold"></button>
+                </div>
+            </ng-template>
+        </p-messages>
+    </ng-container>
+
+    <div class="grid mt-4">
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.submittingRespOrg" readonly> 
+                <label for="tollFreeNumber">Submitting Resp Org</label>
+            </span>
+        </div>
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.futureDateTime" readonly> 
+                <label for="tollFreeNumber">Future Date</label>
+            </span>
+        </div>
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.submittedDateTime" readonly> 
+                <label for="tollFreeNumber">Submission Date</label>
+            </span>
+        </div>
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.dueDate" readonly> 
+                <label for="tollFreeNumber">Due Date</label>
+            </span>
+        </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <div class="card">
+        <h5>Toll-Free Numbers</h5>
+        <p-table 
+            #numberTable 
+            [value]="incomingRespOrgChangeModalData?.numList" 
+            dataKey="num"
+            [rows]="10" 
+            [showCurrentPageReport]="true" 
+            [rowsPerPageOptions]="[10,25,50]" 
+            [paginator]="true" 
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            [globalFilterFields]="['num']"
+        >
+            <ng-template pTemplate="caption">
+                <div class="flex">
+                    <div class="w-20rem p-fluid">
+                        <p-columnFilter field="status" matchMode="equals" [showMenu]="false">
+                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                <span class="p-float-label">
+                                    <p-dropdown [ngModel]="value" [options]="numStatusOptions" (onChange)="filter($event.value)" placeholder="Any" [showClear]="true">
+                                        <ng-template let-option pTemplate="item">
+                                            <span>{{option.label}}</span>
+                                        </ng-template>
+                                    </p-dropdown>
+                                    <label>Filter by Status</label>
+                                </span>
+                            </ng-template>
+                        </p-columnFilter>
+                    </div>
+                    <span class="p-input-icon-left ml-auto">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" (input)="onInputNumberTableFilter($event)" placeholder="Enter Toll-Free Number..." />
+                    </span>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+                <tr>
+                    <ng-container *ngIf="selectType=='INCOMING'">
+                        <th class="text-center">
+                            <p class="mb-0">Due Date</p>
+                            <p class="mb-0">Approval All</p>
+                            <p-checkbox (onChange)="onChangeDueDateApprovalAll($event)" [binary]="true" [disabled]="true"></p-checkbox>
+                        </th>
+                        <th class="text-center">
+                            <p>Approve All</p>
+                            <p-checkbox (onChange)="onChangeApproveAll($event)" [binary]="true" [disabled]="incomingRespOrgChangeModalData?.statusCode=='CLOSED'"></p-checkbox>
+                        </th>
+                        <th class="text-center">
+                            <p>Decline All</p>
+                            <p-checkbox (onChange)="onChangeDeclineAll($event)" [binary]="true" [disabled]="incomingRespOrgChangeModalData?.statusCode=='CLOSED'"></p-checkbox>
+                        </th>
+                    </ng-container>
+                    <th class="text-center">Toll-Free Number</th>
+                    <th class="text-center">Resp Org ID</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Processed On</th>
+                    <th *ngIf="selectType=='OUTGOING'" class="text-center">Remove?</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-num_item let-rowIndex="rowIndex">
+                <tr>
+                    <ng-container *ngIf="selectType=='INCOMING'">
+                        <td class="text-center">
+                            <p-checkbox (onChange)="onChangeDueDateApproval($event, num_item.num)" [binary]="true" [disabled]="true"></p-checkbox>
+                        </td>
+                        <td class="text-center">
+                            <p-checkbox [(ngModel)]="num_item.bApprove" (onChange)="onChangeApprove($event, num_item.num)" [binary]="true" [disabled]="num_item.bDecline || incomingRespOrgChangeModalData?.statusCode=='CLOSED'"></p-checkbox>
+                        </td>
+                        <td class="text-center">
+                            <p-checkbox [(ngModel)]="num_item.bDecline" (onChange)="onChangeDecline($event, num_item.num, rowIndex)" [binary]="true" [disabled]="num_item.bApprove || incomingRespOrgChangeModalData?.statusCode=='CLOSED'"></p-checkbox>
+                        </td>
+                    </ng-container>
+                    <td class="text-center">{{num_item.num | phoneFormat}}</td>
+                    <td class="text-center">{{num_item.ctrlRespOrg}}</td>
+                    <td class="text-center">{{num_item.status}}</td>
+                    <td class="text-center">{{num_item.processedOn}}</td>
+                    <td *ngIf="selectType=='OUTGOING'" class="text-center">
+                        <button pButton type="button" title="Remove" icon="pi pi-times" class="p-button-rounded p-button-outlined p-button-danger" (click)="removeNumber($event, num_item.num, selectedResult?.txnID)" [disabled]="num_item.status=='DECLINED' || num_item.status=='EXPIRED'"></button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="summary">
+                <span class="p-buttonset">
+                    <button pButton pRipple (click)="onClickDownloadNumbers()" label="Download" icon="pi pi-download" class="p-button-text"></button>
+                    <!-- <button pButton pRipple (click)="onClickUploadNumbers()" label="Upload" icon="pi pi-upload" class="p-button-text"></button> -->
+                </span>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-divider></p-divider>
+    <h5>LOA Documentation</h5>
+    <div>
+        <button *ngIf="incomingRespOrgChangeModalData?.loaFileName" pButton pRipple (click)="onClickLOADocumentation(incomingRespOrgChangeModalData?.loaID)" [label]="incomingRespOrgChangeModalData?.loaFileName" class="p-button-link"></button>
+    </div>
+
+    <p-divider></p-divider>
+    <h5>Other Documentation</h5>
+    <div>
+        <ng-container *ngFor="let item_doc of incomingRespOrgChangeModalData?.additionalDocuments">
+            <div>
+                <button pButton pRipple (click)="onClickOtherDocumentation(item_doc?.documentID)" [label]="item_doc?.fileTitle" class="p-button-link"></button>
+            </div>
+        </ng-container>
+    </div>
+
+    <p-divider></p-divider>
+    <h5>Submitter's Information</h5>
+    <div class="grid mt-4">
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.submitterName" readonly> 
+                <label for="tollFreeNumber">Name</label>
+            </span>
+        </div>
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.submitterEmail" readonly> 
+                <label for="tollFreeNumber">Email Address</label>
+            </span>
+        </div>
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.submitterTelNo" readonly> 
+                <label for="tollFreeNumber">Phone</label>
+            </span>
+        </div>
+        <div class="md:col-6 col-12 p-fluid">
+            <span class="p-float-label">
+                <input type="text" pInputText [value]="incomingRespOrgChangeModalData?.submitterCompanyName" readonly> 
+                <label for="tollFreeNumber">Company Name</label>
+            </span>
+        </div>
+    </div>
+
+    <p-divider></p-divider>
+    <div class="p-fluid">
+        <span class="field p-float-label">
+            <textarea [(ngModel)]="inputAlternateContact" rows="5" cols="30" pInputTextarea></textarea>
+            <label>Notes / Alternate Contact Information</label>
+        </span>
+    </div>
+
+    <div class="flex flex-column align-items-end">
+        <div class="field-radiobutton">
+            <label class="mr-2">Resubmit the Request</label>
+            <p-radioButton name="reSubmit" (onClick)="onClickResubmitTheRequest($event)" value="resubmitTheRequest" [(ngModel)]="radioReSubmit"></p-radioButton>
+        </div>
+        <div class="field-radiobutton">
+            <label class="mr-2">Submit a Resp Org Change to the Help Desk for Processing</label>
+            <p-radioButton name="reSubmit" value="submitRespOrgChange" [(ngModel)]="radioReSubmit"></p-radioButton>
+        </div>
+    </div>
+
+    <div class="flex justify-content-end mt-5">
+        <span class="p-buttonset">
+          <button pButton pRipple *ngIf="selectType=='INCOMING'" (click)="onClickSubmit(selectedResult?.txnID)" label="Submit" class="p-button-text" [disabled]="selectedReasons.length == 0"></button>
+          <button pButton pRipple *ngIf="selectType=='OUTGOING'" (click)="onClickCancelRequest(selectedResult?.txnID)" label="Cancel Request" class="p-button-text" [disabled]="true"></button>
+          <button pButton pRipple (click)="onCloseModal()" label="Close" class="p-button-text"></button>
+          <button pButton pRipple *ngIf="selectType=='OUTGOING'" (click)="onClickResubmit(selectedResult?.txnID)" label="Resubmit" class="p-button-text" [disabled]="radioReSubmit==''"></button>
+        </span>
+    </div>
+</p-dialog>
+
+<p-dialog header="Toll-Free Number(s) to be Declined:" styleClass="c-modal" [(visible)]="flagOpenDeclinedNumDialog" (onHide)="flagOpenDeclinedNumDialog=false" [breakpoints]="{'960px': '75vw', '640px': '100vw'}" [style]="{width: '80vw'}" [modal]="true" [draggable]="false" [resizable]="false">
+    <!-- <p>You are declining a Resp Org Change Request for Toll-Free Number(s):</p> -->
+    <div class="p-fluid">
+        <span class="field p-float-label">
+            <textarea class="pt-4" [(ngModel)]="inputDeclinedNumbers" rows="5" cols="30" pInputTextarea></textarea>
+            <label for="notes">You are declining a Resp Org Change Request for Toll-Free Number(s)</label>
+        </span>
+        <span class="field p-float-label">
+            <p-multiSelect [options]="reasonOptions" (onChange)="onChangeReasonCode($event)" [(ngModel)]="selectedReasons" defaultLabel="Reason Code" optionLabel="name" optionValue="value" display="chip"></p-multiSelect>
+            <label for="notes">Reason Code</label>
+        </span>
+        <span class="field p-float-label">
+            <textarea class="pt-4" [(ngModel)]="inputDeclineNotes" rows="5" cols="30" pInputTextarea></textarea>
+            <label for="notes">Decline Notes</label>
+        </span>
+    </div>
+
+    <div class="flex justify-content-end mt-5">
+        <span class="p-buttonset">
+          <button pButton pRipple (click)="onClickDeclineSubmit()" label="Submit" class="p-button-text" [disabled]="selectedReasons.length == 0"></button>
+          <button pButton pRipple (click)="onClickDeclineCancel()" label="Cancel" class="p-button-text"></button>
+        </span>
+    </div>
+</p-dialog>

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {ConfirmationService, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions } from '../../constants';
+import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions, SQL_TYPE_OPTIONS } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IScriptResults, ISqlUser, ISqlScript} from "../../../models/user";
@@ -29,8 +29,8 @@ export class ScriptExeRecordsComponent implements OnInit {
   sqlIdFilterValue = {name: 'All', value: ''}
   resultFilterValue = {name: 'All', value: ''}
   userIdFilterValue = {name: 'All', value: ''}
-  sortActive = 'id'
-  sortDirection = 'ASC'
+  sortActive = 'updated_at'
+  sortDirection = 'DESC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -47,8 +47,15 @@ export class ScriptExeRecordsComponent implements OnInit {
     {name: 'All', value: ''},
     {name: 'SUCCESS', value: 'SUCCESS'},
     {name: 'FAILED', value: 'FAILED'},
-    {name: 'CANCELED', value: 'CANCELED'}
+    {name: 'COMPLETED', value: 'COMPLETED'},
+    {name: 'WAITING', value: 'WAITING'},
+    {name: 'UPLOADING', value: 'UPLOADING'},
+    {name: 'DOWNLOADING', value: 'DOWNLOADING'},
+    {name: 'IMPORTING', value: 'IMPORTING'}
   ];
+
+  sqlTypeOptions: any[] = SQL_TYPE_OPTIONS;
+  selectSqlType: string = '';
 
   constructor(
     public api: ApiService,
@@ -69,21 +76,23 @@ export class ScriptExeRecordsComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.SQL_SCRIPT_EXECUTION_RECORD)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-    })
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.SQL_SCRIPT_EXECUTION_RECORD)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
+
+    // this.store.state$.subscribe(async (state)=> {
+
+    // })
 
     this.getTotalScriptResultsCount();
     this.getScriptResultsList();
     this.getSqlUsersList();
-    this.getSqlScriptsList();
+    // this.getSqlScriptsList();
   }
 
   createData = (name: string, value: number) => {
@@ -97,10 +106,11 @@ export class ScriptExeRecordsComponent implements OnInit {
     this.isLoading = true;
     try {
       let filterValue = this.filterValue.replace('(', '').replace('-', '').replace(') ', '').replace(')', '')
-      await this.api.getScriptResultsList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.sqlIdFilterValue.value, this.resultFilterValue.value, this.userIdFilterValue.value)
+      await this.api.getScriptResultsList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.selectSqlType, this.resultFilterValue.value, this.userIdFilterValue.value)
         .pipe(tap(async (res: IScriptResults[]) => {
+          console.log(res);
           this.script_exe_records = [];
-          res.map(u => u.executed_at = u.executed_at ? moment(new Date(u.executed_at)).format('YYYY/MM/DD h:mm:ss A') : '');
+          res.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '');
 
           let allNotEditable = true
           for (let record of res) {
@@ -108,11 +118,10 @@ export class ScriptExeRecordsComponent implements OnInit {
           }
 
           this.noNeedEditColumn = allNotEditable
-
         })).toPromise();
 
       this.filterResultLength = -1
-      await this.api.getScriptResultsCount(filterValue, this.sqlIdFilterValue.value, this.resultFilterValue.value, this.userIdFilterValue.value).pipe(tap( res => {
+      await this.api.getScriptResultsCount(filterValue, this.selectSqlType, this.resultFilterValue.value, this.userIdFilterValue.value).pipe(tap( res => {
         this.filterResultLength = res.count
       })).toPromise();
     } catch (e) {
@@ -144,21 +153,37 @@ export class ScriptExeRecordsComponent implements OnInit {
     }
   }
 
-  getSqlScriptsList = async () => {
-    this.isLoading = true;
-    try {
-      await this.api.getSqlScriptsList(this.sortActive, this.sortDirection, this.pageIndex, 400, '')
-        .pipe(tap(async (sql_scriptsRes: ISqlScript[]) => {
-          let tmp = sql_scriptsRes.map(item=>{
-            return this.createData(
-              item.content,
-              item.id
-            );
-          });
-          this.sql_scripts = [{name: 'All', value: ''}, ...tmp];
-        })).toPromise();
-    } catch (e) {
+  // getSqlScriptsList = async () => {
+  //   this.isLoading = true;
+  //   try {
+  //     await this.api.getSqlScriptsList(this.sortActive, this.sortDirection, this.pageIndex, 400, '', '')
+  //       .pipe(tap(async (sql_scriptsRes: ISqlScript[]) => {
+  //         let tmp = sql_scriptsRes.map(item=>{
+  //           return this.createData(
+  //             item.content,
+  //             item.id
+  //           );
+  //         });
+  //         this.sql_scripts = [{name: 'All', value: ''}, ...tmp];
+  //       })).toPromise();
+  //   } catch (e) {
+  //   }
+  // }
+
+  getStatusColor = (status: string) => {
+    switch(status) {
+      case 'FAILED':
+        return 'danger';
+      case 'COMPLETED':
+        return 'info';
+      case 'SUCCESS':
+        return 'success';
+      case 'IMPORTING':
+        return 'warning';
+      default:
+        return '';
     }
+    return ''
   }
 
   onSortChange = async (name: any) => {

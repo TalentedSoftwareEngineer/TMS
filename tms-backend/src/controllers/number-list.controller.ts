@@ -314,6 +314,7 @@ export class NumberListController {
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
       @param.query.string('value') value: string,
       @param.query.string('userIdFilter') userIdFilter: string,
+      @param.query.string('sqlType') sqlType: string,
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.NUMBER_LIST))
@@ -325,6 +326,9 @@ export class NumberListController {
     let custom: any[] = [];
     if (userIdFilter!="") {
       custom.push({user_id: userIdFilter})
+    }
+    if (sqlType!=undefined && sqlType!="") {
+      custom.push({type: sqlType})
     }
 
     return this.scriptSqlRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
@@ -353,6 +357,7 @@ export class NumberListController {
       @param.query.string('order') order: string,
       @param.query.string('value') value: string,
       @param.query.string('userIdFilter') userIdFilter: string,
+      @param.query.string('sqlType') sqlType: string,
   ): Promise<ScriptSql[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.NUMBER_LIST))
@@ -361,6 +366,9 @@ export class NumberListController {
     let fields = ['content'];
     let num_fields = undefined;
     let custom: any[] = [];
+    if (sqlType!=undefined && sqlType!="") {
+      custom.push({type: sqlType})
+    }
 
     if (userIdFilter!="") {
       custom.push({user_id: userIdFilter})
@@ -419,7 +427,7 @@ export class NumberListController {
       const user = await this.scriptSqlRepository.getScriptUser(sr.sql_id)
       this.numberService.executeScript(sr, user, profile)
 
-      result.push(sr.id)
+      result.push(sr.id!)
     }
 
     return { success: true, result };

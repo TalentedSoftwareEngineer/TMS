@@ -81,16 +81,18 @@ export class UserActivityComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.USER_ACTIVITY)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-    })
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.USER_ACTIVITY)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
+
+    // this.store.state$.subscribe(async (state)=> {
+
+    // })
 
     this.authenticatedUserId = this.store.getUser().id;
     this.getTotalUserActivitiesCount();
@@ -113,10 +115,10 @@ export class UserActivityComponent implements OnInit {
         .pipe(tap(async (res: IUserActivities[]) => {
           this.user_activities = [];
           res.map(u => {
-            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : ''
-            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : ''
-            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : ''
-            u.page = u.page ? PAGES[u.page.toUpperCase() as keyof typeof PAGES] : ''
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : ''
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : ''
+            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : ''
+            u.page = u.page ? (Boolean(PAGES[u.page.toUpperCase() as keyof typeof PAGES]) ? PAGES[u.page.toUpperCase() as keyof typeof PAGES] : u.page) : ''
           })
 
           let allNotEditable = true

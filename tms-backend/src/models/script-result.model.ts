@@ -11,10 +11,9 @@ export class ScriptResult extends Entity {
     type: 'string',
     id: true,
     generated: false,
-    required: true,
     defaultFn: 'uuidv4'
   })
-  id: string;
+  id?: string;
 
   @belongsTo(() => User, {name: 'user'})
   user_id: number;

@@ -156,7 +156,7 @@ export default class DataUtils {
         if (skip)
             filter.skip = skip
         if (order && order!="")
-            filter.order = order
+            filter.order = [ order ]
 
         if (value==null  || value.trim()=="" ) {
             if (include!=null && include.length>0) {

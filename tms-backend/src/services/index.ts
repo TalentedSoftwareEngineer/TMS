@@ -11,3 +11,4 @@ export * from './secure-382-api.service';
 export * from './ftp.service';
 export * from './resp-org.service';
 export * from './pointer-record.service';
+export * from './file-upload.service';

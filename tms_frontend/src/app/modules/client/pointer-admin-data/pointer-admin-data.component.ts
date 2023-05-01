@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import * as gFunc from 'src/app/utils/utils';
 import {StoreService} from "../../../services/store/store.service";
 import {ApiService} from "../../../services/api/api.service";
@@ -59,7 +59,7 @@ import {environment} from "../../../../environments/environment";
   templateUrl: './pointer-admin-data.component.html',
   styleUrls: ['./pointer-admin-data.component.scss']
 })
-export class PointerAdminDataComponent implements OnInit {
+export class PointerAdminDataComponent implements OnInit, OnDestroy {
   gConst = {
     ACTION_NONE,
     ACTION_ALL,
@@ -178,7 +178,6 @@ export class PointerAdminDataComponent implements OnInit {
   inputTgtNum: string = '';
   inputTgtEffDtTm: any;
   inputCopyNow: boolean = false;
-  radioCopyAction: string = '';
   nowDateTime: any = new Date();
 
   bRevertClicked: boolean = false;
@@ -188,6 +187,8 @@ export class PointerAdminDataComponent implements OnInit {
   inputMessage: string = '';       // api call result messages
 
   num: string = '';      // retrieved num
+
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
 
   constructor(
     public store: StoreService,
@@ -209,22 +210,28 @@ export class PointerAdminDataComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.POINT_ADMIN_DATA)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this._router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-    })
+    // this.store.state$.subscribe(async (state)=> {
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    // })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.POINT_ADMIN_DATA)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this._router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
+
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
     })
 
     this.initialDataLoading();
+  }
+
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
   }
 
   initialDataLoading = async () => {
@@ -270,7 +277,7 @@ export class PointerAdminDataComponent implements OnInit {
 
       cookies.remove("ptrNum");
       cookies.remove("ptrEffDtTm");
-      cookies.remove("action");
+      // cookies.remove("action");
     }
   }
 
@@ -309,7 +316,7 @@ export class PointerAdminDataComponent implements OnInit {
   }
 
   retrievePointerRecord = async (num: string, effDtTm: string, isUserAct: boolean = false): Promise<boolean> => {
-    num = num.replace(/\-/g, "")
+    num = num?.replace(/\-/g, "")
     if (effDtTm != "NOW")
       effDtTm = effDtTm?.replace(/\-/g, "").replace(":", "");
 
@@ -676,7 +683,7 @@ export class PointerAdminDataComponent implements OnInit {
 
     let tgtNum = this.inputTgtNum.replace(/\-/g, "")
 
-    switch (this.radioCopyAction) {
+    switch (this.copyAction) {
       case this.gConst.COPYACTION_CHANGE:
         break
       case this.gConst.COPYACTION_DISCONNECT:
@@ -699,12 +706,13 @@ export class PointerAdminDataComponent implements OnInit {
     // gets target date time
     let tgtEffDtTm = "NOW"
     if (!this.inputCopyNow) {
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z';     
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z';
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm));
     }
 
     let ptrRecAction = this.gConst.ACTION_COPY
-    if (this.radioCopyAction === this.gConst.COPYACTION_DISCONNECT || this.selectReferral !== '') {
+    if (this.copyAction === this.gConst.COPYACTION_DISCONNECT || this.selectReferral !== '') {
       ptrRecAction = this.gConst.ACTION_DISCONNECT
     }
 
@@ -772,8 +780,9 @@ export class PointerAdminDataComponent implements OnInit {
         this.showInfo('Please input effective date/time');
         return
       }
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm));
     }
 
     let tgtNum = this.inputTgtNum.replace(/\-/g, "")
@@ -918,8 +927,9 @@ export class PointerAdminDataComponent implements OnInit {
         this.showInfo('Please input effective date/time');
         return
       }
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm));
     }
 
 
@@ -953,8 +963,9 @@ export class PointerAdminDataComponent implements OnInit {
     // gets target date time
     let tgtEffDtTm = "NOW"
     if (!this.inputCopyNow) {
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm));
     }
 
     // configs parameter for calling lock api

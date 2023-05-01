@@ -56,19 +56,15 @@ export class ContactInformationModalComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    this.timeout_id = setTimeout(()=>{
-      this.onSignout();
-    }, 900000);
-
-    this.api.test().subscribe(res=>{
-      console.log(res);
-    });
+    // this.api.test().subscribe(res=>{
+    //   console.log(res);
+    // });
   }
 
   onSignout = () => {
     this.store.removeCurrentRo();
     this.store.removeToken();
-    this.store.removeUser();
+    // this.store.removeUser();
 
     this.route.navigateByUrl(ROUTES.login);
   }

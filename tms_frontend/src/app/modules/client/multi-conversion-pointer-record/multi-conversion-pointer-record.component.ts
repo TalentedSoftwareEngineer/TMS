@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StoreService } from 'src/app/services/store/store.service';
 import { PERMISSIONS } from 'src/app/consts/permissions';
@@ -14,7 +14,7 @@ import {
 } from '../../constants';
 import {environment} from "../../../../environments/environment";
 import {ApiService} from "../../../services/api/api.service";
-import {SseClient} from "angular-sse-client";
+import {closeEventSource, SseClient} from "angular-sse-client";
 import {tap} from "rxjs/operators";
 import moment from "moment";
 import {Table} from "primeng/table";
@@ -25,7 +25,7 @@ import { IUser } from 'src/app/models/user';
   templateUrl: './multi-conversion-pointer-record.component.html',
   styleUrls: ['./multi-conversion-pointer-record.component.scss']
 })
-export class MultiConversionPointerRecordComponent implements OnInit {
+export class MultiConversionPointerRecordComponent implements OnInit, OnDestroy {
   gConst = {
     TMPL_ERR_TYPE,
     INVALID_NUM_TYPE_COMMON,
@@ -61,7 +61,6 @@ export class MultiConversionPointerRecordComponent implements OnInit {
   completedReq: any[] = [];
 
   viewedResult: any;
-  csvNumbersContent: string = '';
 
   activityLogs: any[] = [];
   activityLogsLoading: boolean = false;
@@ -78,6 +77,8 @@ export class MultiConversionPointerRecordComponent implements OnInit {
   isSuperAdmin: boolean = false;
   userOptions: any[] = [];
   selectUser: string|number = '';
+
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
 
   constructor(
     public store: StoreService,
@@ -101,16 +102,17 @@ export class MultiConversionPointerRecordComponent implements OnInit {
     })
 
     this.store.state$.subscribe(async (state)=> {
-      if(state.user?.permissions?.includes(PERMISSIONS.MULTI_CONVERSION_TO_POINTER_RECORD)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
       this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
+
+    if(this.store.getUser()?.permissions?.includes(PERMISSIONS.MULTI_CONVERSION_TO_POINTER_RECORD)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
     this.activatedRoute.queryParams.subscribe((params) => {
       let numbers = params['numbers'];
@@ -121,7 +123,7 @@ export class MultiConversionPointerRecordComponent implements OnInit {
     await this.getData();
     this.getUsersList();
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       if(data.page=='MCP') {
         if(data.status.toUpperCase()=='IN PROGRESS') {
           let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
@@ -144,7 +146,7 @@ export class MultiConversionPointerRecordComponent implements OnInit {
             }
             // Alert
             if(data.completed==0) {
-              this.showError(`${data.req.message.slice(0, 69)}`, `Failed`);
+              this.showError(`${data.req.message.slice(0, 200)}`, `Failed`);
             } else if(data.failed==0) {
               this.showSuccess('Success!');
             } else {
@@ -156,12 +158,16 @@ export class MultiConversionPointerRecordComponent implements OnInit {
     })
   }
 
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
+  }
+
   getData = async () => {
     this.getTotalCount();
 
     await this.api.getMcpData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
         this.activityLogs = res;
       })).toPromise();
 
@@ -192,8 +198,9 @@ export class MultiConversionPointerRecordComponent implements OnInit {
 
   onNumFieldFocusOut = () => {
     let num = this.inputDialNumbers;
-    if (num !== null && num !== "") {
+    if (Boolean(num)) {
       let nums = gFunc.retrieveNumListWithHyphen(num)
+      nums = nums.filter((item, index)=>(nums.indexOf(item)===index));
       this.inputDialNumbers = nums.join(",");
 
       let specificNumReg = SPECIFICNUM_REG_EXP
@@ -238,7 +245,6 @@ export class MultiConversionPointerRecordComponent implements OnInit {
   }
 
   onOpenViewModal = async (event: Event, result: any) => {
-    this.csvNumbersContent = '';
     this.viewedResult = result;
 
     await this.api.getMcpById(result.id)
@@ -249,9 +255,6 @@ export class MultiConversionPointerRecordComponent implements OnInit {
         // response.map(u => u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
 
         this.numberList = response;
-        response.forEach((item, index) => {
-          this.csvNumbersContent += `\n${item.num},${item.eff_dt_tm==null?'':item.eff_dt_tm},${item.status},${item.message==null?'':item.message}`;
-        });
 
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
@@ -266,8 +269,8 @@ export class MultiConversionPointerRecordComponent implements OnInit {
 
     await this.api.getMcpById(result.id).pipe(tap((response: any[])=>{
       response.map(u => {
-        u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
-        u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : ''
+        u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+        u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : ''
       });
 
       response.forEach((item, index) => {
@@ -311,7 +314,18 @@ export class MultiConversionPointerRecordComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    // this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
+    this.filterNumberList = this.numberList.filter(item=>{
+      let a = item.num?.includes(omittedPhoneNumber);
+      let b = item.status?.includes(this.inputNumListFilterKey);
+      let c = item.message?.includes(this.inputNumListFilterKey);
+      if (omittedPhoneNumber=='') {
+        return b || c;
+      } else {
+        return a || b || c;
+      }
+    });
   }
 
   closeModal = () => {
@@ -352,8 +366,9 @@ export class MultiConversionPointerRecordComponent implements OnInit {
 
     let effDateTime = ""
     if (this.inputEffDateTime!=null) {
-      let d = new Date(this.inputEffDateTime).getTime()
-      effDateTime = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'
+      // let d = new Date(this.inputEffDateTime).getTime()
+      // effDateTime = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'
+      effDateTime = gFunc.fromCTTimeToUTCStr(new Date(this.inputEffDateTime))
     }
 
     let body: any = {
@@ -476,7 +491,11 @@ export class MultiConversionPointerRecordComponent implements OnInit {
   }
 
   onViewNumbersDownload = () => {
-    let data = `Number,Effective Date/Time,Status,Message${this.csvNumbersContent}\n`
+    let numbersContent = '';
+    this.filterNumberList.forEach((item, index) => {
+      numbersContent += `\n${item.num},${item.eff_dt_tm==null?'':item.eff_dt_tm},${item.status},${item.message==null?'':item.message}`;
+    });
+    let data = `Number,Effective Date/Time,Status,Message${numbersContent}\n`
 
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);

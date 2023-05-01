@@ -1,3 +1,10 @@
+export const SQL_TYPE_OPTIONS = [
+  {name: 'All', value: ''},
+  {name: 'TMPL_DIALNBR', value: 'RHDB_TEMPLATE_DIALNBR'},
+  {name: 'DIALNBR', value: 'RHDB_NAREP'},
+  {name: 'TFNREPT_DIALNBR', value: 'RHDB_NAREP_TFNREPT'}
+]
+
 export const SUPER_ADMIN_ID = 1
 export const SUPER_ADMIN_ROLE_ID = 1
 export const PAGE_NO_PERMISSION_MSG = "You have no permission for this page"

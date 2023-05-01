@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import moment from 'moment';
 import {
   INVALID_TIME_NONE,
@@ -25,7 +25,7 @@ import {tap} from "rxjs/operators";
 import {PERMISSIONS} from "../../../consts/permissions";
 import {ROUTES} from "../../../app.routes";
 import {environment} from "../../../../environments/environment";
-import {SseClient} from "angular-sse-client";
+import {closeEventSource, SseClient} from "angular-sse-client";
 import {Router} from "@angular/router";
 import { IUser } from 'src/app/models/user';
 
@@ -34,7 +34,7 @@ import { IUser } from 'src/app/models/user';
   templateUrl: './auto-reserve-numbers.component.html',
   styleUrls: ['./auto-reserve-numbers.component.scss']
 })
-export class AutoReserveNumbersComponent implements OnInit {
+export class AutoReserveNumbersComponent implements OnInit, OnDestroy {
 
   gConst = {
     INVALID_TIME_NONE,
@@ -106,6 +106,8 @@ export class AutoReserveNumbersComponent implements OnInit {
   userOptions: any[] = [];
   selectUser: string|number = '';
 
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
+
   constructor(
     public store: StoreService,
     public api: ApiService,
@@ -127,22 +129,22 @@ export class AutoReserveNumbersComponent implements OnInit {
     })
 
     this.store.state$.subscribe(async (state)=> {
-      if(state.user?.permissions?.includes(PERMISSIONS.AUTO_RESERVE_NUMBERS)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-
       this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
+
+    if(this.store.getUser()?.permissions?.includes(PERMISSIONS.AUTO_RESERVE_NUMBERS)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
     await this.getData();
     this.getUsersList();
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       if(data.page.toUpperCase()=='NAR') {
         if(data.status.toUpperCase()=='IN PROGRESS') {
           let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
@@ -177,6 +179,10 @@ export class AutoReserveNumbersComponent implements OnInit {
         }
       }
     })
+  }
+
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
   }
 
   getUsersList = async () => {

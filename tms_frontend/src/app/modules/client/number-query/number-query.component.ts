@@ -84,16 +84,18 @@ export class NumberQueryComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.NUMBER_QUERY)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-    })
+    // this.store.state$.subscribe(async (state)=> {
+
+    // })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.NUMBER_QUERY)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
     if(this.retreivedStatus === this.gConst.TFNUM_STATE_RESERVED) {
       this.statusOptions = [

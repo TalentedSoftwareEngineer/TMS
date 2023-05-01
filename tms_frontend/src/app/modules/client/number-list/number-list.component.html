@@ -17,13 +17,19 @@
             [responsive]="true">
             <ng-template pTemplate="caption">
               <div class="grid">
-                <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
+                <div class="lg:col-2 md:col-4 col-12 p-fluid pl-0 pr-0">
                   <span class="p-float-label">
                       <p-dropdown [options]="usernameOptions" id="filterByUsername" [(ngModel)]="selectUsername" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
                       <label>Username</label>
                   </span>
                 </div>
-                <div class="lg:col-4 md:col-6 col-12 p-fluid pl-0 pr-0">
+                <div class="lg:col-2 md:col-4 col-12 p-fluid pl-0 pr-0">
+                    <span class="p-float-label">
+                        <p-dropdown [options]="sqlTypeOptions" [(ngModel)]="selectSqlType" optionLabel="name" optionValue="value"></p-dropdown>
+                        <label>Type</label>
+                    </span>
+                </div>
+                <div class="lg:col-3 md:col-4 col-12 p-fluid pl-0 pr-0">
                   <div class="p-inputgroup">
                     <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="scriptFilterValue" [disabled]="isLoading" (keyup.enter)="onScriptClickFilter()">
                     <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onScriptClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
@@ -37,13 +43,16 @@
                     <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
                 </th>
                 <th class="text-align-center" [ngClass]="scriptSortActive === 'user_id' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
-                    <a (click)="onSortChange('user_id')">User Name</a>
+                    <a (click)="onScriptSortChange('user_id')">User Name</a>
                 </th>
                 <th class="text-left" [ngClass]="scriptSortActive === 'content' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
-                    <a (click)="onSortChange('content')">Sql Script</a>
+                    <a (click)="onScriptSortChange('content')">Sql Script</a>
+                </th>
+                <th class="text-align-center" [ngClass]="sortActive === 'type' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                    <a (click)="onSortChange('type')">Type</a>
                 </th>
                 <th class="text-align-center" [ngClass]="scriptSortActive === 'autorun' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
-                  <a (click)="onSortChange('autorun')">Autorun</a>
+                    <a (click)="onScriptSortChange('autorun')">Autorun</a>
                 </th>
 
                 <ng-container *ngIf="allFinish">
@@ -65,6 +74,10 @@
                 <td class="text-align-center">
                   <span class="p-column-title">Sql Script</span>
                   <pre class="text-left">{{ sql_script?.content }}</pre> 
+                </td>
+                <td class="text-align-center">
+                    <span class="p-column-title">Type</span>
+                    {{ sql_script?.type }}
                 </td>
                 <td class="text-align-center">
                   <span class="p-column-title">Autorun</span>
@@ -99,7 +112,7 @@
           </p-table>
 
           <div class="flex justify-content-center align-items-center gap-3">
-            <p-paginator [rows]="scriptPageSize" [totalRecords]="filteredScriptLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="onScriptPagination($event)"></p-paginator>
+            <p-paginator [rows]="scriptPageSize" [totalRecords]="filteredScriptLength" [rowsPerPageOptions]="rowsPerPageOptions" (onPageChange)="scriptPaginate($event)"></p-paginator>
           </div>
         </div>
     </div>
@@ -126,7 +139,6 @@
                 [value]="numberList"
                 [(selection)]="selectedNumbers"
                 dataKey="id"
-                [rowHover]="true"
                 [rows]="10"
                 [loading]="numberListLoading"
                 responsiveLayout="stack"
@@ -136,35 +148,22 @@
             >
                 <ng-template pTemplate="caption">
                     <div class="grid">
-                        <!-- <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
-                            <span class="p-float-label">
-                                <p-dropdown [options]="entityOptions" id="filterByEntity" [(ngModel)]="selectEntity" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
-                                <label>Entity</label>
-                            </span>
-                        </div> -->
-                        <!-- <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
-                            <span class="p-float-label">
-                                <p-dropdown [options]="respOrgIdOptions" id="filterByRespOrgId" [(ngModel)]="selectRespOrgId" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
-                                <label>Resp Org Id</label>
-                            </span>
-                        </div> -->
-                        <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
-                            <span class="p-float-label">
-                                <p-dropdown [options]="tmplNameOptions" id="filterByTmplName" [(ngModel)]="selectTmplName" [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
-                                <label>Template Name</label>
-                            </span>
+                        <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
+
+                        </div>
+                        <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
+
+                        </div>
+                        <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
+
+                        </div>
+                        <div class="lg:col-2 md:col-6 col-12 p-fluid pl-0 pr-0">
+
                         </div>
                         <div class="lg:col-3 md:col-6 col-12 p-fluid pl-0 pr-0">
-                            <span class="p-float-label">
-                                <p-dropdown [options]="statusOptions" id="filterByStatus" [(ngModel)]="selectStatus" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
-                                <label>Status</label>
-                            </span>
-                        </div>
-                        <div class="lg:col-4 md:col-6 col-12 p-fluid pl-0 pr-0">
-                            <div class="p-inputgroup">
-                                <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+                            <!-- <div class="p-inputgroup">
                                 <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </ng-template>
@@ -180,6 +179,7 @@
                         <th class="text-align-center" [ngClass]="sortActive === 'resp_org' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('resp_org')">Resp Org Id</a>
                         </th>
+                        <th class="text-align-center">Company</th>
                         <th class="text-align-center" [ngClass]="sortActive === 'template_name' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('template_name')">Template Name</a>
                         </th>
@@ -195,6 +195,59 @@
                         <th class="text-align-center w-100px">
                             Action
                         </th>
+                    </tr>
+                    <tr>
+                        <th class="pl-0 pr-0"></th>
+                        <th class="pl-0 pr-0">
+                            <div class="p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown [options]="entityOptions" id="filterByEntity" (onChange)="onChangeEntity($event)" [(ngModel)]="selectEntity" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
+                                    <label>Entity</label>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="pl-0 pr-0">
+                            <div class="p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown [options]="respOrgIdOptions" id="filterByRespOrgId" (onChange)="onChangeRespOrgId($event)" [(ngModel)]="selectRespOrgId" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
+                                    <label>Resp Org Id</label>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="pl-0 pr-0">
+                            <div class="p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown [options]="companyOptions" (onChange)="onChangeCompany($event)" [(ngModel)]="selectCompany" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
+                                    <label>Company</label>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="pl-0 pr-0">
+                            <div class="p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown [options]="tmplNameOptions" id="filterByTmplName" (onChange)="onClickFilter()" [(ngModel)]="selectTmplName" [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
+                                    <label>Template Name</label>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="pl-0 pr-0">
+                            <div class="p-fluid">
+                                <span class="p-float-label">
+                                    <input type="text" pInputText [(ngModel)]="filterValue" [disabled]="isLoading" (blur)="onClickFilter()" (keyup.enter)="onClickFilter()">
+                                    <label>Toll-Free Number</label>
+                                </span>
+                            </div>                            
+                        </th>
+                        <th class="pl-0 pr-0">
+                            <div class="p-fluid">
+                                <span class="p-float-label">
+                                    <p-dropdown [options]="statusOptions" id="filterByStatus" (onChange)="onClickFilter()" [(ngModel)]="selectStatus" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
+                                    <label>Status</label>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="pl-0 pr-0"></th>
+                        <th class="pl-0 pr-0"></th>
                     </tr>
                 </ng-template>
 
@@ -212,12 +265,21 @@
                             {{number.resp_org}}
                         </td>
                         <td class="text-align-center">
+                            <span class="p-column-title">Company</span>
+                            {{number?.company}}
+                        </td>
+                        <td class="text-align-center">
                             <span class="p-column-title">Template Name</span>
-                            {{number.template_name}}
+                            <span pButton pRipple class="p-button-link" (click)="onClickTmplName(number.template_name)">{{number.template_name}}</span>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Toll-Free Number</span>
-                            {{number.num | phoneFormat}}
+                            <ng-container *ngIf="number.template_name == '';else pad">
+                                <span pButton pRipple class="p-button-link" (click)="onClickCAD(number.num, number.status)">{{number.num | phoneFormat}}</span>
+                            </ng-container>
+                            <ng-template #pad>
+                                <span pButton pRipple class="p-button-link" (click)="onClickPAD(number.num, number.status)">{{number.num | phoneFormat}}</span>
+                            </ng-template>
                         </td>
                         <td class="text-align-center">
                             <span class="p-column-title">Status</span>

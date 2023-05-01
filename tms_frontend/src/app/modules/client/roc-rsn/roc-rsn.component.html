@@ -23,36 +23,37 @@
 
 <p-panel header="Manage Subscriber Notifications" styleClass="mt-5" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
-        <p-table [value]="notifications" dataKey="tfn_status" responsiveLayout="stack" [responsive]="true">
+        <p-table [value]="notifications" responsiveLayout="stack" [responsive]="true">
             <ng-template pTemplate="header">
                 <tr>
-                    <th class="text-align-center" pSortableColumn="tfn_status">TFN Status</th>
-                    <th class="text-align-center" pSortableColumn="event">Event</th>
-                    <th class="text-align-center" pSortableColumn="process_outgoing">
+                    <th class="text-align-center">TFN Status</th>
+                    <th class="text-align-center">Event</th>
+                    <th class="text-align-center">
                         Process Outgoing (Gaining) 
-                        <p-checkbox [binary]="true" [(ngModel)]="checkAllProcessOutgoing" inputId="checkAllProcessOutgoing"></p-checkbox>
+                        <p-checkbox [binary]="true"></p-checkbox>
                     </th>
-                    <th class="text-align-center" pSortableColumn="process_incoming">
+                    <th class="text-align-center">
                         Process Incoming (Losing)
-                        <p-checkbox [binary]="true" [(ngModel)]="checkAllProcessIncoming" inputId="checkAllProcessIncoming"></p-checkbox>
+                        <p-checkbox [binary]="true"></p-checkbox>
                     </th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-notification  let-rowIndex="rowIndex">
+            <ng-template pTemplate="body" let-item>
                 <tr>
                     <td class="text-align-center">
                         <span class="p-column-title">TFN Status</span>
-                        {{notification.tfn_status}}
+                        {{item.tfn_status}}
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Event</span>
                         <ng-container>
-                            {{notification.event}}
-                            <i 
+                            {{item.event}}
+                            <i  
+                                *ngIf="item.event_tooltip != ''"
                                 class="pi pi-info-circle text-lg" 
                                 tooltipStyleClass="info-tooltip" 
                                 [escape]="false" 
-                                [pTooltip]="notification.event_tooltip" 
+                                [pTooltip]="item.event_tooltip" 
                                 [hideDelay]="500" 
                                 style="cursor: pointer;"
                             ></i>
@@ -60,16 +61,16 @@
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Process Outgoing (Gaining)</span>
-                        <ng-container>
-                            {{notification.process_outgoing}}
-                            <p-checkbox [inputId]="'outgoings_'+rowIndex" name="groupProcessOutgoings" [value]="notification.process_outgoing + '_' + rowIndex" (onChange)="onChangeOut()" [(ngModel)]="selectedProcessOutgoings"></p-checkbox>
+                        <ng-container *ngIf="item.bGaining != null">
+                            Process Outgoing (Gaining)
+                            <p-checkbox [binary]="true" [(ngModel)]="item.bGaining"></p-checkbox>
                         </ng-container>
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Process Incoming (Losing)</span>
-                        <ng-container>
-                            {{notification.process_incoming}}
-                            <p-checkbox [inputId]="'incoming_'+rowIndex" name="groupProcessIncomings" [value]="notification.process_incoming + '_' +rowIndex" (onChange)="onChangeIn()" [(ngModel)]="selectedProcessIncomings"></p-checkbox>
+                        <ng-container *ngIf="item.bLosing != null">
+                            Process Incoming (Losing)
+                            <p-checkbox [binary]="true" [(ngModel)]="item.bLosing"></p-checkbox>
                         </ng-container>
                     </td>
                 </tr>
@@ -80,36 +81,37 @@
 
 <p-panel header="Process HDI Subscriber Notifications" styleClass="mt-5" [toggleable]="true" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
     <div class="pt-2">
-        <p-table [value]="notifications" dataKey="tfn_status" responsiveLayout="stack" [responsive]="true">
+        <p-table [value]="hdi_notifications" responsiveLayout="stack" [responsive]="true">
             <ng-template pTemplate="header">
                 <tr>
-                    <th class="text-align-center" pSortableColumn="tfn_status">TFN Status</th>
-                    <th class="text-align-center" pSortableColumn="event">Event</th>
-                    <th class="text-align-center" pSortableColumn="process_outgoing">
+                    <th class="text-align-center">TFN Status</th>
+                    <th class="text-align-center">Event</th>
+                    <th class="text-align-center">
                         Process ROC HDI (Gaining) 
-                        <p-checkbox [binary]="true" [(ngModel)]="checkAllProcessOutgoing" inputId="checkAllProcessOutgoing"></p-checkbox>
+                        <p-checkbox [binary]="true"></p-checkbox>
                     </th>
-                    <th class="text-align-center" pSortableColumn="process_incoming">
+                    <th class="text-align-center">
                         Process ROC HDI (Losing)
-                        <p-checkbox [binary]="true" [(ngModel)]="checkAllProcessIncoming" inputId="checkAllProcessIncoming"></p-checkbox>
+                        <p-checkbox [binary]="true"></p-checkbox>
                     </th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-notification  let-rowIndex="rowIndex">
+            <ng-template pTemplate="body" let-item>
                 <tr>
                     <td class="text-align-center">
                         <span class="p-column-title">TFN Status</span>
-                        {{notification.tfn_status}}
+                        {{item.tfn_status}}
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Event</span>
                         <ng-container>
-                            {{notification.event}}
+                            {{item.event}}
                             <i 
+                                *ngIf="item.event_tooltip != ''"
                                 class="pi pi-info-circle text-lg" 
                                 tooltipStyleClass="info-tooltip" 
                                 [escape]="false" 
-                                [pTooltip]="notification.event_tooltip" 
+                                [pTooltip]="item.event_tooltip" 
                                 [hideDelay]="500" 
                                 style="cursor: pointer;"
                             ></i>
@@ -117,16 +119,16 @@
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Process ROC HDI (Gaining)</span>
-                        <ng-container>
-                            {{notification.process_outgoing}}
-                            <p-checkbox [inputId]="'outgoings_'+rowIndex" name="groupProcessOutgoings" [value]="notification.process_outgoing + '_' + rowIndex" (onChange)="onChangeOut()" [(ngModel)]="selectedProcessHDIGainings"></p-checkbox>
+                        <ng-container *ngIf="item.bGaining != null">
+                            Process ROC HDI (Gaining)
+                            <p-checkbox [binary]="true" [(ngModel)]="item.bGaining"></p-checkbox>
                         </ng-container>
                     </td>
                     <td class="text-align-center">
                         <span class="p-column-title">Process ROC HDI (Losing)</span>
-                        <ng-container>
-                            {{notification.process_incoming}}
-                            <p-checkbox [inputId]="'incoming_'+rowIndex" name="groupProcessIncomings" [value]="notification.process_incoming + '_' +rowIndex" (onChange)="onChangeIn()" [(ngModel)]="selectedProcessHDILosings"></p-checkbox>
+                        <ng-container *ngIf="item.bLosing != null">
+                            Process ROC HDI (Losing)
+                            <p-checkbox [binary]="true" [(ngModel)]="item.bLosing"></p-checkbox>
                         </ng-container>
                     </td>
                 </tr>

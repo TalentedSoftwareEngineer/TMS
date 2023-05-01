@@ -34,26 +34,28 @@
 </p-panel>
 
 <p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="bRetrieveCardIconHidden" [collapsed]="!bExpResult" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-    <ng-template pTemplate="icons" *ngIf="bEffDtTmListHidden">
-        <span>
-            <button pButton pRipple class="p-button-text" label="Import CPR Report Data" icon="pi pi-file-import" (click)="fileInput.click()" [disabled]="disable"></button>
-            <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".csv"/>
-        </span>
-        <span>
-            <p-dropdown
-                [options]="getEffDtTmStatusOptions(effDtTmStatList)"
-                [(ngModel)]="selectEffDtTmStat"
-                id="effDtTmStat"
-                name="effDtTmStat"
-                optionLabel="name"
-                optionValue="value"
-                scrollHeight="150px"
-                [filter]="true"
-                filterBy="name"
-                [disabled]="bEffDtTmDisable"
-                (onChange)="onEffDtTmSelChange()"
-            ></p-dropdown>
-        </span>
+    <ng-template pTemplate="icons">
+        <ng-container *ngIf="!bEffDtTmListHidden">
+            <span>
+                <button pButton pRipple class="p-button-text" label="Import CPR Report Data" icon="pi pi-file-import" (click)="fileInput.click()" [disabled]="disable"></button>
+                <input #fileInput type="file" (change)="onImportFileSelected($event)" style="display: none" accept=".csv"/>
+            </span>
+            <span>
+                <p-dropdown
+                    [options]="getEffDtTmStatusOptions(effDtTmStatList)"
+                    [(ngModel)]="selectEffDtTmStat"
+                    id="effDtTmStat"
+                    name="effDtTmStat"
+                    optionLabel="name"
+                    optionValue="value"
+                    scrollHeight="150px"
+                    [filter]="true"
+                    filterBy="name"
+                    [disabled]="bEffDtTmDisable"
+                    (onChange)="onEffDtTmSelChange()"
+                ></p-dropdown>
+            </span>
+        </ng-container>
     </ng-template>
 
     <div class="pt-2">
@@ -784,17 +786,17 @@
             <p-panel header="Action">
                 <div class="pt-2">
                     <div class="field-radiobutton">
-                        <p-radioButton name="action" value="CHANGE" [(ngModel)]="radioCopyAction" inputId="change"></p-radioButton>
+                        <p-radioButton name="action" value="CHANGE" [(ngModel)]="copyAction" inputId="change"></p-radioButton>
                         <label for="change">CHANGE</label>
                     </div>
                     <div class="field-radiobutton">
-                        <p-radioButton name="action" value="DISCONNECT" [(ngModel)]="radioCopyAction" inputId="disconnect"></p-radioButton>
+                        <p-radioButton name="action" value="DISCONNECT" [(ngModel)]="copyAction" inputId="disconnect"></p-radioButton>
                         <label for="disconnect">DISCONNECT</label>
                     </div>
-                    <!-- <div class="field-radiobutton">
-                        <p-radioButton name="action" value="NEW" [(ngModel)]="radioCopyAction" inputId="new"></p-radioButton>
+                    <div class="field-radiobutton">
+                        <p-radioButton name="action" value="NEW" [(ngModel)]="copyAction" inputId="new"></p-radioButton>
                         <label for="new">NEW</label>
-                    </div> -->
+                    </div>
                 </div>
             </p-panel>
         </div>

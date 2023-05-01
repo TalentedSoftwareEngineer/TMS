@@ -73,6 +73,12 @@ export class LoginComponent implements OnInit, AfterViewInit  {
       this.blockContent = false
 
       if (res) {
+        await new Promise<void>(resolve=>{
+          this.api.retrieveLoggedUserOb(this.store.getToken()).subscribe(res=>{
+            resolve();
+          });
+        });
+
         this.store.storePassword(this.f.password.value);
         await this.router.navigate([ROUTES.dashboard]);
       }

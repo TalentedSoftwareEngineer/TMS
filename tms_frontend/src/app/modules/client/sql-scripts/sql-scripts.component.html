@@ -1,14 +1,24 @@
 <div class="mt-5 mb-5"></div>
 <div class="card">
   <div class="grid">
-    <div class="col-12 md:col-5">
-      <div class="p-inputgroup">
-        <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
-        <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
-      </div>
+    <div class="col-12 md:col-9">
+        <div class="grid">
+            <div class="col-4 p-fluid pr-0 pl-0">
+                <span class="p-float-label">
+                    <p-dropdown [options]="sqlTypeOptions" [(ngModel)]="selectSqlType" optionLabel="name" optionValue="value"></p-dropdown>
+                    <label>Type</label>
+                </span>
+            </div>
+            <div class="col-5 pr-0 pl-0">
+                <div class="p-inputgroup">
+                    <input type="text" pInputText placeholder="Keyword..." [(ngModel)]="filterValue" [disabled]="isLoading" (keyup.enter)="onClickFilter()">
+                    <button type="button" pButton pRipple label="Search" icon="pi pi-search" (click)="isLoading ? '' : onClickFilter()" [style]="isLoading ? {opacity: 0.5} : ''"></button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-12 md:col-7 text-right" *ngIf="write_permission">
+    <div class="col-12 md:col-3 text-right" *ngIf="write_permission">
         <button pButton pRipple (click)="openSqlScriptModal('Add')" label="Add New Script" icon="pi pi-plus"></button>
     </div>
   </div>
@@ -27,6 +37,9 @@
                             </th>
                             <th class="text-left" [ngClass]="sortActive === 'content' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                                 <a (click)="onSortChange('content')">Sql Script</a>
+                            </th>
+                            <th class="text-align-center" [ngClass]="sortActive === 'type' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                                <a (click)="onSortChange('type')">Type</a>
                             </th>
                             <th class="text-align-center" [ngClass]="sortActive === 'autorun' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                                 <a (click)="onSortChange('autorun')">Autorun</a>
@@ -57,6 +70,10 @@
                             <td class="text-align-center">
                                 <span class="p-column-title">Sql Script</span>
                                 <pre class="text-left">{{ sql_script.content }}</pre>
+                            </td>
+                            <td class="text-align-center">
+                                <span class="p-column-title">Type</span>
+                                {{ sql_script.type }}
                             </td>
                             <td class="text-align-center">
                                 <span class="p-column-title">Autorun</span>

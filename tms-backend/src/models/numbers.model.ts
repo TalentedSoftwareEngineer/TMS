@@ -9,10 +9,9 @@ export class Numbers extends Entity {
     type: 'string',
     id: true,
     generated: false,
-    required: true,
     defaultFn: 'uuidv4'
   })
-  id: string;
+  id?: string;
 
   @property({
     type: 'number',

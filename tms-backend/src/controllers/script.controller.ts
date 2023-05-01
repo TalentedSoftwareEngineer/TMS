@@ -14,6 +14,7 @@ import {PERMISSIONS} from "../constants/permissions";
 import {MESSAGES} from "../constants/messages";
 import DataUtils from "../utils/data";
 import {SUPER_ADMIN_ROLE} from "../constants/configurations";
+import {SCRIPT_TYPE} from "../constants/number_adminstration";
 
 @authenticate('jwt')
 export class ScriptController {
@@ -226,6 +227,17 @@ export class ScriptController {
     if (!profile.permissions.includes(PERMISSIONS.WRITE_SQL_SCRIPT))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
+    if (scriptSql.content.includes(SCRIPT_TYPE.TMPL_DIALNBR)) {
+      scriptSql.type = SCRIPT_TYPE.TMPL_DIALNBR
+    }
+    else if (scriptSql.content.includes(SCRIPT_TYPE.DIALNBR)) {
+      if (scriptSql.content.includes(SCRIPT_TYPE.TFNREPT_DIALNBR))
+        scriptSql.type = SCRIPT_TYPE.TFNREPT_DIALNBR
+      else
+        scriptSql.type = SCRIPT_TYPE.DIALNBR
+    } else
+      throw new HttpErrors.BadRequest(MESSAGES.INVALID_SQL_SCRIPT)
+
     scriptSql.created_by = profile.user.id
     scriptSql.created_at = new Date().toISOString()
     scriptSql.updated_by = profile.user.id
@@ -245,7 +257,8 @@ export class ScriptController {
   })
   async SQL_count(
       @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
-      @param.query.string('value') value: string
+      @param.query.string('value') value: string,
+      @param.query.string('sqlType') sqlType: string,
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_SQL_SCRIPT))
@@ -253,7 +266,11 @@ export class ScriptController {
 
     let fields = ['content'];
     let num_fields = undefined;
-    let custom = undefined;
+    let custom: any[] = [];
+    if (sqlType!=undefined && sqlType!="") {
+      custom.push({type: sqlType})
+    }
+
     return this.scriptSqlRepository.count(DataUtils.getWhere(value, fields, num_fields, custom));
   }
 
@@ -278,7 +295,8 @@ export class ScriptController {
       @param.query.number('limit') limit: number,
       @param.query.number('skip') skip: number,
       @param.query.string('order') order: string,
-      @param.query.string('value') value: string
+      @param.query.string('value') value: string,
+      @param.query.string('sqlType') sqlType: string,
   ): Promise<ScriptSql[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.READ_SQL_SCRIPT))
@@ -286,7 +304,11 @@ export class ScriptController {
 
     let fields = ['content'];
     let num_fields = undefined;
-    let custom = undefined;
+    let custom: any[] = [];
+    if (sqlType!=undefined && sqlType!="") {
+      custom.push({type: sqlType})
+    }
+
     let include = [{relation: 'created'}, {relation: 'updated'}, {relation: 'user'}];
     return this.scriptSqlRepository.find(DataUtils.getFilter(limit, skip, order, value, fields, num_fields, custom, include));
   }
@@ -356,6 +378,17 @@ export class ScriptController {
     if (!profile.permissions.includes(PERMISSIONS.WRITE_SQL_SCRIPT))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
+    if (scriptSql.content.includes(SCRIPT_TYPE.TMPL_DIALNBR)) {
+      scriptSql.type = SCRIPT_TYPE.TMPL_DIALNBR
+    }
+    else if (scriptSql.content.includes(SCRIPT_TYPE.DIALNBR)) {
+      if (scriptSql.content.includes(SCRIPT_TYPE.TFNREPT_DIALNBR))
+        scriptSql.type = SCRIPT_TYPE.TFNREPT_DIALNBR
+      else
+        scriptSql.type = SCRIPT_TYPE.DIALNBR
+    } else
+      throw new HttpErrors.BadRequest(MESSAGES.INVALID_SQL_SCRIPT)
+
     scriptSql.updated_by = profile.user.id
     scriptSql.updated_at = new Date().toISOString()
 
@@ -375,9 +408,11 @@ export class ScriptController {
     if (!profile.permissions.includes(PERMISSIONS.WRITE_SQL_SCRIPT))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    const result = await this.scriptResultRepository.findOne({where: { sql_id: id }})
-    if (result)
-      throw new HttpErrors.BadRequest("This Script have SQL script result. It cannot be deleted.")
+    await this.scriptResultRepository.deleteAll({sql_id: id})
+
+    // const result = await this.scriptResultRepository.findOne({where: { sql_id: id }})
+    // if (result)
+    //   throw new HttpErrors.BadRequest("This Script have SQL script result. It cannot be deleted.")
 
     await this.scriptSqlRepository.deleteById(id);
   }
@@ -396,7 +431,6 @@ export class ScriptController {
       @param.query.string('value') value: string,
       @param.query.string('userIdFilter') userIdFilter: string,
       @param.query.string('resultFilter') resultFilter: string,
-      @param.query.string('sqlIdFilter') sqlIdFilter: string
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.SQL_SCRIPT_EXECUTION_RECORD))
@@ -404,11 +438,10 @@ export class ScriptController {
 
     let tmpUserIdFilter = userIdFilter=='' ? undefined : userIdFilter;
     let tmpResultFilter = resultFilter=='' ? undefined : resultFilter;
-    let tmpSqlIdFilter = sqlIdFilter=='' ? undefined : sqlIdFilter;
 
-    let fields = ['message'];
+    let fields = ["ro", 'message'];
     let num_fields = undefined;
-    let custom: any[] = [{result: tmpResultFilter}, {sql_id: tmpSqlIdFilter}];
+    let custom: any[] = [{status: tmpResultFilter}];
     if (profile.user.role_id!=SUPER_ADMIN_ROLE)
       custom.push({ user_id: profile.user.id })
     else
@@ -441,7 +474,7 @@ export class ScriptController {
       @param.query.string('value') value: string,
       @param.query.string('userIdFilter') userIdFilter: string,
       @param.query.string('resultFilter') resultFilter: string,
-      @param.query.string('sqlIdFilter') sqlIdFilter: string
+      @param.query.string('sqlType') sqlType: string
   ): Promise<ScriptResult[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.SQL_SCRIPT_EXECUTION_RECORD))
@@ -449,11 +482,12 @@ export class ScriptController {
 
     let tmpUserIdFilter = userIdFilter=='' ? undefined : userIdFilter;
     let tmpResultFilter = resultFilter=='' ? undefined : resultFilter;
-    let tmpSqlIdFilter = sqlIdFilter=='' ? undefined : sqlIdFilter;
 
-    let fields = ['message'];
+    // TODO - filter by SQL Script Type
+
+    let fields = ["ro", 'message'];
     let num_fields = undefined;
-    let custom: any[] = [{result: tmpResultFilter}, {sql_id: tmpSqlIdFilter}];
+    let custom: any[] = [{status: tmpResultFilter}];
     if (profile.user.role_id!=SUPER_ADMIN_ROLE)
       custom.push({ user_id: profile.user.id })
     else

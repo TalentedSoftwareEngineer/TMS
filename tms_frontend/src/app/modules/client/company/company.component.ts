@@ -3,7 +3,7 @@ import {Location} from '@angular/common';
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { TMSUserType, NoPermissionAlertInteral, PERMISSION_TYPE_DENY, PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG } from '../../constants';
+import { TMSUserType, NoPermissionAlertInteral, PERMISSION_TYPE_DENY, PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, rowsPerPageOptions } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {ICompany} from "../../../models/user";
@@ -41,7 +41,7 @@ export class CompanyComponent implements OnInit {
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
-  rowsPerPageOptions: any[] = ROWS_PER_PAGE_OPTIONS
+  rowsPerPageOptions: any[] = rowsPerPageOptions
   noNeedRemoveColumn = true
 
   noNeedEditColumn = false
@@ -99,21 +99,23 @@ export class CompanyComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.READ_COMPANY)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
+    // this.store.state$.subscribe(async (state)=> {
 
-      if(state.user.permissions?.indexOf(PERMISSIONS.WRITE_COMPANY) == -1)
-        this.write_permission = false;
-      else
-        this.write_permission = true;
-    })
+    // })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.READ_COMPANY)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
+
+    if(this.store.getUser().permissions?.indexOf(PERMISSIONS.WRITE_COMPANY) == -1)
+      this.write_permission = false;
+    else
+      this.write_permission = true;
 
     this.getCompaniesList();
     this.getTotalCompaniesCount();
@@ -136,8 +138,8 @@ export class CompanyComponent implements OnInit {
         .pipe(tap(async (companiesRes: ICompany[]) => {
           this.companies = [];
           companiesRes.map(u => {
-            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('YYYY/MM/DD h:mm:ss A') : '';
-            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
           });
 
           let allNotEditable = true

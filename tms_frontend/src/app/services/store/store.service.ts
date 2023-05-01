@@ -119,6 +119,12 @@ export class StoreService {
     this.store = {...this.store, token};
   }
 
+  public getToken() {
+    // @ts-ignore
+    const userToken = JSON.parse(this.localdb.getItem(DBKEYS.TOKEN)) as IUserToken;
+    return userToken;
+  }
+
   public removeToken() {
     this.localdb.removeItem(DBKEYS.TOKEN);
     // @ts-ignore

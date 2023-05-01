@@ -10,6 +10,8 @@ import {
  import { StoreService } from 'src/app/services/store/store.service';
 import { PERMISSIONS } from 'src/app/consts/permissions';
 import { ROUTES } from 'src/app/app.routes';
+import { ApiService } from 'src/app/services/api/api.service';
+import moment from 'moment';
 
 @Component({
   selector: 'app-roc-rrn',
@@ -22,17 +24,20 @@ export class RocRrnComponent implements OnInit {
   validRespOrgEntity: boolean = true;
 
   inputTransactionID: string = '';
-  dateRange: any;
+  dateRange: any[] = [new Date(), new Date()];
 
   inputRespOrgID: string = '';
   inputTollFreeNumber: string = '';
   validTollFreeNumber: boolean = true;
   selectedNotificationType: any[] = [];
 
+  retrieveResult: any;
+
   constructor(
     private messageService: MessageService,
     private store: StoreService,
-    public router: Router
+    public router: Router,
+    private api: ApiService
   ) { }
 
   async ngOnInit() {
@@ -46,16 +51,18 @@ export class RocRrnComponent implements OnInit {
       }, 100)
     })
     
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.ROC_RESEND_SUBSCRIBER_NOTIFICATIONS)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-    })
+    // this.store.state$.subscribe(async (state)=> {
+
+    // })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.ROC_RESEND_SUBSCRIBER_NOTIFICATIONS)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
   }
 
   onInputRespOrgEntity = () => {
@@ -69,6 +76,7 @@ export class RocRrnComponent implements OnInit {
     let num = this.inputTollFreeNumber;
     if (num !== null && num !== "") {
       let nums = gFunc.retrieveNumListWithHyphen(num)
+      nums = nums.filter((item, index)=>(nums.indexOf(item)===index));
       this.inputTollFreeNumber = nums.join(",");
       // check if the number list is valid
       let specificNumReg = SPECIFICNUM_REG_EXP
@@ -92,6 +100,27 @@ export class RocRrnComponent implements OnInit {
 
   onClickSearch = () => {
 
+    let data: any = {
+      entity: this.inputRespOrgEntity,
+      ntfnStartDate: moment(this.dateRange[0]).format('YYYY-MM-DD'),
+      ntfnEndDate: moment(this.dateRange[1]).format('YYYY-MM-DD'),
+    }
+
+    if(Boolean(this.inputTransactionID))
+      data.txnID = this.inputTransactionID;
+
+    if(Boolean(this.inputRespOrgID))
+      data.resporg = this.inputRespOrgID
+
+    if(Boolean(this.inputTollFreeNumber))
+      data.num = this.inputTollFreeNumber
+
+    if(this.selectedNotificationType.length > 0)
+      data.ntfnType = this.selectedNotificationType
+
+    this.api.retrieveListOfFailedNotification(data).subscribe(res=>{
+      this.retrieveResult = res;
+    });
   }
 
   onClickClear = () => {

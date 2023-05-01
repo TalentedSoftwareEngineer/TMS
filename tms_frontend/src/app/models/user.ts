@@ -187,7 +187,8 @@ export interface IScriptResults {
   user_id: number,
   sql_id:	number,
   user:	ISqlUser,
-  sql: ISqlScript
+  sql: ISqlScript,
+  updated_at: any
 }
 
 export interface IUserActivities {

@@ -7,4 +7,7 @@ export const MESSAGES = {
 
     HAVE_SUGGESTED_NUMBER: "Number suggested by the system if requested number is not available for reserve",
     EMPTY_RESPONSE: "Response is null. Please contact administrator.",
+
+    SOMOS_NO_RESPONSE: "No Response from SOMOS",
+    INVALID_SQL_SCRIPT: "Invalid SQL Script Type",
 }

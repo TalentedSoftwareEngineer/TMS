@@ -141,7 +141,7 @@
                     <button pButton pRipple type="button" title="Download" icon="pi pi-download"
                             class="p-button-rounded p-button-success p-button-outlined"
                             (click)="onDownloadCsv($event, result)"></button>
-                    <button pButton pRipple type="button" title="Delete" icon="pi pi-trash"
+                    <button pButton pRipple [disabled]="isProgressing(result)" type="button" title="Delete" icon="pi pi-trash"
                             class="p-button-rounded p-button-secondary p-button-outlined"
                             (click)="delete($event, result.id)"></button>
                 </span>
@@ -167,7 +167,7 @@
   <div class="card pt-0">
     <p-table
       #numbersTable
-      [value]="numberList"
+      [value]="filterNumberList"
       dataKey="id"
       [rows]="10"
       [rowsPerPageOptions]="rowsPerPageOptions"
@@ -186,7 +186,7 @@
           <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
         </div>
         <div class="flex align-items-center" [ngClass]="resultTotal>0 ? 'justify-content-between' : 'justify-content-end'">
-          <p class="mb-0" *ngIf="resultTotal>0">Total <span class="dialog_total_count">{{resultTotal}}</span> Record<span *ngIf="resultTotal>1">s</span></p>
+          <h5><span *ngIf="resultTotal!=-1">Total {{resultTotal}} Record</span><span *ngIf="resultTotal>1">s</span><i *ngIf="resultTotal!=-1&&filterNumberList.length!=-1&&filterNumberList.length<resultTotal" style="font-size: medium;">, {{filterNumberList.length}} Record<span *ngIf="filterNumberList.length>1">s</span> Filtered</i></h5>
           <div class="table-header">
             <span class="p-input-icon-left">
                 <i class="pi pi-search"></i>

@@ -129,7 +129,6 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   ];
 
   viewedResult: any;
-  csvNumbersContent: string = '';
 
   //Toll-Free Number Info Modal
   flagNumberOpenModal: boolean = false;
@@ -147,6 +146,8 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   isSuperAdmin: boolean = false;
   userOptions: any[] = [];
   selectUser: string|number = '';
+
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
 
   constructor(
     public store: StoreService,
@@ -170,24 +171,24 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     })
 
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.SEARCH_NUMBER)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-
       this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.SEARCH_NUMBER)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
     await this.getData();
     this.getUsersList();
 
     this.userId = this.store.getUser().id;
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       if(data.page.toUpperCase()=='NSR') {
         if(data.status.toUpperCase()=='IN PROGRESS') {
           let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
@@ -224,7 +225,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    closeEventSource(environment.stream_uri+"/"+this.userId)
+    closeEventSource(environment.stream_uri+"/"+this.userId+this.streamdata_id)
   }
 
   createData = (name: string, value: number) => {
@@ -284,7 +285,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
 
     await this.api.getNSRData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
         this.results = res;
       })).toPromise();
 
@@ -311,6 +312,7 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     if (num !== null && num !== "") {
 
       let nums = gFunc.retrieveNumListWithHyphen(num)
+      nums = nums.filter((item, index)=>(nums.indexOf(item)===index));
       this.inputNumberMaskEntry = nums.join(",");
 
       if (num.includes('*') || num.includes('&')) { // to wildcard mode
@@ -584,7 +586,6 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   }
 
   onOpenViewModal = async (event: Event, result: any) => {
-    this.csvNumbersContent = '';
     this.viewedResult = result;
 
     this.resultQuantity = result.total;
@@ -597,13 +598,10 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
     await this.api.getNSRById(result.id)
       .pipe(tap((response: any[])=>{
         response.map(u => {
-          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
         });
 
         this.numberList = response;
-        response.forEach((item, index) => {
-          this.csvNumbersContent += `\n${item.num},${item.status},${item.message==null?'':item.message},${item.suggested_num==null?'':item.suggested_num}`;
-        });
 
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
@@ -681,7 +679,12 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   }
 
   onSearchReserveResultDownload = () => {
-    let data = `Type,${this.viewedResult.type}\nSubmitType,${this.viewedResult.submit_type}\nQuantity,${this.viewedResult.total}\nConsecutive,${this.viewedResult.consecutive}\nWildCardNum,${this.viewedResult.wild_card_num==null?'':this.viewedResult.wild_card_num}\nNpa,${this.viewedResult.npa==null?'':this.viewedResult.npa}\nNxx,${this.viewedResult.nxx==null?'':this.viewedResult.nxx}\nLine,${this.viewedResult.line==null?'':this.viewedResult.line}\nSubmit Date Time,${this.viewedResult.sub_dt_tm}\nTotal,${this.viewedResult.failed+this.viewedResult.completed}\nCompleted,${this.viewedResult.completed}\nFailed,${this.viewedResult.failed}\n\nNumber,Status,Message,Suggestions${this.csvNumbersContent}\n`
+    let numsContent = '';
+    this.filterNumberList.forEach((item, index) => {
+      numsContent += `\n${item.num}, ${item.status}, ${item.message==null?'':item.message}, ${item.suggested_num==null?'':item.suggested_num}`;
+    });
+
+    let data = `Type,${this.viewedResult.type}\nSubmitType,${this.viewedResult.submit_type}\nQuantity,${this.viewedResult.total}\nConsecutive,${this.viewedResult.consecutive}\nWildCardNum,${this.viewedResult.wild_card_num==null?'':this.viewedResult.wild_card_num}\nNpa,${this.viewedResult.npa==null?'':this.viewedResult.npa}\nNxx,${this.viewedResult.nxx==null?'':this.viewedResult.nxx}\nLine,${this.viewedResult.line==null?'':this.viewedResult.line}\nSubmit Date Time,${this.viewedResult.sub_dt_tm}\nTotal,${this.viewedResult.failed+this.viewedResult.completed}\nCompleted,${this.viewedResult.completed}\nFailed,${this.viewedResult.failed}\n\nNumber,Status,Message,Suggestions${numsContent}\n`
 
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);
@@ -694,19 +697,19 @@ export class NumberSearchComponent implements OnInit, OnDestroy {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
-    // let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
-    // this.filterNumberList = this.numberList.filter(item=>{
-    //   let a = item.tollFreeNumber?.includes(omittedPhoneNumber);
-    //   let b = item.status?.includes(this.inputNumListFilterKey);
-    //   let c = item.message?.includes(this.inputNumListFilterKey);
-    //   let d = item.suggestions?.includes(this.inputNumListFilterKey);
-    //   if (omittedPhoneNumber=='') {
-    //     return b || c || d;
-    //   } else {
-    //     return a || b || c || d;
-    //   }
-    // });
+    // this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
+    this.filterNumberList = this.numberList.filter(item=>{
+      let a = item.num?.includes(omittedPhoneNumber);
+      let b = item.status?.includes(this.inputNumListFilterKey);
+      let c = item.message?.includes(this.inputNumListFilterKey);
+      let d = item.suggested_num?.includes(omittedPhoneNumber);
+      if (omittedPhoneNumber=='') {
+        return b || c;
+      } else {
+        return a || b || c || d;
+      }
+    });
   }
 
   getStatusTagColor = (result: any): string => {

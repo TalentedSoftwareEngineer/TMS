@@ -28,7 +28,8 @@ export class FtpService {
       host,
       port,
       username,
-      password
+      password,
+      interactiveAuth: true,
     }
 
     return config
@@ -112,7 +113,7 @@ export class FtpService {
           })
           .finally(() => {
             client.end()
-            resolve({success: true, message: "Success"})
+            resolve({success: true, message: "Successfully downloaded"})
           })
           .catch( (err: any) => {
             resolve({success: false, message: err?.message})

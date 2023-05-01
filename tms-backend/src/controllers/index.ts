@@ -8,7 +8,7 @@ export * from './privilege.controller';
 export * from './configuration.controller';
 export * from './activity.controller';
 export * from './activity-result.controller';
-export * from './resp-org-information.controller';
+export * from './resp-org.controller';
 export * from './test.controller';
 export * from './number-list.controller';
 export * from './template-administration.controller';

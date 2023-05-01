@@ -85,9 +85,9 @@
     <form #f="ngForm">
         <h1></h1>
         <div class="p-fluid">
-          <span class="field p-float-label">
-              <input type="text" id="ro" name="ro" [ngClass]="{'ng-dirty': !validInputRo, 'ng-invalid': !validInputRo}" pInputText [(ngModel)]="input_ro" (input)="onInputRo()">
-              <label for="ro">RO</label>
+          <span class="p-float-label">
+              <textarea id="ro" name="ro" [ngClass]="{'ng-dirty': !validInputRo, 'ng-invalid': !validInputRo}" [(ngModel)]="input_ro" (input)="onInputRo()" rows="7" cols="30" pInputTextarea></textarea>
+              <label for="dial_numbers">RO</label>
           </span>
         </div>
     </form>

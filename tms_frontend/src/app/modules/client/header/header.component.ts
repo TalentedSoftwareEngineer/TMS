@@ -246,7 +246,7 @@ export class HeaderComponent implements OnInit {
     this.store.removeCurrentRo();
 
     this.store.removeToken();
-    this.store.removeUser();
+    // this.store.removeUser();
 
     this.route.navigateByUrl(ROUTES.login);
   }

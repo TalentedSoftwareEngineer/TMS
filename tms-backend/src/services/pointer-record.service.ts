@@ -677,7 +677,7 @@ export class PointerRecordService {
         } else if (response.reqId != null) {
             let reqId = response.reqId
             // while (response==null || response.effDtTm==null) {
-            //   await DataUtils.sleep(100)
+            //   await DataUtils.sleep(10)
             //   response = await this.tfnRegistryApiService.disconnectTemplateRecordByReqId(ro, reqId, profile)
             // }
 
@@ -752,7 +752,7 @@ export class PointerRecordService {
             // } else if (response.blkId!=null) {
             //   let blkId = response.blkId
             //   while (response==null || response.effDtTm==null) {
-            //     await DataUtils.sleep(100)
+            //     await DataUtils.sleep(10)
             //     response = await this.tfnRegistryApiService.convertCustomerRecordToPointerRecordByBlkId(ro, blkId, profile)
             //   }
             //

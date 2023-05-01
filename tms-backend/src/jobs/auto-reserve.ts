@@ -115,9 +115,8 @@ export class AutoReserve extends CronJob {
             // TODO - consider limit per request
             type = NSR_TYPE.SPECIFIC
             payload.numList = num.replace(/-/g, "").split(",")
-            console.log("-------------", payload.numList)
             payload.qty = payload.numList.length
-            payload.withVanity = "N"
+            // payload.withVanity = "N"
 
             response = await this.tfnRegistryApiService.searchAndReserveSpecificNumbers(req.ro_id, payload, profile)
         }
@@ -126,7 +125,7 @@ export class AutoReserve extends CronJob {
         let apiResult = null
 
         if (response==null) {
-            req.failed += 1 // payload.qty
+            req.failed += payload.qty
             req.message = this.appendErrorMessage(req.message!, MESSAGES.EMPTY_RESPONSE)
         }
         else if (response.errList!=null) {
@@ -136,10 +135,10 @@ export class AutoReserve extends CronJob {
             } else
                 req.message = this.appendErrorMessage(req.message!, MESSAGES.INTERNAL_SERVER_ERROR)
 
-            req.failed += 1 // payload.qty
+            req.failed += payload.qty
         }
         else if (response.code!=null && response.message!=null) {
-            req.failed += 1 // payload.qty
+            req.failed += payload.qty
 
             req.message = this.appendErrorMessage(req.message!, response.message + (response.code!="" ? " Code: " + response.code : ""))
         }
@@ -162,26 +161,26 @@ export class AutoReserve extends CronJob {
             apiResult = response
 
         } else if (response.blkId!=null) {
-            req.failed += 1 // payload.qty
+            req.failed += payload.qty
             req.message = this.appendErrorMessage(req.message!, "Request is in progress. " + "blkId: " + response.blkId)
 
         } else if (response.numList!=null) {
             apiResult = response
 
         } else {
-            req.failed += 1
+            req.failed += payload.qty
             req.message = this.appendErrorMessage(req.message!, MESSAGES.INTERNAL_SERVER_ERROR)
         }
 
         if (apiResult!=null) {
             let result = await this.saveResult(req, apiResult)
-            // console.log("AutoReserve Result", result)
+            console.log("AutoReserve Result", result)
 
-            req.completed += 1
+            req.completed += payload.qty - result.code
             req.message = this.appendErrorMessage(req.message!, result.message)
         }
 
-        req.total += 1
+        req.total += payload.qty
         req.status = PROGRESSING_STATUS.IN_PROGRESS
         req.updated_at = new Date().toISOString()
         await this.narReqRepository.save(req)
@@ -216,17 +215,21 @@ export class AutoReserve extends CronJob {
     }
 
     private async saveNumber(user_id: number, num: string, status: string, sub_dt_tm: string, resp_org?: string) {
-        let created_by = user_id
-        let created_at = new Date().toISOString()
+        let isNew = false
 
         let numObj: any = await this.numbersRepository.findOne({where: {num: num}})
         if (numObj) {
-            created_by = numObj.created_by
-            created_at = numObj.created_at
-            await this.numbersRepository.deleteById(numObj.id)
+            if (status==NUMBER_STATUS.SPARE) {
+                await this.numbersRepository.deleteById(numObj.id)
+                return
+            }
+        } else {
+            isNew = true
+            numObj = new Numbers()
+            numObj.created_at = new Date().toISOString()
+            numObj.created_by = user_id
         }
 
-        numObj = new Numbers()
         numObj.num = num
 
         if (resp_org!=null) {
@@ -237,12 +240,10 @@ export class AutoReserve extends CronJob {
         numObj.sub_dt_tm = sub_dt_tm
         numObj.status = status
 
-        numObj.created_at = created_at
-        numObj.created_by = created_by
         numObj.updated_at = new Date().toISOString()
         numObj.updated_by = user_id
 
-        await this.numbersRepository.create(numObj)
+        isNew ? await this.numbersRepository.create(numObj) : await this.numbersRepository.save(numObj)
     }
 
     private async process() {

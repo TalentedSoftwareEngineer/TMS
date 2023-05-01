@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {StoreService} from "../../../services/store/store.service";
 import {ApiService} from "../../../services/api/api.service";
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
@@ -94,7 +94,7 @@ import Cookies from "universal-cookie";
   templateUrl: './template-admin-data.component.html',
   styleUrls: ['./template-admin-data.component.scss']
 })
-export class TemplateAdminDataComponent implements OnInit {
+export class TemplateAdminDataComponent implements OnInit, OnDestroy {
 
   gConst = {
     CADTOTADTYPE_NEW,
@@ -325,7 +325,6 @@ export class TemplateAdminDataComponent implements OnInit {
   inputTgtEffDtTm: any = new Date();
   inputCopyNow: boolean = false;
   inputTgtTmplName: string = '';
-  radioCopyAction: string = this.gConst.COPYACTION_CHANGE;
   portionEntire: boolean = false;
   portionCR: boolean = false;
   portionCPR: boolean = false;
@@ -375,6 +374,8 @@ export class TemplateAdminDataComponent implements OnInit {
     inputDayLightSaving: this.inputDayLightSaving
   }, (r) => {});
 
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
+
   constructor(
     public store: StoreService,
     public api: ApiService,
@@ -395,19 +396,20 @@ export class TemplateAdminDataComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.TEMPLATE_ADMIN_DATA)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-    })
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.TEMPLATE_ADMIN_DATA)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
-      console.log(data);
+    // this.store.state$.subscribe(async (state)=> {
+
+    // })
+
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
     })
 
@@ -577,6 +579,7 @@ export class TemplateAdminDataComponent implements OnInit {
 
   async ngOnDestroy() {
     this.unlockTemplateRecord();
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
   }
 
   getBoolean = (value: any) => Boolean(value);
@@ -635,7 +638,7 @@ export class TemplateAdminDataComponent implements OnInit {
       this.inputRespOrg = Boolean(data.ctrlRespOrgId) ? data.ctrlRespOrgId : '';
       this.inputPriority = data.priority == 'Y';
       this.inputDscInd = Boolean(data.dscInd) ? data.dscInd : false;
-      this.inputLastUpDt = Boolean(data.lastUpDt) ? moment(new Date(data.lastUpDt)).format('YYYY/MM/DD h:mm:ss A') : '';
+      this.inputLastUpDt = Boolean(data.lastUpDt) ? moment(new Date(data.lastUpDt)).format('MM/DD/YYYY h:mm:ss A') : '';
       this.inputApproval = Boolean(data.approval) ? data.approval : '';
       this.inputLastUser = Boolean(data.lastUsr) ? data.lastUsr : '';
       this.inputPrevUser = Boolean(data.prevUsr) ? data.prevUsr : '';
@@ -809,7 +812,6 @@ export class TemplateAdminDataComponent implements OnInit {
    * this function is called at clicking the retrieve button of the retrieve card.
    */
   async onSearchTemplate() {
-
     if (!this.gConst.TMPLNAME_REG_EXP.test(this.inputSearchTmplName)) {
       this.validTmplName = false;
       return
@@ -2964,7 +2966,7 @@ export class TemplateAdminDataComponent implements OnInit {
       return
     }
 
-    switch (this.radioCopyAction) {
+    switch (this.copyAction) {
       case this.gConst.COPYACTION_CHANGE:
         break
       case this.gConst.COPYACTION_DISCONNECT:
@@ -3000,8 +3002,9 @@ export class TemplateAdminDataComponent implements OnInit {
     // gets target date time
     let tgtEffDtTm = "NOW"
     if (!this.inputCopyNow) {
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z';
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z';
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
     }
 
     // configs component part
@@ -3024,7 +3027,7 @@ export class TemplateAdminDataComponent implements OnInit {
 
     this.action = this.gConst.ACTION_COPY;
     let custRecAction = this.gConst.ACTION_COPY;
-    if (this.inputDscInd || this.radioCopyAction === this.gConst.COPYACTION_DISCONNECT) {
+    if (this.inputDscInd || this.copyAction === this.gConst.COPYACTION_DISCONNECT) {
       this.action = this.gConst.ACTION_DISCONNECT;
       custRecAction = this.gConst.ACTION_DISCONNECT;
     }
@@ -3221,9 +3224,9 @@ export class TemplateAdminDataComponent implements OnInit {
         this.validMsg = 'Please input effective date/time'
         return
       }
-      // tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
-      let d = new Date(this.inputTgtEffDtTm).getTime();
-      tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
+      tgtEffDtTm = gFunc.fromCTTimeToUTCStr(new Date(this.inputTgtEffDtTm))
+      // let d = new Date(this.inputTgtEffDtTm).getTime();
+      // tgtEffDtTm = new Date(Math.ceil(d / 900000) * 900000).toISOString().substring(0, 16) + 'Z'; 
     }
 
     // configs component part

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import * as gFunc from 'src/app/utils/utils';
 import {StoreService} from "../../../services/store/store.service";
 import {ApiService} from "../../../services/api/api.service";
@@ -25,7 +25,7 @@ import { IUser } from 'src/app/models/user';
   templateUrl: './multi-dial-query.component.html',
   styleUrls: ['./multi-dial-query.component.scss']
 })
-export class MultiDialQueryComponent implements OnInit {
+export class MultiDialQueryComponent implements OnInit, OnDestroy {
   gConst = {
     INVALID_NUM_TYPE_NONE,
     INVALID_NUM_TYPE_COMMON,
@@ -61,12 +61,13 @@ export class MultiDialQueryComponent implements OnInit {
   completedReq: any[] = [];
 
   viewedResult: any;
-  csvNumbersContent: string = '';
 
   flagOpenModal: boolean = false;
   numberList: any[] = [];
   filterNumberList: any[] = [];
   inputNumListFilterKey: string = '';
+  selectRespOrgFilter: string = '';
+  selectStatusFilter: string = '';
   resultTotal: number = -1;
   numberListLoading: boolean = false;
 
@@ -76,6 +77,8 @@ export class MultiDialQueryComponent implements OnInit {
 
   respOrgOptions: any[] = [];
   statusOptions: any[] = [];
+
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
 
   constructor(
     public store: StoreService,
@@ -98,22 +101,22 @@ export class MultiDialQueryComponent implements OnInit {
     })
 
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.MULTI_DIAL_NUMBER_QUERY)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-
       this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.MULTI_DIAL_NUMBER_QUERY)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
     await this.getData();
     this.getUsersList();
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       if(data.page.toUpperCase()=='MNQ') {
         if(data.status.toUpperCase()=='IN PROGRESS') {
           let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
@@ -148,12 +151,16 @@ export class MultiDialQueryComponent implements OnInit {
     })
   }
 
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
+  }
+
   getData = async () => {
     this.getTotalCount();
 
     await this.api.getMNQData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
         this.activityLogs = res;
       })).toPromise();
 
@@ -242,6 +249,8 @@ export class MultiDialQueryComponent implements OnInit {
     let num = this.inputDialNumbers;
     if (num !== null && num !== "") {
       let nums = gFunc.retrieveNumListWithHyphen(num)
+      nums = nums.filter((item, index)=>(nums.indexOf(item)===index));
+      nums = nums.filter((item, index)=>(nums.indexOf(item)===index));
       this.inputDialNumbers = nums.join(",");
 
       let specificNumReg = SPECIFICNUM_REG_EXP
@@ -327,39 +336,60 @@ export class MultiDialQueryComponent implements OnInit {
   }
 
   onOpenViewModal = async (event: Event, result: any) => {
-    this.csvNumbersContent = '';
     this.viewedResult = result;
 
     await this.api.getMNQById(result.id)
       .pipe(tap((response: any[])=>{
         response.map(u => {
-          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
-          // u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-          // u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-          // u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-          // u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : ''
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.resp_org_id = u.resp_org_id ? u.resp_org_id : '';
+          u.status = u.status ? u.status : '';
+          // u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('MM/DD/YYYY h:mm:ss A') : '';
+          // u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('MM/DD/YYYY h:mm:ss A') : '';
+          // u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('MM/DD/YYYY h:mm:ss A') : ''
         });
 
-        this.respOrgOptions = [{label: 'All', value: ''}];
-        this.statusOptions = [{label: 'All', value: ''}];
+        this.respOrgOptions = [];
+        this.statusOptions = [];
         this.numberList = response;
+
         response.forEach((item, index) => {
-          this.csvNumbersContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.status},${item.eff_dt==null?'':item.eff_dt},${item.last_act_dt==null?'':item.last_act_dt},${item.res_until_dt==null?'':item.res_until_dt},${item.disc_until_dt==null?'':item.disc_until_dt},${item.con_name==null?'':item.con_name},${item.con_phone==null?'':item.con_phone},${item.message==null?'':item.message},${item.short_notes==null?'':item.short_notes}`;
-
-          if(this.respOrgOptions.find(find_item=>(find_item.label==item.resp_org_id))==undefined) {
+          if(this.respOrgOptions.find(find_item=>(find_item.label==item.resp_org_id))==undefined && Boolean(item.resp_org_id))
             this.respOrgOptions.push({label: item.resp_org_id, value: item.resp_org_id});
-          }
 
-          if(this.statusOptions.find(find_item=>(find_item.label==item.status))==undefined) {
+          if(this.statusOptions.find(find_item=>(find_item.label==item.status))==undefined && Boolean(item.status))
             this.statusOptions.push({label: item.status, value: item.status});
-          }
         });
+
+        this.respOrgOptions.sort((firstItem: any, secondItem: any): any => {
+          if(firstItem.label > secondItem.label)
+            return 1;
+
+          if(firstItem.label < secondItem.label)
+            return -1;
+
+          return 0;
+        });
+
+        this.statusOptions.sort((firstItem: any, secondItem: any): any => {
+          if(firstItem.label > secondItem.label)
+            return 1;
+
+          if(firstItem.label < secondItem.label)
+            return -1;
+
+          return 0;
+        });
+
+        this.respOrgOptions = [{label: 'All', value: ''}, ...this.respOrgOptions];
+        this.statusOptions = [{label: 'All', value: ''}, ...this.statusOptions];
 
         this.filterNumberList = this.numberList;
-        this.inputNumListFilterKey = '';
+        this.selectRespOrgFilter = '';
+        this.selectStatusFilter = '';
         this.onInputNumListFilterKey();
         this.flagOpenModal = true;
-        this.resultTotal = this.numberList.length
+        this.resultTotal = this.numberList.length;
       })).toPromise();
   }
 
@@ -367,15 +397,15 @@ export class MultiDialQueryComponent implements OnInit {
     let numsContent = '';
 
     await this.api.getMNQById(result.id).pipe(tap((response: any[])=>{
-      response.map(u => {
-        // u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-        // u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-        // u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-        // u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '';
-      });
+      // response.map(u => {
+      //   u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('MM/DD/YYYY h:mm:ss A') : '';
+      //   u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('MM/DD/YYYY h:mm:ss A') : '';
+      //   u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('MM/DD/YYYY h:mm:ss A') : '';
+      //   u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('MM/DD/YYYY h:mm:ss A') : '';
+      // });
 
       response.forEach((item, index) => {
-        numsContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.status},${item.eff_dt==null?'':item.eff_dt},${item.last_act_dt==null?'':item.last_act_dt},${item.res_until_dt==null?'':item.res_until_dt},${item.disc_until_dt==null?'':item.disc_until_dt},${item.con_name==null?'':item.con_name},${item.con_phone==null?'':item.con_phone},${item.message==null?'':item.message},${item.short_notes==null?'':item.short_notes}`;
+        numsContent += `\n${String(item.num)},${item.resp_org_id==null?'':item.resp_org_id},${item.status},${item.eff_dt==null?'':item.eff_dt},${item.last_act_dt==null?'':item.last_act_dt},${item.res_until_dt==null?'':item.res_until_dt},${item.disc_until_dt==null?'':item.disc_until_dt},${item.con_name==null?'':item.con_name.replace(/[`'!@#$%&*()_+={}\[\]\:;<>,.?/.]/g, '')},${item.con_phone==null?'':item.con_phone},${item.message==null?'':item.message},${item.short_notes==null?'':''}`;
       });
 
       let data = `Number,Resp Org,Status,Effective Date,Last Active,Reserved Until,Disconnect Until,Contact Person,Contact Number,Message,Notes${numsContent}\n`
@@ -415,7 +445,9 @@ export class MultiDialQueryComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    this.filterNumberList = this.numberList.filter(item=>{
+      return item?.resp_org_id?.includes(this.selectRespOrgFilter) && item?.status?.includes(this.selectStatusFilter);
+    });
   }
 
   closeModal = () => {
@@ -423,7 +455,11 @@ export class MultiDialQueryComponent implements OnInit {
   }
 
   onViewNumbersDownload = () => {
-    let data = `Number,Resp Org,Status,Effective Date,Last Active,Reserved Until,Disconnect Until,Contact Person,Contact Number,Message,Notes${this.csvNumbersContent}\n`
+    let numbersContent = '';
+    this.filterNumberList.forEach((item, index) => {
+      numbersContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.status},${item.eff_dt==null?'':item.eff_dt},${item.last_act_dt==null?'':item.last_act_dt},${item.res_until_dt==null?'':item.res_until_dt},${item.disc_until_dt==null?'':item.disc_until_dt},${item.con_name==null?'':item.con_name.replace(/[`'!@#$%&*()_+={}\[\]\:;<>,.?/.]/g, '')},${item.con_phone==null?'':item.con_phone},${item.message==null?'':item.message},${item.short_notes==null?'':item.short_notes.replace(/[`'!@#$%&*()_+={}\[\]\:;<>,.?/.]/g, '')}`;
+    });
+    let data = `Number,Resp Org,Status,Effective Date,Last Active,Reserved Until,Disconnect Until,Contact Person,Contact Number,Message,Notes${numbersContent}\n`
 
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);

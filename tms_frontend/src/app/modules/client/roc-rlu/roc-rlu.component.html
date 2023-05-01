@@ -6,7 +6,7 @@
         <div class="flex justify-content-start align-items-cneter">
             <div>
                 <button pButton pRipple class="p-button-text" label="Browse" icon="pi pi-upload" (click)="fileInput.click()"></button>
-                <input #fileInput type="file" (change)="onBrowse($event)" style="display: none" accept="*"/>
+                <input #fileInput type="file" (click)="onClickBrowse($event)" (change)="onChangeBrowse($event)" style="display: none" accept=".pdf,.tiff"/>
             </div>
             <button pButton pRipple (click)="onClickSubmit()" label="Submit" icon="pi pi-send" class="p-button-text p-button-success"></button>
         </div>

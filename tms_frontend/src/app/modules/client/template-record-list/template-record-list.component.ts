@@ -54,7 +54,7 @@ export class TemplateRecordListComponent implements OnInit {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private _router: Router,
-  ) { }
+  ) {}
 
   async ngOnInit() {
     await new Promise<void>(resolve => {
@@ -67,16 +67,16 @@ export class TemplateRecordListComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.TEMPLATE_RECORD_LIST)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this._router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.TEMPLATE_RECORD_LIST)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this._router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
+    this.store.state$.subscribe(async (state)=> {
       this.entityOptions = this.store.getEntities();
       this.entityOptions.sort((firstItem: any, secondItem: any): any => {
         if(firstItem.name > secondItem.name) {
@@ -112,8 +112,8 @@ export class TemplateRecordListComponent implements OnInit {
     await this.api.getTemplateList(this.store.getCurrentRo()!, this.selectEntity, this.inputTemplate)
       .pipe(tap( (res: any[]) => {
         res.map(u => {
-          u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('YYYY/MM/DD h:mm:ss A') : '';
-          u.numbers = 0
+          u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('MM/DD/YYYY h:mm:ss A') : '';
+          // u.numbers = u.numbers ? 
         })
         this.retrieveResults = res  
       })).toPromise();
@@ -151,7 +151,7 @@ export class TemplateRecordListComponent implements OnInit {
     this.api.getTemplate(this.store.getCurrentRo()!, result.tmplName, result.effDtTm)
       .pipe(tap( (res: any[]) => {
         res.map(u => {
-          u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('YYYY/MM/DD h:mm:ss A') : '';
+          u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('MM/DD/YYYY h:mm:ss A') : '';
         })
 
         this.selTmplName = result.tmplName

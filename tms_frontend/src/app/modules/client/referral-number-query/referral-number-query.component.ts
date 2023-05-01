@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import * as gFunc from 'src/app/utils/utils';
 import {StoreService} from "../../../services/store/store.service";
 import {ApiService} from "../../../services/api/api.service";
@@ -25,7 +25,7 @@ import { IUser } from 'src/app/models/user';
   templateUrl: './referral-number-query.component.html',
   styleUrls: ['./referral-number-query.component.scss']
 })
-export class ReferralNumberQueryComponent implements OnInit {
+export class ReferralNumberQueryComponent implements OnInit, OnDestroy {
 
   gConst = {
     INVALID_NUM_TYPE_NONE,
@@ -65,11 +65,11 @@ export class ReferralNumberQueryComponent implements OnInit {
   resultTotal: number = -1;
   numberListLoading: boolean = false;
 
-  csvNumbersContent: string = '';
-
   isSuperAdmin: boolean = false;
   userOptions: any[] = [];
   selectUser: string|number = '';
+
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
 
   constructor(
     public store: StoreService,
@@ -91,23 +91,23 @@ export class ReferralNumberQueryComponent implements OnInit {
       }, 100)
     })
 
-    this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.TROUBLE_REFERRAL_NUMBER_QUERY)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.TROUBLE_REFERRAL_NUMBER_QUERY)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
+    this.store.state$.subscribe(async (state)=> {
       this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
 
     await this.getData();
     this.getUsersList();
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       if(data.page.toUpperCase()=='TRQ') {
         if(data.status.toUpperCase()=='IN PROGRESS') {
           let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
@@ -144,6 +144,10 @@ export class ReferralNumberQueryComponent implements OnInit {
     })
   }
 
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
+  }
+
   onCsvXlUploadAuto = async (event: any) => {
     if (event.target.files && event.target.files.length > 0) {
       let file: File = event.target.files.item(0)
@@ -168,7 +172,7 @@ export class ReferralNumberQueryComponent implements OnInit {
 
     await this.api.getTrqData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
         this.results = res;
       })).toPromise();
 
@@ -229,6 +233,7 @@ export class ReferralNumberQueryComponent implements OnInit {
     let num = this.inputTollFreeNumber;
     if (num !== null && num !== "") {
       let nums = gFunc.retrieveNumListWithHyphen(num)
+      nums = nums.filter((item, index)=>(nums.indexOf(item)===index));
       this.inputTollFreeNumber = nums.join(",");
 
       let specificNumReg = SPECIFICNUM_REG_EXP
@@ -313,19 +318,15 @@ export class ReferralNumberQueryComponent implements OnInit {
   }
 
   onOpenViewModal = async (event: Event, result: any) => {
-    this.csvNumbersContent = '';
     this.viewedResult = result;
 
     await this.api.getTrqById(result.id)
       .pipe(tap((response: any[])=>{
         response.map(u => {
-          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
         });
 
         this.numberList = response;
-        response.forEach((item, index) => {
-          this.csvNumbersContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.ref_num==null?'':item.ref_num},${item.resp_org_name==null?'':item.resp_org_name.replace(/,/g, ' ')},${item.message==null?'':item.message}`;
-        });
 
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
@@ -339,7 +340,7 @@ export class ReferralNumberQueryComponent implements OnInit {
     let numsContent = '';
 
     await this.api.getTrqById(result.id).pipe(tap((response: any[])=>{
-      response.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '');
+      response.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '');
 
       response.forEach((item, index) => {
         numsContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.ref_num==null?'':item.ref_num},${item.resp_org_name==null?'':item.resp_org_name.replace(/,/g, ' ')},${item.message==null?'':item.message}`;
@@ -358,7 +359,11 @@ export class ReferralNumberQueryComponent implements OnInit {
   }
 
   onViewNumbersDownload = () => {
-    let data = `Toll-Free Number,Resp Org,Trouble Ref,Resp Org Name,Message${this.csvNumbersContent}\n`
+    let numbersContent = '';
+    this.filterNumberList.forEach((item, index) => {
+      numbersContent += `\n${item.num},${item.resp_org_id==null?'':item.resp_org_id},${item.ref_num==null?'':item.ref_num},${item.resp_org_name==null?'':item.resp_org_name.replace(/,/g, ' ')},${item.message==null?'':item.message}`;
+    });
+    let data = `Toll-Free Number,Resp Org,Trouble Ref,Resp Org Name,Message${numbersContent}\n`
 
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);
@@ -395,7 +400,20 @@ export class ReferralNumberQueryComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    // this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
+    this.filterNumberList = this.numberList.filter((item)=>{
+      let a = Boolean(item.num?.includes(omittedPhoneNumber));
+      let b = Boolean((item.resp_org_id ? item.resp_org_id : '').includes(this.inputNumListFilterKey));
+      let c = Boolean((item.message ? item.message : '').includes(this.inputNumListFilterKey));
+      let d = Boolean((item.resp_org_name ? item.resp_org_name : '').includes(this.inputNumListFilterKey));
+      let e = Boolean(item.ref_num?.includes(omittedPhoneNumber));
+      if (Number(omittedPhoneNumber) < 1000000) {
+        return b || c || d;
+      } else {
+        return a || b || c || d || e;
+      }
+    });
   }
 
   closeModal = () => {

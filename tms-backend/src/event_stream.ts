@@ -24,17 +24,21 @@ export const startEventStreamServer = (env: any, options: any) => {
 
     const consumer = new Consumer(RSMQ_CONFIG)
     // let users: any[] = [];
+    let sessionIds: any[] = []
 
     consumer.consume(RSMQ_QUEUE, (message, cb) => {
         // console.log("RSMQ Consuming....", message.getBody())
-            // @ts-ignore
-        if (users.includes(message.getBody().user_id)) {
-            // @ts-ignore
-            em.emit('consumer-'+ message.getBody().user_id, message.getBody())
+        // @ts-ignore
+        // if (users.includes(message.getBody().user_id)) {
+        //     console.log("emit", message.getBody)
+            sessionIds.forEach(item => {
+                // @ts-ignore
+                em.emit('consumer-'+ message.getBody().user_id+"-"+item, message.getBody())
+            })
             cb()
-        } else {
-            cb(new ConsumerError("no users"))
-        }
+        // } else {
+        //     cb(new ConsumerError("no users"))
+        // }
     }, (err) => {
         if (err!=null) {
             // console.log("RSMQ Consumer Error", typeof err)
@@ -50,35 +54,42 @@ export const startEventStreamServer = (env: any, options: any) => {
         res.write("EventStream Server")
     })
 
-    app.get("/stream/:userId", (req: any, res: any) => {
+    app.get("/stream/:userId/:sessionId", (req: any, res: any) => {
         let userId = Number(req.params.userId)
+        let sessionId = req.params.sessionId
+        // console.log("start....", userId, sessionId)
         // if (!users.includes(userId))
         //     users.push(userId)
         // console.log(users)
+        // console.log("Stream", userId)
+        if (!sessionIds.includes(sessionId))
+            sessionIds.push(sessionId)
 
         res.writeHead(200, SSE_RESPONSE_HEADER);
         res.write(`:\n\n`);
 
         let handler = (data: any) => {
+            // console.log("handler", data)
             if (data.user_id == userId) {
                 res.write(`data: ${JSON.stringify(data)}\n\n`)
                 res.write(`:\n\n`);
             }
         }
-        em.on('consumer-'+userId, handler)
+        em.on('consumer-'+userId+"-"+sessionId, handler)
 
         req.on('close', () => {
-            // const index = users.findIndex(item => item==userId)
-            // if (index>-1)
-            //     users.splice(index, 1)
-            // console.log("EventStream Server: disconnected user....")
-            em.removeListener('consumer-'+userId, handler)
+            const index = sessionIds.findIndex(item => item==sessionId)
+            if (index>-1)
+                sessionIds.splice(index, 1)
+            // console.log("EventStream Server: disconnected user....", userId, sessionId)
+            em.removeListener('consumer-'+userId+"-"+sessionId, handler)
         })
 
         req.on('end', () => {
+            console.log("EventStream Server is ended....")
             // users = []
-            // console.log("EventStream Server is ended....")
-            em.removeAllListeners('consumer-'+userId)
+            // sessionIds = []
+            em.removeAllListeners('consumer-'+userId+"-"+sessionId)
         })
     })
 

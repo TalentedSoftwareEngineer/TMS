@@ -283,11 +283,8 @@ export class TemplateService {
       this.saveActivityResult(profile, activity.id, TASK_TYPE.TAD, TASK_ACTION.RETRIEVE, "", sub_dt_tm, activity.status, undefined, message, effDtTm, tmplName)
     }
 
-    if (result==null) {
-      if (isAct)
-        throw new HttpErrors.BadRequest(message)
-      return null
-    }
+    if (isAct && message.length>0)
+      throw new HttpErrors.BadRequest(message)
 
     return response
   }
@@ -295,9 +292,10 @@ export class TemplateService {
   async retrieve(ro: string, tmplName: string, effDtTm: string, profile: AuthorizedUserProfile, isAct: boolean) {
     const current_utc_time = new Date().toISOString()
     let eff_dt_tm = effDtTm
-    let response: any = await this.getInformation(ro, tmplName, effDtTm, profile, isAct)
-    if (!isAct && response==null)
-      return null
+    let response: any = await this.getInformation(ro, tmplName, effDtTm, profile, false)
+    if (!response.lstEffDtTms || !response.recVersionId)
+      return response
+
     let rec_version_id = response.recVersionId
     if (!isAct)
       await this.save(profile, { ...response, tmplName })
@@ -993,7 +991,7 @@ export class TemplateService {
     } else if (response.reqId!=null) {
       let reqId = response.reqId
       // while (response==null || response.effDtTm==null) {
-      //   await DataUtils.sleep(100)
+      //   await DataUtils.sleep(10)
       //   response = await this.tfnRegistryApiService.disconnectTemplateRecordByReqId(ro, reqId, profile)
       // }
 
@@ -1032,6 +1030,10 @@ export class TemplateService {
     this.messageQueueService.pushTAD(notify)
 
     return null
+  }
+
+  async getCountOfNumbers(tmplName: string) {
+    return this.numbersRepository.count({template_name: tmplName})
   }
 
 }

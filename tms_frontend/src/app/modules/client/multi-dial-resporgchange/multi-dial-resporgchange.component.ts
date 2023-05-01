@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {
   INVALID_NUM_TYPE_COMMON,
   INVALID_NUM_TYPE_NONE, LIMIT_SIXTY_LETTERS_REG_EXP,
@@ -18,7 +18,7 @@ import moment from "moment";
 import {tap} from "rxjs/operators";
 import {Table} from "primeng/table";
 import {ApiService} from "../../../services/api/api.service";
-import {SseClient} from "angular-sse-client";
+import {closeEventSource, SseClient} from "angular-sse-client";
 import {environment} from "../../../../environments/environment";
 import { IUser } from 'src/app/models/user';
 
@@ -27,7 +27,7 @@ import { IUser } from 'src/app/models/user';
   templateUrl: './multi-dial-resporgchange.component.html',
   styleUrls: ['./multi-dial-resporgchange.component.scss']
 })
-export class MultiDialResporgchangeComponent implements OnInit {
+export class MultiDialResporgchangeComponent implements OnInit, OnDestroy {
 
   invalidNumType: number = INVALID_NUM_TYPE_NONE;
   gConst = {
@@ -60,7 +60,6 @@ export class MultiDialResporgchangeComponent implements OnInit {
   completedReq: any[] = [];
 
   viewedResult: any;
-  csvNumbersContent: string = '';
 
   activityLogs: any[] = [];
   activityLogsLoading: boolean = false;
@@ -77,6 +76,8 @@ export class MultiDialResporgchangeComponent implements OnInit {
   isSuperAdmin: boolean = false;
   userOptions: any[] = [];
   selectUser: string|number = '';
+
+  streamdata_id: string = '/'+Math.floor(Math.random()*999999);
 
   constructor(
     public store: StoreService,
@@ -99,22 +100,22 @@ export class MultiDialResporgchangeComponent implements OnInit {
     })
 
     this.store.state$.subscribe(async (state)=> {
-      if(state.user.permissions?.includes(PERMISSIONS.MULTI_DIAL_NUMBER_RESP_ORG_CHANGE)) {
-      } else {
-        // no permission
-        this.showWarn(PAGE_NO_PERMISSION_MSG)
-        await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
-        this.router.navigateByUrl(ROUTES.dashboard)
-        return
-      }
-
       this.isSuperAdmin = state.user.role_id == SUPER_ADMIN_ROLE_ID;
     })
+
+    if(this.store.getUser().permissions?.includes(PERMISSIONS.MULTI_DIAL_NUMBER_RESP_ORG_CHANGE)) {
+    } else {
+      // no permission
+      this.showWarn(PAGE_NO_PERMISSION_MSG)
+      await new Promise<void>(resolve => { setTimeout(() => { resolve() }, 100) })
+      this.router.navigateByUrl(ROUTES.dashboard)
+      return
+    }
 
     await this.getData();
     this.getUsersList();
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id, { keepAlive: true }).subscribe(data => {
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       if(data.page=='MRO') {
         if(data.status.toUpperCase()=='IN PROGRESS') {
           let progressingReqIndex = this.progressingReq.findIndex(req=>req.req.id==data.req.id);
@@ -149,6 +150,10 @@ export class MultiDialResporgchangeComponent implements OnInit {
     })
   }
 
+  ngOnDestroy(): void {
+    closeEventSource(environment.stream_uri+"/"+this.store.getUser()?.id+this.streamdata_id)
+  }
+
   onInputNewRespOrg = (event: Event) => {
     const input = event.target as HTMLInputElement;
 
@@ -166,7 +171,7 @@ export class MultiDialResporgchangeComponent implements OnInit {
   getData = async () => {
     await this.api.getMroData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('YYYY/MM/DD h:mm:ss A') : '');
+        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
         this.activityLogs = res;
       })).toPromise();
 
@@ -201,6 +206,7 @@ export class MultiDialResporgchangeComponent implements OnInit {
     let num = this.inputDialNumbers;
     if (num !== null && num !== "") {
       let nums = gFunc.retrieveNumListWithHyphen(num)
+      nums = nums.filter((item, index)=>(nums.indexOf(item)===index));
       this.inputDialNumbers = nums.join(",");
 
       let specificNumReg = SPECIFICNUM_REG_EXP
@@ -242,19 +248,15 @@ export class MultiDialResporgchangeComponent implements OnInit {
   }
 
   onOpenViewModal = async (event: Event, result: any) => {
-    this.csvNumbersContent = '';
     this.viewedResult = result;
 
     await this.api.getMroById(result.id)
       .pipe(tap((response: any[])=>{
         response.map(u => {
-          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('YYYY/MM/DD h:mm:ss A') : '';
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
         });
 
         this.numberList = response;
-        response.forEach((item, index) => {
-          this.csvNumbersContent += `\n${item.num},${item.status},${item.message==null?'':item.message}`;
-        });
 
         this.filterNumberList = this.numberList;
         this.inputNumListFilterKey = '';
@@ -268,10 +270,10 @@ export class MultiDialResporgchangeComponent implements OnInit {
     let numsContent = '';
 
     await this.api.getMroById(result.id).pipe(tap((response: any[])=>{
-      // response.map(u => u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-      // response.map(u => u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-      // response.map(u => u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-      // response.map(u => u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
+      // response.map(u => u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('MM/DD/YYYY h:mm:ss A') : '');
+      // response.map(u => u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('MM/DD/YYYY h:mm:ss A') : '');
+      // response.map(u => u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('MM/DD/YYYY h:mm:ss A') : '');
+      // response.map(u => u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('MM/DD/YYYY h:mm:ss A') : '');
 
       response.forEach((item, index) => {
         numsContent += `\n${item.num},${item.status},${item.message==null?'':item.message}`;
@@ -314,7 +316,18 @@ export class MultiDialResporgchangeComponent implements OnInit {
   }
 
   onInputNumListFilterKey = () => {
-    this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    // this.numbersTable.filterGlobal(this.inputNumListFilterKey.replace(/\W/g, ''), 'contains');
+    let omittedPhoneNumber = this.inputNumListFilterKey.replace(/\D/g, '');
+    this.filterNumberList = this.numberList.filter(item=>{
+      let a = item.num?.includes(omittedPhoneNumber);
+      let b = item.status?.includes(this.inputNumListFilterKey);
+      let c = item.message?.includes(this.inputNumListFilterKey);
+      if (omittedPhoneNumber=='') {
+        return b || c;
+      } else {
+        return a || b || c;
+      }
+    });
   }
 
   closeModal = () => {
@@ -370,7 +383,11 @@ export class MultiDialResporgchangeComponent implements OnInit {
   }
 
   onViewNumbersDownload = () => {
-    let data = `Number,Status,Message${this.csvNumbersContent}\n`
+    let numbersContent = '';
+    this.filterNumberList.forEach((item, index) => {
+      numbersContent += `\n${item.num},${item.status},${item.message==null?'':item.message}`;
+    });
+    let data = `Number,Status,Message${numbersContent}\n`
 
     const csvContent = 'data:text/csv;charset=utf-8,' + data;
     const url = encodeURI(csvContent);
