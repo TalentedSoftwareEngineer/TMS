@@ -50,10 +50,8 @@ export class User extends Entity {
 
   @property({
     type: 'number',
-    required: true,
-    default: 0,
   })
-  timezone: number;
+  timezone?: string;
 
   @property({
     type: 'boolean',

@@ -30,3 +30,18 @@ table {
         }
     }
 }
+
+:host ::ng-deep .p-dialog {
+    &.c-modal {
+        max-height: none;
+        .p-dialog-header {
+            .p-dialog-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        .p-dialog-content{
+            overflow-y: visible;
+        }
+    }
+}

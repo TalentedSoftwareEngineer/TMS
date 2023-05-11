@@ -402,8 +402,142 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     this.intraLATACarrierOptions = this.gConst.CARRIER_LIST.map(item=>({name: item, value: item}));
     this.interLATACarrierOptions = this.gConst.CARRIER_LIST.map(item=>({name: item, value: item}));
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
-      this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(async(data): Promise<any> => {
+      if(data.page == 'CAD' && data.user_id == this.store.getUser().id) {
+        this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
+        if(data.completed) {
+          if(data.success) {
+            this.showSuccess(data.message);
+            switch(data.operation) {
+              case 'DELETE':
+                if (this.effDtTmStatList.length == 1) { // only one record, goes to initial state of page
+                  this.cancelAction()
+                } else { // if next record exists, shows next record, else shows previous record
+                  this.clearAllData()
+                  // gets index
+                  let index = this.effDtTmStatList.indexOf(this.selectEffDtTmStat)
+    
+                  let effDtTmStatList = [...this.effDtTmStatList]
+                  effDtTmStatList.splice(index, 1)
+                  effDtTmStatList.splice(0, 0, "SELECT")
+    
+                  this.effDtTmStatList = effDtTmStatList;
+                  this.selectEffDtTmStat = "SELECT";
+                  this.bEditEnable = false;
+                  this.bCopyEnable = false;
+                  this.bTransferEnable = false;
+                  this.bDeleteEnable = false;
+                  this.bSubmitEnable = false;
+                  this.bSaveEnable = false;
+                  this.bRevertEnable = false;
+                  this.bCancelEnable = true;
+                }
+                break;
+              case 'TRANSFER':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+          
+                if (data.result.recVersionId != null && data.result.effDtTm != null) {
+                  if (await this.retrieveCustomerRecord(data?.body?.tgtNum, data.result.effDtTm)) {
+          
+                  }
+                }
+                break;
+              case 'COPY':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+          
+                if (data.result.recVersionId != null && data.result.effDtTm != null) {
+                  if (await this.retrieveCustomerRecord(data.body.tgtNum, data.result.effDtTm)) {
+                    // this.showSuccess(CAD_COPY_SUCCESSFUL);
+                    // this.inputMessage = CAD_COPY_SUCCESSFUL
+                    this.action = this.gConst.ACTION_NONE
+                  }
+                }
+                break;
+              case 'CREATE':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId;
+                }
+          
+                if (data.result.recVersionId != null) {
+                  if (await this.retrieveCustomerRecord(data.body.num, data.body.effDtTm)) {
+          
+                  }
+                }
+                break;
+              case 'CONVERT':
+                this.gotoPTRPage(this.inputSrcNum, data.result.effDtTm)
+                break;
+              case 'DISCONNECT':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId;
+                }
+          
+                if (data.result.recVersionId != null && data.result.effDtTm != null) {
+                  if (await this.retrieveCustomerRecord(data.body.tgtNum, data.result.effDtTm)) {
+          
+                  }
+                }
+          
+                // no error, update successful
+                if (await this.retrieveCustomerRecord(data.body.tgtNum, data.result.effDtTm)) {
+                  // this.showSuccess(CAD_DISCONNECT_SUCCESSFUL);
+                  // this.inputMessage = CAD_DISCONNECT_SUCCESSFUL
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'UPDATE':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+          
+                // if there is any error
+                let errList = data.result.errList
+                if (errList != undefined && errList != null) {
+          
+                  let message = gFunc.synthesisErrMsg(errList)
+                  // error, but able to retrieve
+                  if (data.result.recVersionId != null) {
+                    if (await this.retrieveCustomerRecord(data.body.num, data.body.effDtTm)) {
+                      if (errList[0].errLvl === "ERROR") {
+                        this.showError(message, 'Error');
+                      } else {
+                        this.showWarn(message);
+                      }
+                      this.inputMessage = message
+                    }
+                  } else {
+                    this.inputMessage = message
+          
+                    if (errList[0].errLvl === "ERROR") {
+                      this.showError(message, 'Error');
+                      return false
+          
+                    } else {
+                      this.showWarn(message);
+                    }
+                  }
+          
+                } else {
+          
+                  // no error, update successful
+                  if (await this.retrieveCustomerRecord(data.body.num, data.body.effDtTm)) {
+                    // this.showSuccess(CAD_UPDATE_SUCCESSFUL);
+                    // this.inputMessage = CAD_UPDATE_SUCCESSFUL;
+                  }
+                }
+                break;
+              default:
+                break;
+            }
+          } else {
+            this.showError(data.message, 'Error');
+          }
+        }
+      }
     })
 
     this.initialDataLoading();
@@ -442,7 +576,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
           let retrieveCardTitle = "Create a New Customer Record: " + gFunc.formattedNumber(num)
           this.action = this.gConst.ACTION_CREATE;
           this.disable = false;
-          this.num = num.replace(/-/g, "");
+          this.num = num?.replace(/-/g, "");
           this.destNums = [
             {
               destNum: gFunc.formattedNumber(num),
@@ -471,7 +605,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
 
           let body = {
             numList:[
-              num.replace(/\-/g, "")
+              num?.replace(/\-/g, "")
             ]
           }
 
@@ -517,7 +651,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
       this.numParam = this.inputSearchEffDtTm;
       this.effDtTmParam = searchUTCString;
       this.preEffDtTmStat = '';   // sets as empty her
-    } else if (await this.retrieveCustomerRecord(this.inputSearchNum.replace(/\W/g, ''), searchUTCString, true)) {
+    } else if (await this.retrieveCustomerRecord(this.inputSearchNum?.replace(/\W/g, ''), searchUTCString, true)) {
       this.inputMessage = CAD_RETRIEVE_SUCCESSFUL;
     }
   }
@@ -527,9 +661,9 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
 
     let ro = this.store.getCurrentRo();
 
-    num = num.replace(/\-/g, "")
+    num = num?.replace(/\-/g, "")
     if (effDtTm != "NOW")
-      effDtTm = effDtTm.replace(/\-/g, "").replace(":", "");
+      effDtTm = effDtTm?.replace(/\-/g, "")?.replace(":", "");
 
     return await new Promise<any>(resolve=>{
       this.api.retrieveCadRec(ro, num, effDtTm).subscribe(res => {
@@ -589,23 +723,26 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     for (let i = 0; i < lstEffDtTms.length; i++) {
       let edt = lstEffDtTms[i]
       let dtTmString = gFunc.fromUTCStrToCTStr(edt.effDtTm)
-      let dtTmStat = dtTmString + " CT " + edt.custRecStat.replace("_", " ") + " " + edt.custRecCompPart.substring(0, 3)
+      let dtTmStat = dtTmString + " CT " + edt.custRecStat?.replace("_", " ") + " " + edt.custRecCompPart.substring(0, 3)
       dtTmStatList.push(dtTmStat)
 
-      if (effDtTm == edt.effDtTm) {
-        nEffIndex = i;
-      }
+      // if (effDtTm == edt.effDtTm) {
+      //   nEffIndex = i;
+      // }
     }
+
+    nEffIndex = this.getEffDtTmStatusOptions(this.effDtTmStatList).findIndex(item=>item.value.includes(this.selectEffDtTmStat));
+    nEffIndex = nEffIndex == -1 ? 0 : nEffIndex
     
     // if the record was activated by PAD, go to the PAD page
-    if (lstEffDtTms[nEffIndex].custRecCompPart.includes("PAD")) {
+    if (lstEffDtTms[nEffIndex]?.custRecCompPart?.includes("PAD")) {
       this.gotoPTRPage(num, effDtTm)
       return
     }
 
-    let status = lstEffDtTms[nEffIndex].custRecStat.replace("_", " ")
+    let status = lstEffDtTms[nEffIndex]?.custRecStat?.replace("_", " ")
 
-    this.num = num.replace(/-/g, "");
+    this.num = num?.replace(/-/g, "");
     this.retrieveCardTitle =  this.gConst.RETRIEVE_CARD_TITLE_PREFIX + ": " + gFunc.formattedNumber(num);
     this.bRetrieveCardIconHidden = true;
     this.resultCardTitle =    this.gConst.RESULT_CARD_TITLE_PREFIX2;
@@ -616,7 +753,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     this.effDtTmStatList =    dtTmStatList;
     this.selectEffDtTmStat =        dtTmStatList[nEffIndex];
     this.status =             status;
-    this.custRecCompPart =    lstEffDtTms[nEffIndex].custRecCompPart.replace(/\_/g, ", ");
+    this.custRecCompPart =    lstEffDtTms[nEffIndex].custRecCompPart?.replace(/\_/g, ", ");
 
     // get basic data
     let interLATACarrier = data.interLATACarrier != null ? data.interLATACarrier : []
@@ -800,9 +937,9 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
       destNums.push(destNum)
     }
 
-    this.num = num.replace(/-/g, "");
+    this.num = num?.replace(/-/g, "");
     this.inputRespOrg = data.ctrlRespOrgId;
-    this.inputApproval = data.lstEffDtTms[nEffIndex].apprStat.replace(/\_/g, " ");
+    this.inputApproval = data.lstEffDtTms[nEffIndex].apprStat?.replace(/\_/g, " ");
     this.inputPriority =     (data.priority == 'Y');
     this.inputCustomerId = data.onAccCust ? data.onAccCust : '';
 
@@ -971,7 +1108,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
   createAction = async () => {
     // lock the number
     let ro = this.store.getCurrentRo();
-    let body = { custRecAction: this.gConst.ACTION_ALL, srcNum: this.inputSearchNum.replace(/\W/g, ''), custRecCompPart: "CAD" }
+    let body = { custRecAction: this.gConst.ACTION_ALL, srcNum: this.inputSearchNum?.replace(/\W/g, ''), custRecCompPart: "CAD" }
     let res = await new Promise<any>(resolve=> {
       this.api.lockCadRec({body: JSON.stringify(body), ro: ro}).subscribe(res=>{
         resolve(res);
@@ -991,7 +1128,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     let retrieveCardTitle = "Create a New Customer Record: " + gFunc.formattedNumber(this.inputSearchNum)
     this.action = this.gConst.ACTION_CREATE;
     this.disable = false;
-    this.num = this.inputSearchNum.replace(/\W/g, '');
+    this.num = this.inputSearchNum?.replace(/\W/g, '');
     this.retrieveCardTitle = retrieveCardTitle;
     this.bRetrieveCardIconHidden = true;
     this.bResultHeaderHidden = true;
@@ -1074,7 +1211,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
   onSelectAosNetwork = () => {
     let choiceList: any[] = []
     if (this.inputNetwork !== '')
-      choiceList = this.inputNetwork.replace(/\ /g, "").split(",")
+      choiceList = this.inputNetwork?.replace(/\ /g, "").split(",")
 
     this.choiceModalVisible = true;
     this.choiceModalHeaderTitle = this.gConst.AOS_NETWORK_MODAL_HEADER_TITLE;
@@ -1091,7 +1228,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
   onSelectAosState = () => {
     let choiceList: any[] = []
     if (this.inputState !== '')
-      choiceList = this.inputState.replace(/\ /g, "").split(",")
+      choiceList = this.inputState?.replace(/\ /g, "").split(",")
 
       this.choiceModalVisible = true,
       this.choiceModalHeaderTitle = AOS_STATE_MODAL_HEADER_TITLE,
@@ -1145,7 +1282,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
   onSelectAosLATA = () => {
     let choiceList: any[] = [];
     if (this.inputLata !== '')
-      choiceList = this.inputLata.replace(/\ /g, "").split(",")
+      choiceList = this.inputLata?.replace(/\ /g, "").split(",")
 
     let lataList = this.gConst.AOS_LATA.split(",")
 
@@ -1178,6 +1315,20 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
   handleCarrierSelect = () => {
     this.bContentModified = true;
     this.checkDataExistForCR()
+  }
+
+  onEffDtTmSelChange = async () => {
+    let UTCTimeStr = this.fromEffDtTmStatToUTCStr(this.selectEffDtTmStat)
+
+    // if any modified, shows the modal asking if really will do
+    if (this.bContentModified) {
+      this.numParam = this.num
+      this.effDtTmParam = UTCTimeStr
+      this.preEffDtTmStat = this.selectEffDtTmStat
+      // this.modifiedModalVisible = true
+    } else if (await this.retrieveCustomerRecord(this.num, UTCTimeStr, true)) {
+      this.inputMessage = CAD_RETRIEVE_SUCCESSFUL
+    }
   }
 
   getEffDtTmStatusOptions = (effDtTmStatList: any[]) => {
@@ -1659,10 +1810,12 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
           this.bSaveEnable = true;
           return
         }
-      }
 
-      if (res && res.updateStatus && Boolean(res.updateStatus.statusMessages)) {
-        this.inputMessage = gFunc.synthesisErrMsg(res.updateStatus.statusMessages)
+        if (res.errList) {
+          this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+        } else if (res.updateStatus && res.updateStatus.statusMessages !== null) {
+          this.showError(gFunc.synthesisErrMsg(res.updateStatus.statusMessages), 'Error');
+        }
       }
     })
   }
@@ -1795,16 +1948,16 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     });
     
     if (res.success) {
-      let data = res
-      if (data.recVersionId != undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId
-      }
+      // let data = res
+      // if (data.recVersionId != undefined && data.recVersionId != null) {
+      //   this.recVersionId = data.recVersionId
+      // }
 
-      if (data.recVersionId != null && data.effDtTm != null) {
-        if (await this.retrieveCustomerRecord(body.tgtNum, data.effDtTm)) {
+      // if (data.recVersionId != null && data.effDtTm != null) {
+      //   if (await this.retrieveCustomerRecord(body.tgtNum, data.effDtTm)) {
 
-        }
-      }
+      //   }
+      // }
     }
     return true
   }
@@ -1819,23 +1972,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     });
     
     if (res.success) {
-      let data = res
-      if (data.recVersionId != undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId;
-      }
 
-      if (data.recVersionId != null && data.effDtTm != null) {
-        if (await this.retrieveCustomerRecord(body.tgtNum, data.effDtTm)) {
-
-        }
-      }
-
-      // no error, update successful
-      if (await this.retrieveCustomerRecord(body.tgtNum, res.effDtTm)) {
-        this.showSuccess(CAD_DISCONNECT_SUCCESSFUL);
-        this.inputMessage = CAD_DISCONNECT_SUCCESSFUL
-        this.action = this.gConst.ACTION_NONE
-      }
     }
     return true
   }
@@ -1850,23 +1987,9 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     });
     
     if (res.success) {
-      let data = res
-      if (data.recVersionId != undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId
-      }
 
-      if (data.recVersionId != null && data.effDtTm != null) {
-        if (await this.retrieveCustomerRecord(body.tgtNum, data.effDtTm)) {
-
-        }
-      }
     } else {
-      // no error, update successful
-      if (await this.retrieveCustomerRecord(body.tgtNum, res.effDtTm)) {
-        this.showSuccess(CAD_COPY_SUCCESSFUL);
-        this.inputMessage = CAD_COPY_SUCCESSFUL
-        this.action = this.gConst.ACTION_NONE
-      }
+
     } 
     return true;
   }
@@ -1886,19 +2009,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     });
 
     if (res.success) {
-      let data = res
-      if (data.recVersionId != undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId;
-      }
 
-      if (data.recVersionId != null) {
-        if (await this.retrieveCustomerRecord(body.num, body.effDtTm)) {
-
-        }
-
-      } else {
-
-      }
     }
 
     return true;
@@ -1920,58 +2031,8 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     
     if (res.success) {
 
-      let data = res
-      if (data.recVersionId != undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId
-      }
-
-      // if there is any error
-      let errList = data.errList
-      if (errList != undefined && errList != null) {
-
-        let message = gFunc.synthesisErrMsg(errList)
-        // error, but able to retrieve
-        if (data.recVersionId != null) {
-          if (await this.retrieveCustomerRecord(body.num, body.effDtTm)) {
-            if (errList[0].errLvl === "ERROR") {
-              this.showError(message, 'Error');
-            } else {
-              this.showWarn(message);
-            }
-            this.inputMessage = message
-          }
-        } else {
-
-          this.inputMessage = message
-
-          if (errList[0].errLvl === "ERROR") {
-            this.showError(message, 'Error');
-            return false
-
-          } else {
-            this.showWarn(message);
-          }
-        }
-
-      } else {
-
-        // no error, update successful
-        if (await this.retrieveCustomerRecord(body.num, body.effDtTm)) {
-          this.showSuccess(CAD_UPDATE_SUCCESSFUL);
-          this.inputMessage = CAD_UPDATE_SUCCESSFUL;
-        }
-      }
-
     } else if (res != undefined) {
-      // if there is any error
-      let errList = res.errList
-      if (errList != undefined && errList != null) {
 
-        let message = gFunc.synthesisErrMsg(errList)
-        this.showError(message, 'Error');
-
-        return false
-      }
     }
 
     return true
@@ -2300,42 +2361,42 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
 
     let intraLATACarrier: any[] = []
     if (this.selectIntraLATACarrier !== '') {
-      intraLATACarrier = this.selectIntraLATACarrier.replace(/\ /g, "").split(",")
+      intraLATACarrier = this.selectIntraLATACarrier?.replace(/\ /g, "").split(",")
     }
 
     let interLATACarrier: any[] = []
     if (this.selectInterLATACarrier !== '') {
-      interLATACarrier = this.selectInterLATACarrier.replace(/\ /g, "").split(",")
+      interLATACarrier = this.selectInterLATACarrier?.replace(/\ /g, "").split(",")
     }
 
     let aos: any = {}
     let aosNet = this.inputNetwork
     if (aosNet != '')
-      aos.aosNet = aosNet.replace(/\ /g, "").split(",")
+      aos.aosNet = aosNet?.replace(/\ /g, "").split(",")
     else
       aos.aosNet = []
 
     let aosState = this.inputState
     if (aosState != '')
-      aos.aosState = aosState.replace(/\ /g, "").split(",")
+      aos.aosState = aosState?.replace(/\ /g, "").split(",")
     else
       aos.aosState = []
 
     let aosNPA = this.inputNpa
     if (aosNPA != '')
-      aos.aosNPA = aosNPA.replace(/\ /g, "").split(",")
+      aos.aosNPA = aosNPA?.replace(/\ /g, "").split(",")
     else
       aos.aosNPA = []
 
     let aosLATA = this.inputLata
     if (aosLATA != '')
-      aos.aosLATA = aosLATA.replace(/\ /g, "").split(",")
+      aos.aosLATA = aosLATA?.replace(/\ /g, "").split(",")
     else
       aos.aosLATA = []
 
     let aosLbl = this.inputLabel
     if (aosLbl != '')
-      aos.aosLbl = aosLbl.replace(/\ /g, "").split(",")
+      aos.aosLbl = aosLbl?.replace(/\ /g, "").split(",")
     else
       aos.aosLbl = []
 
@@ -2346,7 +2407,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
       }
 
       let destNum: any = {}
-      if (el.destNum !== '')           destNum.destNum = el.destNum.replace(/\-/g, "")
+      if (el.destNum !== '')           destNum.destNum = el.destNum?.replace(/\-/g, "")
       if (el.numTermLine !== '')       destNum.numTermLine = el.numTermLine
       if (el.localServOff !== '')      destNum.localServOff = el.localServOff
       if (el.forServOff !== '')        destNum.forServOff = el.forServOff
@@ -2386,7 +2447,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
       body.conName = this.inputContactName
 
     if (this.inputContactNumber !== '')
-      body.conTel = this.inputContactNumber.replace(/\-/g, "")
+      body.conTel = this.inputContactNumber?.replace(/\-/g, "")
 
     if (this.inputNotes !== '')
       body.notes = this.inputNotes
@@ -2743,8 +2804,8 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
       return
     }
 
-    let srcNum = this.inputSrcNum.replace(/\-/g, "")
-    let tgtNum = this.inputTgtNum.replace(/\-/g, "")
+    let srcNum = this.inputSrcNum?.replace(/\-/g, "")
+    let tgtNum = this.inputTgtNum?.replace(/\-/g, "")
     let tgtTmplName = this.inputTgtNum
 
     switch (this.copyAction) {
@@ -2846,7 +2907,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
           let params = { tmplName: tgtTmplName, ro: ro, isUserAct: false }
           // get template info
           let resTmplQuery = await new Promise<any>(resolve=> {
-            this.api.queryTmplRec(params).subscribe(res=> {
+            this.api.queryCadlRec(params).subscribe(res=> {
               resolve(res);
             });
           });
@@ -2864,7 +2925,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
               }
 
               // retrieve the template record with template name and effective date time
-              let tmplEffDtTm: string = data.lstEffDtTms[i].effDtTm.replace(/\-/g, "").replace(":", "")
+              let tmplEffDtTm: string = data.lstEffDtTms[i].effDtTm?.replace(/\-/g, "")?.replace(":", "")
               let params_retrieve = { tmplName: tgtTmplName, effDtTm: tmplEffDtTm, ro: ro }
               let resTmpl = await new Promise<any>(resolve=> {
                 this.api.tmplAdminDataRetrieve(ro, params_retrieve.tmplName, params_retrieve.effDtTm).subscribe(res=> {
@@ -2952,6 +3013,14 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
         this.finishCpyTrnsfrOp()
 
         return
+      }
+
+      if (res.errList) {
+        this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+      } else if (res.copyStatus && res.copyStatus.statusMessages !== null) {
+        this.showError(gFunc.synthesisErrMsg(res.copyStatus.statusMessages), 'Error');
+      } else if (res.disconnectStatus && res.disconnectStatus.statusMessages !== null) {
+        this.showError(gFunc.synthesisErrMsg(res.disconnectStatus.statusMessages), 'Error');
       }
     }
   }
@@ -3202,7 +3271,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
    */
   retrieveNumForTgtNum = (effDtTm: string) => {
 
-    let params = { num: this.lockParam.tgtNum, effDtTm: effDtTm.replace(/[-|:]/g, ''), isUserAct: false }
+    let params = { num: this.lockParam.tgtNum, effDtTm: effDtTm?.replace(/[-|:]/g, ''), isUserAct: false }
     // console.log("retrieveNumForTgtNum: " + params.num + ", " + params.effDtTm)
 
     this.api.retrieveCadRec(this.store.getCurrentRo(), params.num, params. effDtTm).subscribe(res => {
@@ -3279,8 +3348,8 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
       return
     }
 
-    let srcNum = this.inputSrcNum.replace(/\-/g, "")
-    let tgtNum = this.inputTgtNum.replace(/\-/g, "")
+    let srcNum = this.inputSrcNum?.replace(/\-/g, "")
+    let tgtNum = this.inputTgtNum?.replace(/\-/g, "")
     let tgtTmplName = this.inputTgtNum
 
     // gets source date time
@@ -3355,7 +3424,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
           let params_queryTmplRec = {tmplName: tgtTmplName, ro: ro}
           let resTmplQuery = await new Promise<any>(resolve=>{
             // get template info
-            this.api.queryTmplRec(params_queryTmplRec).subscribe(res=>{resolve(res)});
+            this.api.queryCadlRec(params_queryTmplRec).subscribe(res=>{resolve(res)});
           });
           if (resTmplQuery) {
 
@@ -3375,7 +3444,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
               }
 
               // retrieve the template record with template name and effective date time
-              let tmplEffDtTm = data.lstEffDtTms[i].effDtTm.replace(/\-/g, "").replace(":", "")
+              let tmplEffDtTm = data.lstEffDtTms[i].effDtTm?.replace(/\-/g, "").replace(":", "")
               let params_retrieveTmplRec = { tmplName: tgtTmplName, effDtTm: tmplEffDtTm, ro: ro }
               let resTmpl = await new Promise<any>(resolve=>{
                 this.api.tmplAdminDataRetrieve(this.store.getCurrentRo(), params_retrieveTmplRec.tmplName, params_retrieveTmplRec.effDtTm).subscribe(res=>{resolve(res)});
@@ -3467,38 +3536,12 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
   deleteCustomerRecord = () => {
     this.toggleDelete()
 
-    let utcEffDtTm = this.fromEffDtTmStatToUTCStr(this.selectEffDtTmStat)  // YYYY-MM-DDTHH:mmZ
+    let utcEffDtTm = this.fromEffDtTmStatToUTCStr(this.selectEffDtTmStat).replace(':', '').replace(/-/g, "")  // YYYY-MM-DDTHH:mmZ
 
     let params = { num: this.num, effDtTm: utcEffDtTm, recVersionId: this.recVersionId }
-    this.api.deleteCadRec(params).subscribe(res => {
+    this.api.deleteCadRec({ro: this.store.getCurrentRo(), body: JSON.stringify(params)}).subscribe(res => {
       if (res.success) {
-        this.showSuccess('CAD deleted successfully!');
-        this.inputMessage = ''
 
-        if (this.effDtTmStatList.length == 1) { // only one record, goes to initial state of page
-          this.cancelAction()
-        } else { // if next record exists, shows next record, else shows previous record
-
-          this.clearAllData()
-
-          // gets index
-          let index = this.effDtTmStatList.indexOf(this.selectEffDtTmStat)
-
-          let effDtTmStatList = [...this.effDtTmStatList]
-          effDtTmStatList.splice(index, 1)
-          effDtTmStatList.splice(0, 0, "SELECT")
-
-          this.effDtTmStatList = effDtTmStatList;
-          this.selectEffDtTmStat = "SELECT";
-          this.bEditEnable = false;
-          this.bCopyEnable = false;
-          this.bTransferEnable = false;
-          this.bDeleteEnable = false;
-          this.bSubmitEnable = false;
-          this.bSaveEnable = false;
-          this.bRevertEnable = false;
-          this.bCancelEnable = true;
-        }
       }
     })
   }
@@ -3524,8 +3567,7 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
     // calls lock api
     let res: any = await this.api.convertCadRec({'body': JSON.stringify(body), ro: this.inputRespOrg})
     if (res.success) {
-      this.gotoPTRPage(this.inputSrcNum, res.inputEffDtTm)
-      return
+
     }
   }
 
@@ -3598,7 +3640,15 @@ export class CustomerAdminDataComponent implements OnInit, OnDestroy {
 
     await this.unlockCustomerRecord()
     this.inputSearchNum = '';
+
     this.inputSearchEffDtTm = '';
+    this.bRetrieveEnable = false;
+    this.bExpRetrieve = true;
+    this.bExpResult = false;
+    this.bEffDtTmListHidden = true;
+    this.selectEffDtTmStat = '';
+    this.resultCardTitle = 'Result';
+    this.retrieveCardTitle = 'Retrieve';
   };
 
   clearAllData = async () => {

@@ -9,7 +9,7 @@ export class UserCreateRequest {
     somos_id: number;
     role_id: number;
 
-    timezone: number;
+    timezone?: string;
 
     password: string;
 

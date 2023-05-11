@@ -11,6 +11,7 @@ import {tap} from "rxjs/operators";
 import {Table} from "primeng/table";
 import moment from "moment";
 import Cookies from "universal-cookie";
+import * as gFunc from 'src/app/utils/utils';
 
 @Component({
   selector: 'app-template-record-list',
@@ -25,6 +26,7 @@ export class TemplateRecordListComponent implements OnInit {
   bExpRetrieve: boolean = false;
 
   retrieveResults: any[] = [];
+  selectedRetrieveTemplate: any;
   retrieveResultsLoading = false
   rowsPerPageOptions: any[] = rowsPerPageOptions;
 
@@ -90,7 +92,6 @@ export class TemplateRecordListComponent implements OnInit {
     })
   }
 
-
   retrieveTemplates = async () => {
     
     if(this.selectEntity === "") {
@@ -106,14 +107,14 @@ export class TemplateRecordListComponent implements OnInit {
       this.validTemplate = false;
       return;
     } else {
-      this.validTemplate = true
+      this.validTemplate = true;
     }
 
     await this.api.getTemplateList(this.store.getCurrentRo()!, this.selectEntity, this.inputTemplate)
       .pipe(tap( (res: any[]) => {
         res.map(u => {
-          u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('MM/DD/YYYY h:mm:ss A') : '';
-          // u.numbers = u.numbers ? 
+          // u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.effDtTm = u.effDtTm ? gFunc.fromUTCStrToCTStr(u.effDtTm) : '';
         })
         this.retrieveResults = res  
       })).toPromise();
@@ -148,15 +149,15 @@ export class TemplateRecordListComponent implements OnInit {
   }
 
   viewResult = (event: Event, result: any) => {
-    this.api.getTemplate(this.store.getCurrentRo()!, result.tmplName, result.effDtTm)
-      .pipe(tap( (res: any[]) => {
-        res.map(u => {
+    this.api.getTemplate(this.store.getCurrentRo()!, result.tmplName, gFunc.fromCTTimeToUTCStr(new Date(result.effDtTm)))
+      .pipe(tap( (res: any) => {
+        res.result.map((u: any) => {
           u.effDtTm = u.effDtTm ? moment(new Date(u.effDtTm)).format('MM/DD/YYYY h:mm:ss A') : '';
         })
 
-        this.selTmplName = result.tmplName
-        this.selEffDtTm = result.effDtTm
-        this.selTmplList = res
+        this.selTmplName = result.tmplName;
+        this.selEffDtTm = result.effDtTm;
+        this.selTmplList = res.result;
 
         this.bSelectionOpenModal = true;
       })).toPromise();
@@ -181,18 +182,91 @@ export class TemplateRecordListComponent implements OnInit {
     this.numbersTable.filterGlobal(this.inputNumListFilterKey, 'contains');
   }
 
+  onResultDownload = () => {
+    let tmplContent = '';
+    let filteredResults = this.retrieveResults.filter(item=>(
+      item.tmplName?.includes(this.inputNumListFilterKey) || 
+      item.effDtTm?.includes(this.inputNumListFilterKey) || 
+      item.description?.includes(this.inputNumListFilterKey) || 
+      item.custRecStat?.includes(this.inputNumListFilterKey)
+    ));
+    
+    filteredResults.forEach((item, index) => {
+      tmplContent += `\n${item.tmplName}, ${item.description}, ${item.effDtTm==null?'':item.effDtTm}, ${item.custRecStat==null?'':item.custRecStat}, ${item.numbers==null?'':item.numbers}`;
+    });
+
+    let data = `Entity,${this.selectEntity}\n\nTemplate Name,Template Description,Effective Date/Time,CR Status,Total Amount of Numbers${tmplContent}\n`
+    const csvContent = 'data:text/csv;charset=utf-8,' + data;
+    const url = encodeURI(csvContent);
+    let fileName = 'Template_Record_List'+moment(new Date()).format('YYYY_MM_DD_hh_mm_ss');
+
+    const tempLink = document.createElement('a');
+    tempLink.href = url;
+    tempLink.setAttribute('download', fileName);
+    tempLink.click();
+  }
+
+  onResultTemplateDisconnect = () => {
+    console.log(this.selectedRetrieveTemplate);
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to disconnect?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        if(Boolean(this.selectedRetrieveTemplate)) {
+          this.api.getTemplate(this.store.getCurrentRo()!, this.selectedRetrieveTemplate.tmplName, '').subscribe(res=>{
+            let body = {
+              srcTmplName: this.selectedRetrieveTemplate.tmplName,
+              srcEffDtTm: gFunc.fromCTTimeToUTCStr(new Date(this.selectedRetrieveTemplate.effDtTm)),
+              srcRecVersionId: res.recVersionId,
+              tgtTmplName: this.selectedRetrieveTemplate.tmplName,
+              tgtEffDtTm: 'NOW',
+              cmd: 'U',
+              tmplRecCompPart: 'TAD'
+            };
+            this.api.disconnectTmplRec({ro: this.store.getCurrentRo(), body: JSON.stringify(body)}).subscribe(response=>{
+              if(response)
+              this.showSuccess('Template successfully disconnected!');
+            });
+          });
+        } else {
+          this.showWarn("Please select template!");
+        }
+      },
+      reject: (type: any) => {
+          switch(type) {
+              case ConfirmEventType.REJECT:
+                break;
+              case ConfirmEventType.CANCEL:
+                break;
+          }
+      }
+    });
+  }
+
+  onClickTmplName = (tmplName: string, effDtTm: string) => {
+    if(Boolean(tmplName))
+      this.gotoTADPage(tmplName, effDtTm)
+  }
+
+  gotoTADPage = (tmplName: string, effDtTm: string) => {
+    const cookies = new Cookies();
+    cookies.set("tmplName", tmplName);
+    cookies.set("effDtTm", effDtTm);
+    this._router.navigateByUrl(ROUTES.templateAdmin.tad);
+  }
+
   tad = () => {
     let template = this.retrieveResults.find((item) => item.tmplName == this.selTmplName)
     if (template) {
       this.set_cookie();
       this._router.navigateByUrl(ROUTES.templateAdmin.tad);
     } else {
-      this.showInfo("Please select template!");
+      this.showWarn("Please select template!");
     }
   }
 
   set_cookie = () => {
-    console.log("Cookie: " + this.selTmplName + ", " + this.selEffDtTm)
     const cookies = new Cookies();
     cookies.set("tmplName", this.selTmplName);
     cookies.set("effDtTm", this.selEffDtTm);

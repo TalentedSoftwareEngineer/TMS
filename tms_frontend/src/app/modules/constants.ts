@@ -1,8 +1,11 @@
 export const SQL_TYPE_OPTIONS = [
   {name: 'All', value: ''},
-  {name: 'TMPL_DIALNBR', value: 'RHDB_TEMPLATE_DIALNBR'},
-  {name: 'DIALNBR', value: 'RHDB_NAREP'},
-  {name: 'TFNREPT_DIALNBR', value: 'RHDB_NAREP_TFNREPT'}
+  {name: 'TMPL_DIALNBR', value: 'TMPL_DIALNBR'},
+  {name: 'DIALNBR', value: 'DIALNBR'},
+  {name: 'TFNREPT_DIALNBR', value: 'TFNREPT_DIALNBR'},
+  {name: 'RHDB_TEMPLATE_DIALNBR', value: 'RHDB_TEMPLATE_DIALNBR'},
+  {name: 'RHDB_NAREP', value: 'RHDB_NAREP'},
+  {name: 'RHDB_NAREP_TFNREPT', value: 'RHDB_NAREP_TFNREPT'},
 ]
 
 export const SUPER_ADMIN_ID = 1
@@ -44,6 +47,16 @@ export const ROWS_PER_PAGE_OPTIONS = [
 ]
 
 export const rowsPerPageOptions = [10, 25, 50, 100]
+
+export const TIMEZONE = [
+  {name: 'Auto Detect', value: ''},
+  {name: 'Coordinated Universal Time (UTC)', value: '0'},
+  {name: 'Pacific Standard Time (PST)', value: '-8'},
+  {name: 'Mountain Standard Time (MST)', value: '-7'},
+  {name: 'Central Standard Time (CST)', value: '-6'},
+  {name: 'Estern Standard Time (EST)', value: '-5'},
+  {name: 'Eastern Daylight Time (EDT)', value: '-4'}
+]
 
 //Contact Information Modal
 //Contact name for the TFN that is being reserved.

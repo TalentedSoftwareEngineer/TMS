@@ -26,7 +26,7 @@ import {
 } from '../../constants';
 import { ApiService } from 'src/app/services/api/api.service';
 import { tap } from 'rxjs/operators';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import {ISqlScript} from "../../../models/user";
 import {closeEventSource, SseClient} from "angular-sse-client";
 import {environment} from "../../../../environments/environment";
@@ -49,8 +49,8 @@ export class NumberListComponent implements OnInit, OnDestroy {
   pageIndex = 1
   filterName = ''
   filterValue = ''
-  sortActive = 'sub_dt_tm'
-  sortDirection = 'DESC'
+  sortActive = 'entity'
+  sortDirection = 'ASC'
   resultsLength = -1
   filterResultLength = -1;
   isLoading = true
@@ -65,11 +65,14 @@ export class NumberListComponent implements OnInit, OnDestroy {
   tmplNameOptions: any[] = [];
   tmplNames: any[] = [];
   selectTmplName = '';
+  inputNumber: string = '';
   statusOptions: any[] = [];
   selectStatus = '';
   companyOptions: any[] = [];
   selectCompany: string = '';
   companies: any[] = [];
+  subDtTmOptions: any[] = [];
+  selectSubDtTm: string = '';
 
   selectUsername: string = '';
   usernameOptions: any[] = []
@@ -100,7 +103,7 @@ export class NumberListComponent implements OnInit, OnDestroy {
   filteredScriptLength: number = -1
   scriptPageSize = 10
   scriptPageIndex = 1
-  scriptSortActive = 'id'
+  scriptSortActive = 'user_id'
   scriptSortDirection = 'ASC'
   selectedSQLScripts: any[] =[];
   allFinish: boolean = false;
@@ -165,24 +168,28 @@ export class NumberListComponent implements OnInit, OnDestroy {
 
     this.store.state$.subscribe(async (state)=> {
       // this.selectRespOrgId = state.currentRo;
-      await this.getCompaniesList();
-      this.getTotalNumberList();
-      this.getNumberList();
+
     })
 
     this.backPressureEvent();
+    
+    await this.getCompaniesList();
+    await this.getSubDtTmList();
+    this.getTotalNumberList();
+    this.getNumberList();
 
-    this.getUsernames()
-    this.getTemplate()
+    this.getUsernames();
+    this.getTemplate();
     this.getTemplateOfNumberList();
     this.getRespOrgIds();
     this.getEntities();
     this.getStatus();
 
-    this.getTotalSqlScriptsCount()
-    this.getSqlScriptsList()
+    await this.getTotalSqlScriptsCount();
+    await this.getSqlScriptsList();
     // this.getTotalNumberList();
     // this.getNumberList();
+    await this.getSqlTypeOptions();
   }
 
   ngOnDestroy(): void {
@@ -190,7 +197,7 @@ export class NumberListComponent implements OnInit, OnDestroy {
   }
 
   async getTemplate() {
-    await this.api.getTemplateList(this.store.getCurrentRo()!, '')
+    await this.api.getTemplateList(this.store.getCurrentRo()!, '', '')
       .pipe(tap( res => {
         // this.templates = [ { tmplName:"" }]
         this.templates = this.templates.concat(res)
@@ -201,12 +208,20 @@ export class NumberListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     try {
       let filterValue = this.filterValue//.replace('(', '').replace('-', '').replace(') ', '').replace(')', '')
-      await this.api.getNumberList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.selectEntity, this.selectRespOrgId, this.selectTmplName, this.selectStatus)
+      await this.api.getNumberList(this.sortActive, this.sortDirection, this.pageIndex, this.pageSize, filterValue, this.selectEntity, this.selectRespOrgId, this.selectTmplName, this.selectStatus, this.inputNumber.replace(/\D/g, ''), this.selectSubDtTm)
         .pipe(tap(async (res: any[]) => {
           this.numberList = [];
+
           res.map(u => {
-            u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.eff_dt_tm = u.eff_dt_tm ? gFunc.fromUTCStrToCTStr(u.eff_dt_tm) : '';
+
+            if(Boolean(this.store.getUser()?.timezone)) {
+              // Timezone Time
+              u.sub_dt_tm = u.sub_dt_tm ? moment(u.sub_dt_tm).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            } else {
+              // Local time
+              u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+            }
           });
 
           for (let record of res) {
@@ -217,8 +232,8 @@ export class NumberListComponent implements OnInit, OnDestroy {
         })).toPromise();
 
       this.filterResultLength = -1
-      await this.api.getNumberListCount(filterValue, this.selectEntity, this.selectRespOrgId, this.selectTmplName, this.selectStatus).pipe(tap( res => {
-        this.filterResultLength = res.count
+      await this.api.getNumberListCount(filterValue, this.selectEntity, this.selectRespOrgId, this.selectTmplName, this.selectStatus, this.inputNumber.replace(/\D/g, ''), this.selectSubDtTm).pipe(tap( res => {
+        this.filterResultLength = res.count;
       })).toPromise();
     } catch (e) {
     } finally {
@@ -228,7 +243,7 @@ export class NumberListComponent implements OnInit, OnDestroy {
 
   getTotalNumberList = async () => {
     this.resultsLength = -1
-    await this.api.getNumberListCount('', '', this.selectRespOrgId, '', '').pipe(tap( res => {
+    await this.api.getNumberListCount('', '', this.selectRespOrgId, '', '', '', '').pipe(tap( res => {
       this.resultsLength = res.count
     })).toPromise();
   }
@@ -236,10 +251,9 @@ export class NumberListComponent implements OnInit, OnDestroy {
   getSqlScriptsList = async () => {
     this.isLoading = true;
     try {
-
       let filterValue = this.scriptFilterValue//.replace('(', '').replace('-', '').replace(') ', '').replace(')', '')
 
-      await this.api.getScriptSQLsOfNumberList(this.scriptSortActive, this.scriptSortDirection, this.scriptPageIndex, this.scriptPageSize, filterValue, this.selectUsername)
+      await this.api.getScriptSQLsOfNumberList(this.scriptSortActive, this.scriptSortDirection, this.scriptPageIndex, this.scriptPageSize, filterValue, this.selectUsername, this.selectSqlType)
         .pipe(tap(async (sql_scriptsRes: any) => {
           this.sql_scripts = [];
           for (let sql_script of sql_scriptsRes) {
@@ -248,7 +262,7 @@ export class NumberListComponent implements OnInit, OnDestroy {
         })).toPromise();
 
       this.filteredScriptLength = -1
-      await this.api.getScriptCountOfNumberList(filterValue, this.selectUsername).pipe(tap( res => {
+      await this.api.getScriptCountOfNumberList(filterValue, this.selectUsername, this.selectSqlType).pipe(tap( res => {
         this.filteredScriptLength = res.count
       })).toPromise();
     } catch (e) {
@@ -259,8 +273,19 @@ export class NumberListComponent implements OnInit, OnDestroy {
 
   getTotalSqlScriptsCount = async () => {
     this.scriptLength = -1
-    await this.api.getSqlScriptsCount('', '').pipe(tap( res => {
+    await this.api.getScriptCountOfNumberList('', '', '').pipe(tap( res => {
       this.scriptLength = res.count
+    })).toPromise();
+  }
+
+  getSqlTypeOptions = async () => {
+    await this.api.getScriptSQLsOfNumberList('type', 'ASC', 1, this.scriptLength, '', '', '')
+    .pipe(tap(async (res: any) => {
+      this.sqlTypeOptions = [{name: 'All', value: ''}];
+      for(let item of res) {
+        if(!Boolean(this.sqlTypeOptions.find(sqlItem=>(sqlItem.value==item.type))))
+          this.sqlTypeOptions.push({name: item.type, value: item.type});
+      }
     })).toPromise();
   }
 
@@ -357,6 +382,33 @@ export class NumberListComponent implements OnInit, OnDestroy {
     }
   }
 
+  getSubDtTmList = async () => {
+    this.api.getNumberListSubDtTmForFilter().subscribe(res=>{
+      // switch(this.store.getUser()?.timezone) {
+      //   case -5:
+      //     // EST/EDT time
+      //     this.subDtTmOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: moment(new Date(item.sub_dt_tm)).utc().tz('America/New_York').format('MM/DD/YYYY h:mm:ss A'), value: item.sub_dt_tm}))];
+      //     break;
+      //   case -6:
+      //     // CST/CDT time
+      //     this.subDtTmOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: moment(new Date(item.sub_dt_tm)).utc().tz('America/Chicago').format('MM/DD/YYYY h:mm:ss A'), value: item.sub_dt_tm}))];
+      //     break;
+      //   default:
+      //     // Local time
+      //     this.subDtTmOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: moment(new Date(item.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A'), value: item.sub_dt_tm}))];
+      //     break;
+      // }
+
+      if(Boolean(this.store.getUser()?.timezone)) {
+        // Timezone Time
+        this.subDtTmOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: moment(item.sub_dt_tm).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A'), value: item.sub_dt_tm}))];
+      } else {
+        // Local time
+        this.subDtTmOptions = [{name: 'All', value: ''}, ...res.map(item=>({name: moment(new Date(item.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A'), value: item.sub_dt_tm}))];
+      }
+    });
+  }
+
   backPressureEvent = () => {
     this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
       console.log(data);
@@ -382,6 +434,8 @@ export class NumberListComponent implements OnInit, OnDestroy {
           this.bBtnConfirmVisible = true;
           this.bBtnCancelVisible = false;
           this.bBtnSubmitEnable = false;
+          if(data.status == NUM_IMPRT_STAT_COMPLETED || data.status ==NUM_IMPRT_STAT_SUCCESS)
+            this.getNumberList();
         }
       }
     })
@@ -389,25 +443,42 @@ export class NumberListComponent implements OnInit, OnDestroy {
 
   onChangeEntity = (event: any) => {
     this.respOrgIdOptions = [{name: 'All', value: ''}, ...this.respOrgIds.filter(item=>item?.name?.includes(event.value) && Boolean(item?.name))];
-    this.tmplNameOptions = [{name: 'All', value: ''}, ...this.tmplNames.filter(item=>item?.name?.slice(0, 3)==('*'+event.value) && Boolean(item?.name))];
+
+    if(event.value == '') {
+      this.tmplNameOptions = [{name: 'All', value: ''}, ...this.tmplNames.filter(item=>Boolean(item?.name))];
+    } else {
+      this.tmplNameOptions = [{name: 'All', value: ''}, ...this.tmplNames.filter(item=>item?.name?.slice(0, 3)==('*'+event.value) && Boolean(item?.name))];
+    }
+
     this.onClickFilter();
   }
 
   onChangeRespOrgId = (event: any) => {
-    this.tmplNameOptions = [
-      {name: 'All', value: ''}, 
-      ...this.tmplNames.filter(item=>item?.name?.includes(event.value) && Boolean(item?.name))
-    ];
+    if(event.value == '') {
+      if(this.selectEntity=='') {
+        this.tmplNameOptions = [{name: 'All', value: ''}, ...this.tmplNames.filter(item=>Boolean(item?.name))];
+      } else {
+        this.tmplNameOptions = [{name: 'All', value: ''}, ...this.tmplNames.filter(item=>item?.name?.slice(0, 3)=='*' + this.selectEntity && Boolean(item?.name))];
+      }
+    } else {
+      this.tmplNameOptions = [{name: 'All', value: ''}, ...this.tmplNames.filter(item=>item?.name?.slice(0, 3)=='*' + event.value.slice(0, 2) && Boolean(item?.name))];
+    }
 
-    if(this.companyOptions.find(item=>(item.value==event.value) == undefined))
-      this.selectCompany = '';
+    if(event.value=='')
+      this.companyOptions = [{name: 'All', value: ''}, ...this.companies.map(item=>({name: item.name, value: item.resp_org_id}))];
     else
-      this.selectCompany = event.value;
+      this.companyOptions = [{name: 'All', value: ''}, ...this.companies.filter(item=>event.value==item?.resp_org_id && Boolean(item?.resp_org_id)).map(item=>({name: item.name, value: item.resp_org_id}))];
+    
+    setTimeout(()=>{this.selectCompany = event.value;}, 500);
 
     this.onClickFilter();
   }
 
-  onChangeCompany = (event: any) => {
+  onChangeCompany = (event: any) => {    
+    if(event.value=='') {
+      this.companyOptions = [{name: 'All', value: ''}, ...this.companies.map(item=>({name: item.name, value: item.resp_org_id}))];      
+    }
+
     if(this.respOrgIdOptions.find(item=>(item.value==event.value) == undefined))
       this.selectRespOrgId = '';
     else
@@ -472,8 +543,7 @@ export class NumberListComponent implements OnInit, OnDestroy {
       this.bBtnConfirmVisible = false;
       this.bBtnCancelVisible = false;
       this.bBtnSubmitEnable  = true;
-      this.showSuccess("Canceled");
-      
+      this.showSuccess("Canceled");      
     }
   }
 
@@ -487,7 +557,7 @@ export class NumberListComponent implements OnInit, OnDestroy {
   }
 
   onDownload = async () => {
-    await this.api.getNumberList("sub_dt_tm", "asc", 1, this.resultsLength, "", "", "", "", "")
+    await this.api.getNumberList("sub_dt_tm", "asc", 1, this.filterResultLength, this.filterValue, this.selectEntity, this.selectRespOrgId, this.selectTmplName, this.selectStatus, this.inputNumber.replace(/\D/g, ''), this.selectSubDtTm)
       .pipe(tap(async (res: any[]) => {
         let data = res.map(u => ({
           'Entity': u.entity!=null ? u.entity : '',
@@ -517,10 +587,7 @@ export class NumberListComponent implements OnInit, OnDestroy {
             );
           });
         });
-
-
       })).toPromise();
-
   }
 
   closeActivateModal = () => {

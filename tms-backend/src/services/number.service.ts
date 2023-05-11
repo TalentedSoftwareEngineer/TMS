@@ -155,12 +155,16 @@ export class NumberService {
         await this.numbersRepository.deleteById(numObj.id)
         return
       }
+
     } else {
       isNew = true
       numObj = new Numbers()
       numObj.num = num
       numObj.created_at = created_at
       numObj.created_by = created_by
+
+      if (status==null)
+        numObj.status = NUMBER_STATUS.WORKING
     }
 
     numObj.user_id = profile ? profile.user.id : SUPER_ADMIN
@@ -1247,9 +1251,9 @@ export class NumberService {
         failed++
         error_message = this.appendErrorMessage(error_message, mnq_result.message)
       }
-      else
+      // else
         // TODO - do not saved in java version
-        await this.saveNumber(profile, mnq_result.num!, mnq_result.status!, mnq_req.sub_dt_tm!, mnq_result.resp_org_id, undefined, mnq_result.eff_dt, mnq_result.last_act_dt, mnq_result.res_until_dt, mnq_result.disc_until_dt)
+        // await this.saveNumber(profile, mnq_result.num!, mnq_result.status!, mnq_req.sub_dt_tm!, mnq_result.resp_org_id, undefined, mnq_result.eff_dt, mnq_result.last_act_dt, mnq_result.res_until_dt, mnq_result.disc_until_dt)
 
       mnq_result.updated_at = new Date().toISOString()
       await this.mnqResultRepository.create(mnq_result)
@@ -2199,7 +2203,7 @@ export class NumberService {
         error_message = this.appendErrorMessage(error_message, mro_result.message)
         console.log("MRO Result", failed, error_message)
       } else {
-        await this.saveNumber(profile, mro_result.num!, undefined, mro_req.sub_dt_tm, newRespOrgId)
+        // await this.saveNumber(profile, mro_result.num!, undefined, mro_req.sub_dt_tm, newRespOrgId)
       }
 
       mro_result.updated_at = new Date().toISOString()
@@ -2655,8 +2659,14 @@ export class NumberService {
     for (const item of result) {
       let mcp_result = new McpResult()
       mcp_result.req_id = mcp_req.id
-      mcp_result.num = item.num
-      if (response.effDtTm!=null)
+      if (item.num!=null)
+        mcp_result.num = item.num
+      else if (item.tfNum!=null)
+        mcp_result.num = item.tfNum
+
+      if (item.effDtTm!=null)
+        mcp_result.eff_dt_tm = item.effDtTm
+      else if (response.effDtTm!=null)
         mcp_result.eff_dt_tm = response.effDtTm
 
       if (item.errList!=null || item.failReason!=null) {
@@ -2680,7 +2690,7 @@ export class NumberService {
 
         // update number with new resp org and template name
         if (mcp_req.start_eff_dt_tm=="NOW")
-          this.saveNumber(profile, mcp_result.num!, NUMBER_STATUS.WORKING, mcp_req.sub_dt_tm!, newRespOrgId, mcp_req.template_name, mcp_result.eff_dt_tm)
+          this.saveNumber(profile, mcp_result.num!, undefined, mcp_req.sub_dt_tm!, newRespOrgId, mcp_req.template_name, mcp_result.eff_dt_tm)
         // } else {
         //   this.saveNumber(profile, mcp_result.num!, NUMBER_STATUS.WORKING, mcp_req.sub_dt_tm!)
         // }
@@ -2708,7 +2718,7 @@ export class NumberService {
       mcp_result.status = PROGRESSING_STATUS.COMPLETED
 
       if (mcp_req.start_eff_dt_tm=="NOW")
-        this.saveNumber(profile, mcp_result.num!, NUMBER_STATUS.WORKING, mcp_req.sub_dt_tm!, undefined, mcp_req.template_name, mcp_result.eff_dt_tm)
+        this.saveNumber(profile, mcp_result.num!, undefined, mcp_req.sub_dt_tm!, undefined, mcp_req.template_name, mcp_result.eff_dt_tm)
 
       mcp_result.updated_at = new Date().toISOString()
       await this.mcpResultRepository.create(mcp_result)

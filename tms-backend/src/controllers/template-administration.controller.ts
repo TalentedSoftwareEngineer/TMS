@@ -100,7 +100,7 @@ export class TemplateAdministrationController {
     const template = await this.templateRepository.findOne({where: {name: templateName}})
     result.map(item => item.saved = template ? true : false)
 
-    return result;
+    return { result, recVersionId: response.recVersionId };
   }
 
   @post('/templates/save')
@@ -412,7 +412,7 @@ export class TemplateAdministrationController {
           req: TemplateRequest, @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
   ): Promise<any> {
     const profile = JSON.parse(currentUserProfile[securityId]);
-    if (!profile.permissions.includes(PERMISSIONS.TEMPLATE_ADMIN_DATA))
+    if (!profile.permissions.includes(PERMISSIONS.TEMPLATE_ADMIN_DATA) && !profile.permissions.includes(PERMISSIONS.TEMPLATE_RECORD_LIST))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
     if (req.ro=="" || req.body=="")

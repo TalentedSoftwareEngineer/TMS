@@ -18,6 +18,7 @@ import {MroReq} from "../models/mro-req.model";
 import {PAGES} from "../constants/pages";
 import {NSR_SUBMIT_TYPE} from "../constants/number_adminstration";
 import {RSMQ_CONFIG, RSMQ_QUEUE} from "../config";
+import DataUtils from "../utils/data";
 
 @injectable({scope: BindingScope.TRANSIENT})
 export class MessageQueueService {

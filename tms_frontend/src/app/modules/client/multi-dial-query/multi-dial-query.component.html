@@ -223,67 +223,67 @@
 
             <ng-template pTemplate="header">
                 <tr>
-                    <th pSortableColumn="num" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="num" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Number
                             <p-sortIcon field="num"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="resp_org_id" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="resp_org_id" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Resp Org
                             <p-sortIcon field="resp_org_id"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="status" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="status" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Status
                             <p-sortIcon field="status"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="eff_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="eff_dt" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Effective Date
                             <p-sortIcon field="eff_dt"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="last_act_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="last_act_dt" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Last Active
                             <p-sortIcon field="last_act_dt"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="res_until_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="res_until_dt" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Reserved Until
                             <p-sortIcon field="res_until_dt"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="disc_until_dt" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="disc_until_dt" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Disconnect Until
                             <p-sortIcon field="disc_until_dt"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="con_name" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="con_name" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Contact Person
                             <p-sortIcon field="con_name"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="con_phone" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="con_phone" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Contact Number
                             <p-sortIcon field="con_phone"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="message" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="message" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Message
                             <p-sortIcon field="message"></p-sortIcon>
                       </div>
                     </th>
-                    <th pSortableColumn="short_notes" style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <th pSortableColumn="short_notes" style="flex: 3;" class="flex justify-content-center align-items-center">
                       <div>
                             Notes
                             <p-sortIcon field="short_notes"></p-sortIcon>
@@ -294,47 +294,47 @@
 
             <ng-template pTemplate="body" let-number>
                 <tr>
-                  <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                  <td style="flex: 3;" class="flex justify-content-center align-items-center">
                     <!-- <span class="p-column-title">Number</span> -->
                         {{number.num | phoneFormat}}
                     </td>
-                  <td class="flex justify-content-center align-items-center" style="width: 200px;">
+                  <td class="flex justify-content-center align-items-center" style="flex: 3;">
                     <!-- <span class="p-column-title">Resp Org</span> -->
                         {{number.resp_org_id}}
                     </td>
-                  <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                  <td style="flex: 3;" class="flex justify-content-center align-items-center">
                     <!-- <span class="p-column-title">Status</span> -->
                     {{number.status}}
                   </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Effective Date</span> -->
                         {{number.eff_dt}}
                     </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Last Active</span> -->
                         {{number.last_act_dt}}
                     </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Reserved Until</span> -->
                         {{number.res_until_dt}}
                     </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Disconnect Until</span> -->
                         {{number.disc_until_dt}}
                     </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Contact Person</span> -->
                         {{number.con_name}}
                     </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Contact Number</span> -->
                         {{number.con_phone}}
                     </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Message</span> -->
                         {{number.message}}
                     </td>
-                    <td style="width: 200px;" class="flex justify-content-center align-items-center">
+                    <td style="flex: 3;" class="flex justify-content-center align-items-center">
                         <!-- <span class="p-column-title">Notes</span> -->
                         {{number.short_notes}}
                     </td>

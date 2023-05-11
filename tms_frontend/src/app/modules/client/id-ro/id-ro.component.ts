@@ -56,6 +56,8 @@ export class IdRoComponent implements OnInit {
 
   write_permission: boolean = false;
 
+  allUsers: any[] = []
+
   constructor(
     public router: Router,
     public api: ApiService,
@@ -94,8 +96,16 @@ export class IdRoComponent implements OnInit {
     else
       this.write_permission = true;
 
+    await this.getAllUsers();
     this.getIdRosList();
     this.getTotalIdRosCount();
+  }
+
+  getAllUsers = async () => {
+    await this.api.getUsersListForFilter()
+    .pipe(tap(async (res: IUser[]) => {
+      this.allUsers = res;
+    })).toPromise();
   }
 
   getIdRosList = async () => {
@@ -108,10 +118,17 @@ export class IdRoComponent implements OnInit {
         .pipe(tap(async (id_rosRes: IUser[]) => {
           this.id_ros = [];
           id_rosRes.map(u => {
-            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.created_by = u.created_by ? this.getAuditionedUsername(u.created_by, username=>u.created_by=username) : '';
-            u.updated_by = u.updated_by ? this.getAuditionedUsername(u.updated_by, username=>u.updated_by=username) : '';
+            if(Boolean(this.store.getUser()?.timezone)) {
+              // Timezone Time
+              u.created_at = u.created_at ? moment(u.created_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+              u.updated_at = u.updated_at ? moment(u.updated_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            } else {
+              // Local time
+              u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+              u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            }
+            u.created_by = u.created_by ? this.allUsers.find((item: any) => item.id==u.created_by)?.username : '';
+            u.updated_by = u.updated_by ? this.allUsers.find((item: any) => item.id==u.updated_by)?.username  : '';
           });
 
           let allNotEditable = true

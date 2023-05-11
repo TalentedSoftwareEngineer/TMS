@@ -223,8 +223,118 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
       return
     }
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
-      this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(async(data): Promise<any> => {
+      if(data.page == 'PAD' && data.user_id == this.store.getUser().id) {
+        this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
+        if(data.completed) {
+          if(data.success) {
+            this.showSuccess(data.message);
+            switch(data.operation) {
+              case 'DELETE':
+                // this.showSuccess(PAD_DELETE_SUCCESSFUL);
+                // this.inputMessage = ''
+        
+                // let effDtTmListSize = this.effDtTmStatList.length
+        
+                if (this.effDtTmStatList.length == 1) { // only one record, goes to initial state of page
+                  this.cancelAction()
+                } else { // if next record exists, shows next record, else shows previous record
+        
+                  this.clearAllData()
+        
+                  // gets index
+                  let index = this.effDtTmStatList.indexOf(this.selectEffDtTmStat)
+        
+                  let effDtTmStatList = [...this.effDtTmStatList]
+                  effDtTmStatList.splice(index, 1)
+                  effDtTmStatList.splice(0, 0, "SELECT")
+        
+                  this.effDtTmStatList = effDtTmStatList
+                  this.selectEffDtTmStat = "SELECT";
+                  this.bEditEnable = false;
+                  this.bCopyEnable = false;
+                  this.bTransferEnable = false;
+                  this.bDeleteEnable = false;
+                  this.bSubmitEnable = false;
+                  this.bSaveEnable = false;
+                  this.bRevertEnable = false;
+                  this.bCancelEnable = true;
+                }
+                break;
+              case 'TRANSFER':
+                if (data.result.recVersionId !== undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+          
+                if (await this.retrievePointerRecord(data.body.num, data.result.effDtTm)) {
+                  // this.showSuccess(PAD_TRANSFER_SUCCESSFUL);
+                  // this.inputMessage = PAD_TRANSFER_SUCCESSFUL
+                  this.action = this.gConst.ACTION_NONE
+                }                
+                break;
+              case 'COPY':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+          
+                if (await this.retrievePointerRecord(data.body.tgtNum, data.result.effDtTm)) {
+                  // this.showSuccess(PAD_COPY_SUCCESSFUL)
+                  // this.inputMessage = PAD_COPY_SUCCESSFUL
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'CREATE':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+          
+                if (await this.retrievePointerRecord(data.body.num, data.result.effDtTm)) {
+                  // this.showSuccess(PAD_CREATE_SUCCESSFUL)
+                  // this.inputMessage = ''
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'CONVERT':
+                if (data.result.effDtTm) {
+                  this.gotoCADPage(this.inputSrcNum, data.result.effDtTm)          
+                } else if (data.result.reqId) {
+                  let params = {reqId: data.result.reqId, ro: this.store.getCurrentRo()}
+                  await this.api.resultOfConvertedPtrRec(params).pipe(tap(resResult => {
+                    if (resResult) {
+                      this.gotoCADPage(this.inputSrcNum, resResult.effDtTm)
+                    }
+                  })).toPromise();
+                }
+                break;
+              case 'DISCONNECT':
+                if (data.result.recVersionId !== undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId;
+                }
+          
+                if (await this.retrievePointerRecord(data.body.num, data.result.effDtTm)) {
+                  // this.showSuccess(PAD_DISCONNECT_SUCCESSFUL);
+                  // this.inputMessage = PAD_DISCONNECT_SUCCESSFUL
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'UPDATE':
+                if (data.result.recVersionId !== undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+          
+                if (await this.retrievePointerRecord(data.body.num, data.body.effDtTm)) {
+                  // this.showSuccess(PAD_UPDATE_SUCCESSFUL);
+                  // this.inputMessage = PAD_UPDATE_SUCCESSFUL
+                }
+                break;
+              default:
+                break;
+            }
+          } else {
+            this.showError(data.message, 'Error');
+          }
+        }
+      }
     })
 
     this.initialDataLoading();
@@ -241,7 +351,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     let effDtTm = cookies.get("ptrEffDtTm");
     let action = cookies.get("action");
 
-    if (action) {
+    if (action && Boolean(num)) {
       switch (action) {
         case this.gConst.RECORD_PAGE_ACTION_RETRIEVE:
           if (effDtTm) {
@@ -255,7 +365,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
           }
 
           if (await this.retrievePointerRecord(num, effDtTm, true)) {
-            this.inputMessage = PAD_RETRIEVE_SUCCESSFUL
+            this.inputMessage = PAD_RETRIEVE_SUCCESSFUL;
           }
           break;
         case this.gConst.RECORD_PAGE_ACTION_CREATE:
@@ -409,10 +519,13 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
       let dtTmStat = dtTmString + " CT " + edt.custRecStat.replace("_", " ") + " " + edt.custRecCompPart.substring(0, 3)
       dtTmStatList.push(dtTmStat)
 
-      if (effDtTm === edt.effDtTm) {
-        nEffIndex = i;
-      }
+      // if (effDtTm === edt.effDtTm) {
+      //   nEffIndex = i;
+      // }
     }
+
+    nEffIndex = this.getEffDtTmStatusOptions(this.effDtTmStatList).findIndex(item=>item.value.includes(this.selectEffDtTmStat));
+    nEffIndex = nEffIndex == -1 ? 0 : nEffIndex
 
     // if the record was activated by CAD, go to the PAD page
     if (lstEffDtTms[nEffIndex].custRecCompPart.includes("CAD")) {
@@ -493,7 +606,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     this.recVersionId = data.recVersionId;
 
     // check if the user has permission for the customer record
-    if (data.errList != null && data.errList.length) {
+    if (Boolean(data.errList) && data.errList?.length) {
 
       let errList = data.errList
       let errMsg = gFunc.synthesisErrMsg(errList)
@@ -524,7 +637,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
 
     // if current date is before than the the date of selected template record
     let ctEffDtTmStr = this.getCurEffDtTm()
-    let localEffDtTm = gFunc.fromCTStrToLocalTime(ctEffDtTmStr)
+    let localEffDtTm = gFunc.fromCTStrToLocalTime(ctEffDtTmStr);
     let curTime = new Date()
 
     if (localEffDtTm >= curTime) {
@@ -657,10 +770,12 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
           this.bSaveEnable = true;
           return
         }
-      }
 
-      if (res && res.updateStatus && res.updateStatus.statusMessages !== null) {
-        this.inputMessage = gFunc.synthesisErrMsg(res.updateStatus.statusMessages)
+        if (res.errList) {
+          this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+        } else if (res.updateStatus && res.updateStatus.statusMessages !== null) {
+          this.showError(gFunc.synthesisErrMsg(res.updateStatus.statusMessages), 'Error');
+        }
       }
     })
   }
@@ -757,6 +872,14 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
 
         return
       }
+
+      if (res.errList) {
+        this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+      } else if (res.copyStatus && res.copyStatus.statusMessages !== null) {
+        this.showError(gFunc.synthesisErrMsg(res.copyStatus.statusMessages), 'Error');
+      } else if (res.disconnectStatus && res.disconnectStatus.statusMessages !== null) {
+        this.showError(gFunc.synthesisErrMsg(res.disconnectStatus.statusMessages), 'Error');
+      }
     }
   }
 
@@ -834,53 +957,26 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     let params = { num: this.num, effDtTm: utcEffDtTm, recVersionId: this.recVersionId, ro: this.store.getCurrentRo()}
     this.api.deletePtrRec(params).subscribe(res => {
       if (res) {
-        this.showSuccess(PAD_DELETE_SUCCESSFUL);
-        this.inputMessage = ''
 
-        let effDtTmListSize = this.effDtTmStatList.length
-
-        if (this.effDtTmStatList.length == 1) { // only one record, goes to initial state of page
-          this.cancelAction()
-        } else { // if next record exists, shows next record, else shows previous record
-
-          this.clearAllData()
-
-          // gets index
-          let index = this.effDtTmStatList.indexOf(this.selectEffDtTmStat)
-
-          let effDtTmStatList = [...this.effDtTmStatList]
-          effDtTmStatList.splice(index, 1)
-          effDtTmStatList.splice(0, 0, "SELECT")
-
-          this.effDtTmStatList = effDtTmStatList
-          this.selectEffDtTmStat = "SELECT";
-          this.bEditEnable = false;
-          this.bCopyEnable = false;
-          this.bTransferEnable = false;
-          this.bDeleteEnable = false;
-          this.bSubmitEnable = false;
-          this.bSaveEnable = false;
-          this.bRevertEnable = false;
-          this.bCancelEnable = true;
-        }
       }
     })
   }
 
   cancelAction = async () => {
-    await this.unlockPointerRecord()
+    this.unlockPointerRecord()
     this.inputSearchNum = '';
     // this.inputSearchEffDtTm = null
     // this.bExpRetrieve = true;
     // this.bExpResult = false;
 
     this.inputSearchEffDtTm = '';
-    this.bRetrieveEnable = true;
+    this.bRetrieveEnable = false;
     this.bExpRetrieve = true;
     this.bExpResult = false;
     this.bEffDtTmListHidden = true;
     this.selectEffDtTmStat = '';
-    this.resultCardTitle = 'Result'
+    this.resultCardTitle = 'Result';
+    this.retrieveCardTitle = 'Retrieve';
   };
 
   unlockPointerRecord = () => {
@@ -902,7 +998,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
           body.effDtTm = lockParam.srcEffDtTm
           break
       }
-      console.log("body: " + JSON.stringify(body))
+      // console.log("body: " + JSON.stringify(body))
 
       this.api.unlockPtrRec({'body': JSON.stringify(body), ro: this.store.getCurrentRo()}).subscribe((res: any) => { })
     }
@@ -984,20 +1080,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     });
 
     if (res) {
-      if (res.effDtTm) {
-        this.gotoCADPage(this.inputSrcNum, res.effDtTm)
-        return
 
-      } else if (res.reqId) {
-        let params = {reqId: res.reqId, ro: this.store.getCurrentRo()}
-        await this.api.resultOfConvertedPtrRec(params).pipe(tap(resResult => {
-          if (resResult) {
-            this.gotoCADPage(this.inputSrcNum, resResult.effDtTm)
-            return
-          }
-          return
-        })).toPromise();
-      }
     }
   }
 
@@ -1210,15 +1293,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     });
     
     if (res) {
-      let data = res
-      if (data.recVersionId !== undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId
-      }
 
-      if (await this.retrievePointerRecord(body.num, body.effDtTm)) {
-        this.showSuccess(PAD_UPDATE_SUCCESSFUL);
-        this.inputMessage = PAD_UPDATE_SUCCESSFUL
-      }
     } else {
       return false;
     }
@@ -1242,16 +1317,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     });
     
     if (res) {
-      let data = res
-      if (data.recVersionId != undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId
-      }
 
-      if (await this.retrievePointerRecord(body.num, data.effDtTm)) {
-        this.showSuccess(PAD_CREATE_SUCCESSFUL)
-        this.inputMessage = ''
-        this.action = this.gConst.ACTION_NONE
-      }
     } else {
       return false
     }
@@ -1271,16 +1337,7 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     });
     
     if (res) {
-      let data = res
-      if (data.recVersionId != undefined && data.recVersionId != null) {
-        recVersionId: data.recVersionId
-      }
 
-      if (await this.retrievePointerRecord(body.tgtNum, res.effDtTm)) {
-        this.showSuccess(PAD_COPY_SUCCESSFUL)
-        this.inputMessage = PAD_COPY_SUCCESSFUL
-        this.action = this.gConst.ACTION_NONE
-      }
     } else if (res != undefined) {
       return false
     }
@@ -1299,17 +1356,6 @@ export class PointerAdminDataComponent implements OnInit, OnDestroy {
     });
     
     if (res) {
-      let data = res
-      if (data.recVersionId !== undefined && data.recVersionId != null) {
-        this.recVersionId = data.recVersionId;
-      }
-
-      if (await this.retrievePointerRecord(body.num, res.effDtTm)) {
-        this.showSuccess(PAD_DISCONNECT_SUCCESSFUL);
-        this.inputMessage = PAD_DISCONNECT_SUCCESSFUL
-        this.action = this.gConst.ACTION_NONE
-      }
-
     } else {
       return false
     }

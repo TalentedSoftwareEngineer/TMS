@@ -479,9 +479,38 @@ export class AutoReserveNumbersComponent implements OnInit, OnDestroy {
     await this.api.getNarData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
         res.map(u => {
-          u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : ''
-          u.start_at = u.start_at ? moment(new Date(u.start_at)).format('MM/DD/YYYY h:mm:ss A') : ''
-          u.end_at = u.end_at ? moment(new Date(u.end_at)).format('MM/DD/YYYY h:mm:ss A') : ''
+          // switch(this.store.getUser()?.timezone) {
+          //   case -5:
+          //     // EST/EDT time
+          //     u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).utc().tz('America/New_York').format('MM/DD/YYYY h:mm:ss A') : '';
+          //     u.start_at = u.start_at ? moment(new Date(u.start_at)).utc().tz('America/New_York').format('MM/DD/YYYY h:mm:ss A') : '';
+          //     u.end_at = u.end_at ? moment(new Date(u.end_at)).utc().tz('America/New_York').format('MM/DD/YYYY h:mm:ss A') : '';
+          //     break;
+          //   case -6:
+          //     // CST/CDT time
+          //     u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).utc().tz('America/Chicago').format('MM/DD/YYYY h:mm:ss A') : '';
+          //     u.start_at = u.start_at ? moment(new Date(u.start_at)).utc().tz('America/Chicago').format('MM/DD/YYYY h:mm:ss A') : '';
+          //     u.end_at = u.end_at ? moment(new Date(u.end_at)).utc().tz('America/Chicago').format('MM/DD/YYYY h:mm:ss A') : '';
+          //     break;
+          //   default:
+          //     // Local time
+          //     u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+          //     u.start_at = u.start_at ? moment(new Date(u.start_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+          //     u.end_at = u.end_at ? moment(new Date(u.end_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+          //     break;
+          // }
+
+          if(Boolean(this.store.getUser()?.timezone)) {
+            // Timezone Time
+            u.sub_dt_tm = u.sub_dt_tm ? moment(u.sub_dt_tm).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.start_at = u.start_at ? moment(u.start_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.end_at = u.end_at ? moment(u.end_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+          } else {
+            // Local time
+            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.start_at = u.start_at ? moment(new Date(u.start_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            u.end_at = u.end_at ? moment(new Date(u.end_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+          }
         });
         this.activityLogs = res;
       })).toPromise();

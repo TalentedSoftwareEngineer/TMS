@@ -105,18 +105,21 @@ export default class DataUtils {
         return filter;
     }
 
-    static getWhere(value?: string, fields?: string[], num_fields?: string, custom?: any[]) {
+    static getWhere(value?: string, fields?: string[], num_fields?: string, custom?: any[], conditions?: any) {
         if (value==null || value.trim()=="" ) {
+            const where: any = { and : [] }
+
             if (custom!=null && custom.length>0) {
-                const where: any = { and : [] }
                 custom.forEach(function(item: any) {
                     where.and.push(item)
                 })
-
-                return where;
             }
 
-            return {};
+            if (conditions!=null && conditions.length>0) {
+                where.and.push(conditions)
+            }
+
+            return where;
         }
 
         let where: any = { and: [ {} ] };
@@ -146,19 +149,22 @@ export default class DataUtils {
                 where.and.push(item)
             })
 
+        if (conditions!=null && conditions.length>0)
+            where.and.push(conditions)
+
         return where
     }
 
-    static getFilter(limit: number, skip: number, order: string, value?: string, fields?: string[], num_fields?: string, custom?: any[], include?: any[]) {
+    static getFilter(limit: number, skip: number, order: string, value?: string, fields?: string[], num_fields?: string, custom?: any[], include?: any[], conditions?: any) {
         let filter: any = { }
         if (limit)
             filter.limit = limit
         if (skip)
             filter.skip = skip
         if (order && order!="")
-            filter.order = [ order ]
+            filter.order = order
 
-        if (value==null  || value.trim()=="" ) {
+        if (value==null  || value.trim()=="") {
             if (include!=null && include.length>0) {
                 filter.include = []
                 include.forEach(item => {
@@ -166,11 +172,15 @@ export default class DataUtils {
                 })
             }
 
+            filter.where = { and : [] }
             if (custom!=null && custom.length>0) {
-                filter.where = { and : [] }
                 custom.forEach(function(item: any) {
                     filter.where.and.push(item)
                 })
+            }
+
+            if (conditions!=null && conditions.length>0) {
+                filter.where.and.push(conditions)
             }
 
             return filter;
@@ -202,6 +212,9 @@ export default class DataUtils {
             custom.forEach(function(item: any) {
                 where.and.push(item)
             })
+
+        if (conditions!=null && conditions.length>0)
+            where.and.push(conditions)
 
         filter.where = where
 

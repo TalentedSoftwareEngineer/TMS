@@ -98,34 +98,23 @@ export class PointerRecordService {
 
     private async saveNumber(profile: AuthorizedUserProfile, num: string, status?: string, sub_dt_tm?: string, resp_org?: string,
                              template_name?: string, eff_dt_tm?: string, last_act_dt?: string, res_until_dt?: string, disc_until_dt?: string) {
-        let created_by = profile.user.id
-        let created_at = new Date().toISOString()
-
+        let isNew = false
         let numObj: any = await this.numbersRepository.findOne({where: {num: num}})
         if (numObj) {
-            if (numObj.status != null && status == null) {
-                status = numObj.status
+            if (status!=null && status==NUMBER_STATUS.SPARE) {
+                await this.numbersRepository.deleteById(numObj.id)
+                return
             }
+        } else {
+            isNew = true
 
-            if (numObj.sub_dt_tm != null && sub_dt_tm == null) {
-                sub_dt_tm = numObj.sub_dt_tm
-            }
+            numObj = new Numbers()
+            numObj.num = num
 
-            if (numObj.resp_org != null && resp_org == null) {
-                resp_org = numObj.resp_org
-            }
-
-            if (numObj.template_name != null && template_name == null) {
-                template_name = numObj.template_name
-            }
-
-            created_by = numObj.created_by
-            created_at = numObj.created_at
-            await this.numbersRepository.deleteById(numObj.id)
+            numObj.created_at = profile.user.id
+            numObj.created_by = new Date().toISOString()
         }
 
-        numObj = new Numbers()
-        numObj.num = num
         numObj.user_id = profile.user.id
 
         if (resp_org != null) {
@@ -151,12 +140,10 @@ export class PointerRecordService {
         if (status != null)
             numObj.status = status
 
-        numObj.created_at = created_at
-        numObj.created_by = created_by
         numObj.updated_at = new Date().toISOString()
         numObj.updated_by = profile.user.id!
 
-        await this.numbersRepository.create(numObj)
+        isNew ? await this.numbersRepository.create(numObj) : await this.numbersRepository.save(numObj)
     }
 
     async retrieve(ro: string, num: string, effDtTm: string, profile: AuthorizedUserProfile, isAct: boolean) {
@@ -305,7 +292,9 @@ export class PointerRecordService {
         notify.completed = false
         notify.title = "Pointer Record: <b>" + body.tgtNum + "</b> COPY --> "
         notify.message = "IN PROGRESS ....."
+        notify.body = body
         this.messageQueueService.pushPAD(notify)
+        await DataUtils.sleep(50)
 
         let response = await this.tfnRegistryApiService.copyPointerRecord(ro, body, profile)
         if (response == null) {
@@ -346,6 +335,7 @@ export class PointerRecordService {
             notify.completed = true
             notify.message = message
             this.messageQueueService.pushPAD(notify)
+            await DataUtils.sleep(50)
 
             // throw new HttpErrors.BadRequest(message)
             return null
@@ -356,6 +346,7 @@ export class PointerRecordService {
             body.srcNum, body.srcEffDtTm)
 
         notify.completed = true
+        notify.success = true
         notify.message = body.cmd == ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
         notify.result = response
         this.messageQueueService.pushCAD(notify)
@@ -375,7 +366,9 @@ export class PointerRecordService {
         notify.completed = false
         notify.title = "Pointer Record : <b>" + body.num + "</b> TRANSFER --> "
         notify.message = "IN PROGRESS ....."
+        notify.body = body
         this.messageQueueService.pushPAD(notify)
+        await DataUtils.sleep(50)
 
         let response = await this.tfnRegistryApiService.transferPointerRecord(ro, body, profile)
         if (response == null) {
@@ -421,6 +414,7 @@ export class PointerRecordService {
             notify.completed = true
             notify.message = message
             this.messageQueueService.pushCAD(notify)
+            await DataUtils.sleep(50)
 
             // throw new HttpErrors.BadRequest(message)
             return null
@@ -431,6 +425,7 @@ export class PointerRecordService {
             undefined, body.srcEffDtTm)
 
         notify.completed = true
+        notify.success = true
         notify.message = body.cmd == ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
         notify.result = response
 
@@ -451,7 +446,9 @@ export class PointerRecordService {
         notify.completed = false
         notify.title = "Pointer Record: <b>" + body.num + "</b> DISCONNECT --> "
         notify.message = "IN PROGRESS ....."
+        notify.body = body
         this.messageQueueService.pushPAD(notify)
+        await DataUtils.sleep(50)
 
         let response = await this.tfnRegistryApiService.disconnectPointerRecord(ro, body, profile)
         if (response == null) {
@@ -490,6 +487,7 @@ export class PointerRecordService {
             notify.completed = true
             notify.message = message
             this.messageQueueService.pushPAD(notify)
+            await DataUtils.sleep(50)
 
             // throw new HttpErrors.BadRequest(message)
             return null
@@ -500,6 +498,7 @@ export class PointerRecordService {
             undefined, body.srcEffDtTm)
 
         notify.completed = true
+        notify.success = true
         notify.result = response
         notify.message = body.cmd == ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
         this.messageQueueService.pushPAD(notify)
@@ -519,7 +518,9 @@ export class PointerRecordService {
         notify.completed = false
         notify.title = "Pointer Record: <b>" + body.num + "</b> CREATE --> "
         notify.message = "IN PROGRESS ....."
+        notify.body = body
         this.messageQueueService.pushPAD(notify)
+        await DataUtils.sleep(50)
 
         let response = await this.tfnRegistryApiService.createPointerRecord(ro, body, profile)
         if (response == null) {
@@ -558,6 +559,7 @@ export class PointerRecordService {
             notify.completed = true
             notify.message = message
             this.messageQueueService.pushPAD(notify)
+            await DataUtils.sleep(50)
 
             // throw new HttpErrors.BadRequest(message)
             return null
@@ -570,6 +572,7 @@ export class PointerRecordService {
         this.saveNumber(profile, body.num, NUMBER_STATUS.ASSIGNED, sub_dt_tm, body.newRespOrgId, body.tmplName, response.effDtTm)
 
         notify.completed = true
+        notify.success = true
         notify.result = response
         notify.message = body.cmd == ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -590,6 +593,7 @@ export class PointerRecordService {
         notify.completed = false
         notify.title = "Pointer Record: <b>" + body.num + "</b> UPDATE --> "
         notify.message = "IN PROGRESS ....."
+        notify.body = body
         this.messageQueueService.pushPAD(notify)
 
         let response = await this.tfnRegistryApiService.updatePointerRecord(ro, body, profile)
@@ -629,6 +633,7 @@ export class PointerRecordService {
             notify.completed = true
             notify.message = message
             this.messageQueueService.pushPAD(notify)
+            await DataUtils.sleep(50)
 
             // throw new HttpErrors.BadRequest(message)
             return null
@@ -638,6 +643,7 @@ export class PointerRecordService {
             undefined, message, body.effDtTm, body.tmplName, undefined)
 
         notify.completed = true
+        notify.success = true
         notify.result = response
         notify.message = body.cmd == ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -659,6 +665,7 @@ export class PointerRecordService {
         notify.title = "Pointer Record: <b>" + num + "</b> DELETE --> "
         notify.message = "IN PROGRESS ....."
         this.messageQueueService.pushPAD(notify)
+        await DataUtils.sleep(50)
 
         let response = await this.tfnRegistryApiService.deletePointerRecord(ro, num, effDtTm, recVersionId, profile)
         if (response == null) {
@@ -697,6 +704,7 @@ export class PointerRecordService {
             notify.completed = true
             notify.message = message
             this.messageQueueService.pushPAD(notify)
+            await DataUtils.sleep(50)
 
             // throw new HttpErrors.BadRequest(message)
             return null
@@ -706,6 +714,7 @@ export class PointerRecordService {
             "", message, effDtTm, undefined, undefined)
 
         notify.completed = true
+        notify.success = true
         notify.message = "Deleted successfully."
         notify.result = response
         this.messageQueueService.pushPAD(notify)
@@ -725,7 +734,9 @@ export class PointerRecordService {
         notify.completed = false
         notify.title = "Pointer Record: <b>" + body.num + "</b> CONVERT --> "
         notify.message = "IN PROGRESS ....."
+        notify.body = body
         this.messageQueueService.pushPAD(notify)
+        await DataUtils.sleep(50)
 
         let response = await this.tfnRegistryApiService.convertPointerRecordToCustomerRecord(ro, body, profile)
         if (response == null) {
@@ -773,6 +784,7 @@ export class PointerRecordService {
             notify.completed = true
             notify.message = message
             this.messageQueueService.pushPAD(notify)
+            await DataUtils.sleep(50)
 
             // throw new HttpErrors.BadRequest(message)
             return null
@@ -783,6 +795,7 @@ export class PointerRecordService {
             undefined, body.srcEffDtTm)
 
         notify.completed = true
+        notify.success = true
         notify.result = response
         notify.message = body.cmd == ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 

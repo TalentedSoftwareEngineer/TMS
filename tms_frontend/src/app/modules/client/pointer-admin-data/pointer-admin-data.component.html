@@ -33,27 +33,24 @@
 </p-panel>
 
 <p-panel [header]="resultCardTitle" styleClass="mt-5" [toggleable]="true" [collapsed]="!bExpResult" iconPos="left" expandIcon="pi pi-chevron-up" collapseIcon="pi pi-chevron-down">
-    <div class="pt-2">
-        <ng-template pTemplate="icons">
-            <span style="flex: 1;">
-                <p-dropdown 
-                    *ngIf="!bEffDtTmListHidden"
-                    [options]="getEffDtTmStatusOptions(effDtTmStatList)" 
-                    [(ngModel)]="selectEffDtTmStat" 
-                    id="effDtTmStat" 
-                    name="effDtTmStat" 
-                    optionLabel="name" 
-                    optionValue="value"
-                    [showClear]="true" 
-                    scrollHeight="150px" 
-                    [filter]="true" 
-                    filterBy="name"
-                    [disabled]="bEffDtTmDisable"
-                    (onChange)="onEffDtTmSelChange()"
-                ></p-dropdown>
-            </span>
-        </ng-template>
+    <ng-template pTemplate="icons">
+        <span style="flex: 1;">
+            <p-dropdown 
+                *ngIf="!bEffDtTmListHidden"
+                [options]="getEffDtTmStatusOptions(effDtTmStatList)" 
+                [(ngModel)]="selectEffDtTmStat" 
+                id="effDtTmStat" 
+                name="effDtTmStat" 
+                optionLabel="name" 
+                optionValue="value"
+                scrollHeight="150px" 
+                [disabled]="bEffDtTmDisable"
+                (onChange)="onEffDtTmSelChange()"
+            ></p-dropdown>
+        </span>
+    </ng-template>
 
+    <div class="pt-2">
         <!-- This is the row that includes the effective date time, now -->
         <div *ngIf="action == gConst.ACTION_CREATE" class="grid">
             <div class="lg:col-6 col-12 p-fluid">

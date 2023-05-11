@@ -51,7 +51,7 @@
                     scrollHeight="150px"
                     [filter]="true"
                     filterBy="name"
-                    [disabled]="bEffDtTmDisable"
+                    [readonly]="bEffDtTmDisable"
                     (onChange)="onEffDtTmSelChange()"
                 ></p-dropdown>
             </span>
@@ -73,7 +73,7 @@
                             <div class="grid">
                                 <div class="lg:col-4 col-12 p-fluid field">
                                     <span class="p-float-label">
-                                        <input type="text" [(ngModel)]="inputRespOrg" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
+                                        <input type="text" [(ngModel)]="inputRespOrg" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [readonly]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
                                         <label for="respOrg">Resp Org</label>
                                     </span>
                                 </div>
@@ -123,7 +123,7 @@
                             <div class="grid">
                                 <div class="lg:col-4 col-12 p-fluid field">
                                     <span class="p-float-label">
-                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [disabled]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
+                                        <input type="text" id="respOrg" name="respOrg" pInputText (input)="handleOnCR()" [(ngModel)]="inputRespOrg" [readonly]="!(action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW)">
                                         <label for="respOrg">Resp Org</label>
                                     </span>
                                 </div>
@@ -134,7 +134,7 @@
                                             name="priority"
                                             [(ngModel)]="inputPriority"
                                             (onChange)="handleOnCR()"
-                                            [disabled]="disable"
+                                            [readonly]="disable"
                                         ></p-inputSwitch>
                                         High Priority
                                     </label>
@@ -146,7 +146,7 @@
                                             name="dscInd"
                                             [(ngModel)]="inputDscInd"
                                             (onChange)="onChangeCheckboxDscInd()"
-                                            [disabled]="disable || action === gConst.ACTION_DISCONNECT || copyAction === gConst.COPYACTION_NEW"
+                                            [readonly]="disable || action === gConst.ACTION_DISCONNECT || copyAction === gConst.COPYACTION_NEW"
                                         ></p-inputSwitch>
                                         Disconnect
                                     </label>
@@ -158,25 +158,25 @@
                         <div *ngIf="!(action === gConst.ACTION_CREATE || (action === gConst.ACTION_COPY && copyAction === gConst.COPYACTION_NEW))" class="grid">
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="lastUpDt" name="lastUpDt" pInputText [(ngModel)]="inputLastUpDt" disabled>
+                                    <input type="text" id="lastUpDt" name="lastUpDt" pInputText [(ngModel)]="inputLastUpDt" readonly>
                                     <label for="lastUpDt">Last Changed</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="approval" name="approval" pInputText [(ngModel)]="inputApproval" disabled>
+                                    <input type="text" id="approval" name="approval" pInputText [(ngModel)]="inputApproval" readonly>
                                     <label for="approval">Approval</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="lastUser" name="lastUser" pInputText [(ngModel)]="inputLastUser" disabled>
+                                    <input type="text" id="lastUser" name="lastUser" pInputText [(ngModel)]="inputLastUser" readonly>
                                     <label for="lastUser">Last User</label>
                                 </span>
                             </div>
                             <div class="col-12 lg:col-3 p-fluid">
                                 <span class="field p-float-label">
-                                    <input type="text" id="prevUser" name="prevUser" pInputText [(ngModel)]="inputPrevUser" disabled>
+                                    <input type="text" id="prevUser" name="prevUser" pInputText [(ngModel)]="inputPrevUser" readonly>
                                     <label for="prevUser">Prev User</label>
                                 </span>
                             </div>
@@ -193,11 +193,11 @@
 
                                 <div class="pt-2 p-fluid">
                                     <span class="field p-float-label">
-                                        <input type="text" id="templateId" name="templateId" pInputText [(ngModel)]="inputTemplateId" disabled>
+                                        <input type="text" id="templateId" name="templateId" pInputText [(ngModel)]="inputTemplateId" readonly>
                                         <label for="templateId">Template ID</label>
                                     </span>
                                     <span class="field p-float-label">
-                                        <input type="text" id="description" name="description" pInputText [(ngModel)]="inputDescription" (input)="handleOnCR()" [disabled]="disable">
+                                        <input type="text" id="description" name="description" pInputText [(ngModel)]="inputDescription" (input)="handleOnCR()" [readonly]="disable">
                                         <label for="description">Description</label>
                                     </span>
                                 </div>
@@ -210,7 +210,7 @@
 
                                 <div class="pt-2 p-fluid">
                                     <span class="field p-float-label">
-                                        <input type="text" id="line" name="line" pInputText [(ngModel)]="inputLine" (input)="handleOnCR()" [disabled]="disable">
+                                        <input type="text" id="line" name="line" pInputText [(ngModel)]="inputLine" (input)="handleOnCR()" [readonly]="disable">
                                         <label for="line">#Line*</label>
                                     </span>
                                 </div>
@@ -226,15 +226,15 @@
 
                                 <div class="pt-2 p-fluid">
                                     <span class="field p-float-label">
-                                        <input type="text" id="contactName" name="contactName" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactName" [disabled]="disable">
+                                        <input type="text" id="contactName" name="contactName" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactName" [readonly]="disable">
                                         <label for="contactName">Contact Person</label>
                                     </span>
                                     <span class="field p-float-label">
-                                        <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactNumber" [disabled]="disable">
+                                        <input type="text" id="contactNumber" name="contactNumber" pInputText (input)="handleOnCR()" [(ngModel)]="inputContactNumber" [readonly]="disable">
                                         <label for="contactNumber">Contact Number</label>
                                     </span>
                                     <span class="field p-float-label">
-                                        <textarea class="pt-4" id="notes" name="notes" (input)="handleOnCR()" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea [disabled]="disable"></textarea>
+                                        <textarea class="pt-4" id="notes" name="notes" (input)="handleOnCR()" [(ngModel)]="inputNotes" rows="5" cols="30" pInputTextarea [readonly]="disable"></textarea>
                                         <label for="notes">Notes</label>
                                     </span>
                                 </div>
@@ -255,7 +255,7 @@
                                         <p-tabPanel header="Networks" tooltip="Networks">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="network" name="network" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNetwork" [disabled]="disable">
+                                                    <input type="text" id="network" name="network" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNetwork" [readonly]="disable">
                                                     <label for="network">Networks</label>
                                                 </span>
                                             </div>
@@ -267,7 +267,7 @@
                                         <p-tabPanel header="States" tooltip="States">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="state" name="state" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputState" [disabled]="disable">
+                                                    <input type="text" id="state" name="state" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputState" [readonly]="disable">
                                                     <label for="state">States</label>
                                                 </span>
                                             </div>
@@ -279,7 +279,7 @@
                                         <p-tabPanel header="NPAs" tooltip="NPAs">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="npa" name="npa" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNpa" [disabled]="disable">
+                                                    <input type="text" id="npa" name="npa" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputNpa" [readonly]="disable">
                                                     <label for="npa">NPAs</label>
                                                 </span>
                                             </div>
@@ -291,7 +291,7 @@
                                         <p-tabPanel header="LATAs" tooltip="LATAs">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="lata" name="lata" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLata" [disabled]="disable">
+                                                    <input type="text" id="lata" name="lata" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLata" [readonly]="disable">
                                                     <label for="lata">LATAs</label>
                                                 </span>
                                             </div>
@@ -303,7 +303,7 @@
                                         <p-tabPanel header="Labels" tooltip="Labels">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="label" name="label" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLabel" [disabled]="disable">
+                                                    <input type="text" id="label" name="label" pInputText (input)="handleUppercase($event)" [(ngModel)]="inputLabel" [readonly]="disable">
                                                     <label for="label">Labels</label>
                                                 </span>
                                             </div>
@@ -329,7 +329,7 @@
                                         <p-tabPanel header="IntraLATA" tooltip="IntraLATA">
                                             <div class="p-fluid">
                                                 <span class="field p-float-label">
-                                                    <input type="text" id="intraLATACarrier" name="intraLATACarrier" pInputText (input)="handleCarrier('Intra')" [(ngModel)]="inputIntraLATACarrier" [disabled]="disable">
+                                                    <input type="text" id="intraLATACarrier" name="intraLATACarrier" pInputText (input)="handleCarrier('Intra')" [(ngModel)]="inputIntraLATACarrier" [readonly]="disable">
                                                     <label for="intraLATACarrier">Intra LATA Carrier</label>
                                                 </span>
                                             </div>
@@ -344,7 +344,7 @@
                                             <div class="p-fluid">
                                                 <div class="p-fluid">
                                                     <span class="field p-float-label">
-                                                        <input type="text" id="interLATACarrier" name="interLATACarrier" pInputText (input)="handleCarrier('Inter')" [(ngModel)]="inputInterLATACarrier" [disabled]="disable">
+                                                        <input type="text" id="interLATACarrier" name="interLATACarrier" pInputText (input)="handleCarrier('Inter')" [(ngModel)]="inputInterLATACarrier" [readonly]="disable">
                                                         <label for="interLATACarrier">Inter LATA Carrier</label>
                                                     </span>
                                                 </div>
@@ -450,24 +450,24 @@
                                             <div class="lg:col-6 col-12">
                                                 <div class="grid">
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRRowAbove()" label="Insert Row Above" class="p-button-text"></button>
-                                                        <button pButton pRipple (click)="onInsertCPRRowBelow()" label="Insert Row Below" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRRowAbove()" label="Insert Row Above" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRRowBelow()" label="Insert Row Below" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
                                                     </div>
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRRowEnd()" label="Insert Row End" class="p-button-text"></button>
-                                                        <button pButton pRipple (click)="onDeleteCPRRowEnd()" label="Delete Row" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRRowEnd()" label="Insert Row End" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onDeleteCPRRowEnd()" label="Delete Row" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="lg:col-6 col-12 p-buttonset flex justify-content-between">
                                                 <div class="grid">
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRColumnBefore()" label="Insert Column Before" class="p-button-text"></button>
-                                                        <button pButton pRipple (click)="onInsertCPRColumnAfter()" label="Insert Column After" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRColumnBefore()" label="Insert Column Before" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRColumnAfter()" label="Insert Column After" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
                                                     </div>
                                                     <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                        <button pButton pRipple (click)="onInsertCPRColumnLast()" label="Insert Column Last" class="p-button-text"></button>
-                                                        <button pButton pRipple (click)="onDeleteCPRColumn()" label="Delete Column" class="p-button-text"></button>
+                                                        <button pButton pRipple (click)="onInsertCPRColumnLast()" label="Insert Column Last" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                        <button pButton pRipple (click)="onDeleteCPRColumn()" label="Delete Column" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -494,7 +494,7 @@
                                         filterBy="name"
                                         [virtualScroll]="true"
                                         [itemSize]="40"
-                                        [disabled]="disable || cprSectNames.length === 0"
+                                        [readonly]="disable || cprSectNames.length === 0"
                                     ></p-dropdown>
                                     <label for="priIntraLT">Primary IntraLATA Carrier</label>
                                 </span>
@@ -516,7 +516,7 @@
                                         filterBy="name"
                                         [virtualScroll]="true"
                                         [itemSize]="40"
-                                        [disabled]="disable || cprSectNames.length === 0"
+                                        [readonly]="disable || cprSectNames.length === 0"
                                     ></p-dropdown>
                                     <label for="priInterLT">Primary InterLATA Carrier</label>
                                 </span>
@@ -537,7 +537,7 @@
                                         filterBy="name"
                                         [virtualScroll]="true"
                                         [itemSize]="40"
-                                        [disabled]="disable"
+                                        [readonly]="disable"
                                     ></p-dropdown>
                                     <label for="timezone">Timezone</label>
                                 </span>
@@ -550,7 +550,7 @@
                                         name="dayLightSaving"
                                         [(ngModel)]="inputDayLightSaving"
                                         (onChange)="handleOnCPR()"
-                                        [disabled]="disable"
+                                        [readonly]="disable"
                                     ></p-inputSwitch>
                                     Daylight Savings
                                 </label>
@@ -558,7 +558,7 @@
 
                             <div class="col-12 p-fluid">
                                 <span class="p-float-label">
-                                    <input type="text" id="npaCntPerCarrier" name="npaCntPerCarrier" pInputText [(ngModel)]="inputNpaCntPerCarrier" disabled>
+                                    <input type="text" id="npaCntPerCarrier" name="npaCntPerCarrier" pInputText [(ngModel)]="inputNpaCntPerCarrier" readonly>
                                     <label for="npaCntPerCarrier">NPANXX count per carrier</label>
                                 </span>
                             </div>
@@ -570,7 +570,7 @@
                     <div class="flex justify-content-between align-items-center mb-2">
                         <h4 class="mb-0">Label Definition</h4>
                         <div class="flex align-items-center gap-3">
-                            <p *ngIf="searchResult.total < 1;else matches" class="mb-0">no matches</p>
+                            <!-- <p *ngIf="searchResult.total < 1;else matches" class="mb-0">no matches</p> -->
                             <ng-template #matches>
                                 <p>{{searchResult.total}} matches</p>
                             </ng-template>
@@ -616,7 +616,7 @@
                                                                         [value]="data"
                                                                         (blur)="handleLADCellChange($event, index, k, g)"
                                                                         (click)="setLADActiveIndexes(index, k, g)"
-                                                                        [disabled]="disable || ladSectNames.length === 0 || ladGridCategory[index][g] == null || ladGridCategory[index][g] === ''"
+                                                                        [readonly]="disable || ladSectNames.length === 0 || ladGridCategory[index][g] == null || ladGridCategory[index][g] === ''"
                                                                     >
                                                                 </td>
                                                             </ng-container>
@@ -631,24 +631,24 @@
                                         <div class="lg:col-6 col-12">
                                             <div class="grid">
                                                 <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                    <button pButton pRipple (click)="onInsertLADRowAbove()" label="Insert Row Above" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                    <button pButton pRipple (click)="onInsertLADRowBelow()" label="Insert Row Below" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onInsertLADRowAbove()" label="Insert Row Above" class="p-button-text" [disabled]="disable"></button>
+                                                    <button pButton pRipple (click)="onInsertLADRowBelow()" label="Insert Row Below" class="p-button-text" [disabled]="disable"></button>
                                                 </div>
                                                 <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                    <button pButton pRipple (click)="onInsertLADRowEnd()" label="Insert Row End" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                    <button pButton pRipple (click)="onDeleteLADRowEnd()" label="Delete Row" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onInsertLADRowEnd()" label="Insert Row End" class="p-button-text" [disabled]="disable"></button>
+                                                    <button pButton pRipple (click)="onDeleteLADRowEnd()" label="Delete Row" class="p-button-text" [disabled]="disable"></button>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="lg:col-6 col-12 p-buttonset flex justify-content-between">
                                             <div class="grid">
                                                 <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                    <button pButton pRipple (click)="onInsertLADColumnBefore()" label="Insert Column Before" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                    <button pButton pRipple (click)="onInsertLADColumnAfter()" label="Insert Column After" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onInsertLADColumnBefore()" label="Insert Column Before" class="p-button-text" [disabled]="disable"></button>
+                                                    <button pButton pRipple (click)="onInsertLADColumnAfter()" label="Insert Column After" class="p-button-text" [disabled]="disable"></button>
                                                 </div>
                                                 <div class="md:col-6 col-12 p-buttonset flex justify-content-between">
-                                                    <button pButton pRipple (click)="onInsertLADColumnLast()" label="Insert Column Last" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
-                                                    <button pButton pRipple (click)="onDeleteLADColumn()" label="Delete Column" class="p-button-text" [disabled]="disable || cprSectNames.length === 0"></button>
+                                                    <button pButton pRipple (click)="onInsertLADColumnLast()" label="Insert Column Last" class="p-button-text" [disabled]="disable"></button>
+                                                    <button pButton pRipple (click)="onDeleteLADColumn()" label="Delete Column" class="p-button-text" [disabled]="disable"></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -667,7 +667,7 @@
                     <div class="flex justify-content-between align-items-center mb-2">
                         <h4 class="mb-0">Number List</h4>
                         <div class="flex align-items-center gap-3">
-                            <p *ngIf="searchResult.total < 1;else matches" class="mb-0">no matches</p>
+                            <!-- <p *ngIf="searchResult.total < 1;else matches" class="mb-0">no matches</p> -->
                             <ng-template #matches>
                                 <p>Total {{numberList.length}} Numbers</p>
                             </ng-template>
@@ -729,12 +729,12 @@
             <p-panel header="Source Record">
                 <div class="p-fluid pt-2">
                     <span class="field p-float-label">
-                        <input type="text" id="srcTmplName" name="srcTmplName" pInputText [(ngModel)]="inputSrcTmplName" disabled>
+                        <input type="text" id="srcTmplName" name="srcTmplName" pInputText [(ngModel)]="inputSrcTmplName" readonly>
                         <label for="srcTmplName">Template</label>
                     </span>
 
                     <span class="field p-float-label">
-                        <input type="text" id="srcEffDtTm" name="srcEffDtTm" pInputText [(ngModel)]="inputSrcEffDtTm" disabled>
+                        <input type="text" id="srcEffDtTm" name="srcEffDtTm" pInputText [(ngModel)]="inputSrcEffDtTm" readonly>
                         <label for="srcEffDtTm">Effective Date/Time</label>
                     </span>
                 </div>
@@ -855,12 +855,12 @@
     <p-panel header="Source Record">
         <div class="p-fluid pt-2">
             <span class="field p-float-label">
-                <input type="text" pInputText [(ngModel)]="tmplName" disabled>
+                <input type="text" pInputText [(ngModel)]="tmplName" readonly>
                 <label>Template</label>
             </span>
 
             <span class="field p-float-label">
-                <input type="text" pInputText [(ngModel)]="selectEffDtTmStat.split(' ')[0] + ' ' + selectEffDtTmStat.split(' ')[1] + ' ' + selectEffDtTmStat.split(' ')[2]" disabled>
+                <input type="text" pInputText [(ngModel)]="selectEffDtTmStat.split(' ')[0] + ' ' + selectEffDtTmStat.split(' ')[1] + ' ' + selectEffDtTmStat.split(' ')[2]" readonly>
                 <label for="srcEffDtTm">Effective Date/Time</label>
             </span>
         </div>
@@ -879,12 +879,12 @@
             <p-panel header="Source Record">
                 <div class="p-fluid pt-2">
                     <span class="field p-float-label">
-                        <input type="text" id="srcTmplName" name="srcTmplName" pInputText [(ngModel)]="inputSrcTmplName" disabled>
+                        <input type="text" id="srcTmplName" name="srcTmplName" pInputText [(ngModel)]="inputSrcTmplName" readonly>
                         <label for="srcTmplName">Template</label>
                     </span>
 
                     <span class="field p-float-label">
-                        <input type="text" id="srcEffDtTm" name="srcEffDtTm" pInputText [(ngModel)]="inputSrcEffDtTm" disabled>
+                        <input type="text" id="srcEffDtTm" name="srcEffDtTm" pInputText [(ngModel)]="inputSrcEffDtTm" readonly>
                         <label for="srcEffDtTm">Effective Date/Time</label>
                     </span>
                 </div>

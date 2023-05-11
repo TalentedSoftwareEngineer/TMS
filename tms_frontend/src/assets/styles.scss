@@ -246,12 +246,14 @@ text-align: center !important;
 
 .p-dialog {
   &.c-modal {
+    // max-height: none;
     background-color: var(--surface-card);
     .p-dialog-header {
       background-color: transparent;
     }
 
     .p-dialog-content {
+      overflow-y: auto;
       background-color: transparent;
       padding-top: 1rem;
     }

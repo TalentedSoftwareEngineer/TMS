@@ -72,10 +72,10 @@ export class BackendApplication extends BootMixin(
     this.bind(UserServiceBindings.USER_CREDENTIALS_REPOSITORY).toClass(UserCredentialsRepository);
 
     this.bind(TokenServiceBindings.TOKEN_SECRET).to("tms_token");
-    this.bind(TokenServiceBindings.TOKEN_EXPIRES_IN).to("3600");
+    this.bind(TokenServiceBindings.TOKEN_EXPIRES_IN).to("86400");
     this.bind(RestBindings.REQUEST_BODY_PARSER_OPTIONS).to({
-      json: {limit: '10MB'},
-      text: {limit: '10MB'}
+      json: {limit: '20MB'},
+      text: {limit: '20MB'}
     })
 
     this.service(TfnRegistryApiService);

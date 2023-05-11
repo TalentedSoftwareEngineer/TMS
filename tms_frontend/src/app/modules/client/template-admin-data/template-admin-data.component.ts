@@ -409,8 +409,101 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
 
     // })
 
-    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(data => {
-      this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
+    this.sseClient.get(environment.stream_uri+"/"+this.store.getUser().id+this.streamdata_id, { keepAlive: true }).subscribe(async (data): Promise<any> => {
+      if(data.page == 'TAD' && data.user_id == this.store.getUser().id) {
+        this.inputMessage = data.title + data.message + '<br><br>' + this.inputMessage;
+        if(data.completed) {
+          if(data.success) {
+            this.showSuccess(data.message);
+            // this.cancelAction();
+            switch(data.operation) {
+              case 'DELETE':
+                // this.showSuccess(TAD_DELETE_SUCCESSFUL);
+                // this.inputMessage = ''
+        
+                let effDtTmListSize = this.effDtTmStatList.length
+        
+                if (this.effDtTmStatList.length == 1) { // only one record, goes to initial state of page
+                  // this.cancelAction()
+                } else { // if next record exists, shows next record, else shows previous record
+        
+                  // gets index
+                  let index = this.effDtTmStatList.indexOf(this.selectEffDtTmStat)
+                  if (index == effDtTmListSize - 1) {
+                    index--
+                  }
+        
+                  // gets effective date time based on index and retrieves template record
+                  let newEffDtTm = this.effDtTmStatList[index]
+                  let utcEffDtTm = gFunc.fromCTStrToUTCStr(newEffDtTm)
+                  this.retrieveTemplateRecord(this.tmplName, utcEffDtTm)
+                }        
+                break;
+              case 'TRANSFER':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId;
+                }
+
+                if (await this.retrieveTemplateRecord(data.body.tgtTmplName, data.result.effDtTm)) {
+                  // this.showSuccess(TAD_TRANSFER_SUCCESSFUL);
+                  // this.inputMessage = TAD_TRANSFER_SUCCESSFUL;
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'COPY':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId;
+                }
+
+                // no error, update successful
+                if (await this.retrieveTemplateRecord(data.body.tgtTmplName, data.result.effDtTm)) {
+                  // this.showSuccess(TAD_COPY_SUCCESSFUL);
+                  // this.inputMessage = TAD_COPY_SUCCESSFUL;
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'CREATE':
+                if (data.result.recVersionId !== undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId;
+                }
+                // no error, update successful
+                if (await this.retrieveTemplateRecord(data.body.tmplName, data.body.effDtTm)) {
+                  // this.showSuccess(TAD_CREATE_SUCCESSFUL);
+                  // this.inputMessage = TAD_CREATE_SUCCESSFUL
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'DISCONNECT':
+                if (data.result.recVersionId != undefined && data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId;
+                }
+
+                // no error, update successful
+                if (await this.retrieveTemplateRecord(data.body.tgtTmplName, data.result.effDtTm)) {
+                  // this.showSuccess(TAD_DISCONNECT_SUCCESSFUL);
+                  // this.inputMessage = TAD_DISCONNECT_SUCCESSFUL;
+                  this.action = this.gConst.ACTION_NONE
+                }
+                break;
+              case 'UPDATE':
+                if (data.result.recVersionId != null) {
+                  this.recVersionId = data.result.recVersionId
+                }
+
+                // no error, update successful
+                if (await this.retrieveTemplateRecord(data.body.tmplName, data.body.effDtTm)) {
+                  // this.showError(TAD_UPDATE_SUCCESSFUL, '');
+                  // this.inputMessage = TAD_UPDATE_SUCCESSFUL;
+                }
+                break;
+              default:
+                break;
+            }
+          } else {
+            this.showError(data.message, 'Error');
+          }
+        }
+      }
     })
 
     this.initialDataLoading();
@@ -616,10 +709,13 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
         let dtTmStat = dtTmString + " CT " + edt.tmplRecStat.replace("_", " ")
         dtTmStatList.push(dtTmStat)
 
-        if (effDtTm == edt.effDtTm) {
-          nEffIndex = i;
-        }
+        // if (effDtTm == edt.effDtTm) {
+        //   nEffIndex = i;
+        // }
       }
+
+      nEffIndex = this.getEffDtTmStatusOptions(this.effDtTmStatList).findIndex(item=>item.value.includes(this.selectEffDtTmStat));
+      nEffIndex = nEffIndex == -1 ? 0 : nEffIndex
   
       let status = lstEffDtTms[nEffIndex].tmplRecStat.replace("_", " ")
       this.tmplName = tmplName;
@@ -761,9 +857,28 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
       }
 
       this.recVersionId = Boolean(data.recVersionId) ? data.recVersionId : '';
+
+      // check if the user has permission for the customer record
+      if (data.errList != null && data.errList.length) {
+        if (data.errList[0].errCode === this.gConst.TAD_NO_PERMISSION_ERR_CODE) {  // no permission for template record
+          this.disable = true;
+          this.bContentModified = false;
+          this.bRetrieveEnable = true;
+          this.bEditEnable = false;
+          this.bCopyEnable = false;
+          this.bTransferEnable = false;
+          this.bDeleteEnable = false;
+          this.bSubmitEnable = false;
+          this.bSaveEnable = false;
+          this.bRevertEnable = false;
+          this.bCancelEnable = true;
+
+          this.bEffDtTmDisable = false;
+          return
+        }
+      }
   
-      this.bEffDtTmDisable = false;
-  
+      this.bEffDtTmDisable = false;  
       this.bExpRetrieve = false;
   
       // if current date is before than the the date of selected template record
@@ -1047,7 +1162,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
   }
 
   onClearBasicData = () => {
-
+    this.initBasicData()
   }
 
   /**
@@ -2011,26 +2126,25 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
       tmplRecCompPart: this.tmplRecCompPart
     }
 
-    await new Promise<void>(resolve=>{
-      this.api.tmplLock({ro: ro, body: JSON.stringify(body)}).subscribe(res=> {
-        if (res) {
-          if (res.updateStatus.isAllowed === 'Y') {
-            this.lockParam = body;
-            this.action = this.gConst.ACTION_UPDATE
+    this.api.tmplLock({ro: ro, body: JSON.stringify(body)}).subscribe(res=> {
+      if (res) {
+        if (res.updateStatus.isAllowed === 'Y') {
+          this.lockParam = body;
+          this.action = this.gConst.ACTION_UPDATE
 
-            this.disable = false
-            this.bEditEnable = false
-            this.bSubmitEnable = true
-            this.bSaveEnable = true
-            return
-          }
+          this.disable = false
+          this.bEditEnable = false
+          this.bSubmitEnable = true
+          this.bSaveEnable = true
+          return
         }
-  
-        if (res && res.updateStatus && res.updateStatus.statusMessages !== null) {
-          this.inputMessage = gFunc.synthesisErrMsg(res.updateStatus.statusMessages);
+
+        if (res.errList) {
+          this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+        } else if (res.updateStatus && res.updateStatus.statusMessages !== null) {
+          this.showError(gFunc.synthesisErrMsg(res.updateStatus.statusMessages), 'Error');
         }
-        resolve();
-      });
+      }
     });
   }
 
@@ -2162,23 +2276,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: async () => {
-        if (this.action != this.gConst.ACTION_NONE) {
-          this.unlockTemplateRecord()
-        }
-        
-        this.selectPriIntraLT = ''
-        this.selectPriInterLT = ''
-        this.selectTimezone = 'C'
-        this.inputDayLightSaving = gFunc.isCurrentDayLightSavingTime();
-        this.inputSearchTmplName = '';
-        this.inputSearchEffDtTm = '';
-        this.bRetrieveEnable = true;
-        this.bExpRetrieve = true;
-        this.bExpResult = false;
-        this.bEffDtTmListHidden = true;
-        this.selectEffDtTmStat = '';
-        this.resultCardTitle = 'Result'
-        this.bRetrieveCardIconHidden = false;
+        this.cancelAction();
       },
       reject: (type: any) => {
           switch(type) {
@@ -2194,6 +2292,8 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
   performAction = (cmd: string) => {
     switch (this.action) {
       case this.gConst.ACTION_NONE:
+        // this.cancelAction();
+        break;
       case this.gConst.ACTION_UPDATE:
         this.updateTemplateRecord(cmd)
         break
@@ -2265,30 +2365,18 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
     });
 
     if (res.success) {
-      // let data = res
-      // if (data.recVersionId != undefined && data.recVersionId != null) {
-      //   this.recVersionId = data.recVersionId;
-      // }
 
-      // // no error, update successful
-      // if (await this.retrieveTemplateRecord(body.tgtTmplName, res.effDtTm)) {
-      //   this.showSuccess(TAD_DISCONNECT_SUCCESSFUL);
-      //   this.inputMessage = TAD_DISCONNECT_SUCCESSFUL;
-      //   this.action = this.gConst.ACTION_NONE
-      // }
     }
 
     return true
   }
 
   copyTemplateRecord = async (cmd: string) => {
-
     if (!this.checkValidation()) {
       return false
     }
     let ro = this.store.getCurrentRo();
     let body = await this.getCopyRequestBody(cmd)
-    console.log(body);
     let res = await new Promise<any>(resolve=>{
       this.api.copyTmplRec({ro: ro, body: JSON.stringify(body)}).subscribe(res=>{
         resolve(res);
@@ -2296,17 +2384,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
     });
 
     if (res.success) {
-      // let data = res
-      // if (data.recVersionId != undefined && data.recVersionId != null) {
-      //   this.recVersionId = data.recVersionId;
-      // }
 
-      // // no error, update successful
-      // if (await this.retrieveTemplateRecord(body.tgtTmplName, res.effDtTm)) {
-      //   this.showSuccess(TAD_COPY_SUCCESSFUL);
-      //   this.inputMessage = TAD_COPY_SUCCESSFUL;
-      //   this.action = this.gConst.ACTION_NONE
-      // }
     }
     return true
   }
@@ -2326,16 +2404,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
     });
 
     if (res.success) {
-      // let data = res
-      // if (data.recVersionId !== undefined && data.recVersionId != null) {
-      //   this.recVersionId = data.recVersionId;
-      // }
-      // // no error, update successful
-      // if (await this.retrieveTemplateRecord(body.tmplName, body.effDtTm)) {
-      //   this.showSuccess(TAD_CREATE_SUCCESSFUL);
-      //   this.inputMessage = TAD_CREATE_SUCCESSFUL
-      //   this.action = this.gConst.ACTION_NONE
-      // }
+
     }
 
     return true;
@@ -2358,16 +2427,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
     });
 
     if (res.success) {
-      // let data = res
-      // if (data.recVersionId != null) {
-      //   this.recVersionId = data.recVersionId
-      // }
 
-      // // no error, update successful
-      // if (await this.retrieveTemplateRecord(body.tmplName, body.effDtTm)) {
-      //   this.showError(TAD_UPDATE_SUCCESSFUL, '');
-      //   this.inputMessage = TAD_UPDATE_SUCCESSFUL;
-      // }
     }
 
     return true
@@ -2962,7 +3022,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
   checkValidForCopying = async () => {
     if (!this.inputCopyNow && !Boolean(this.inputTgtEffDtTm)) {
       this.validMsg = "Please input effective date/time";
-      this.showInfo('Please input effective date/time');
+      this.showWarn('Please input effective date/time');
       return
     }
 
@@ -2972,27 +3032,27 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
       case this.gConst.COPYACTION_DISCONNECT:
         if (this.inputSrcTmplName !== this.inputTgtTmplName) {
           this.validMsg = "Copy of a Disconnect TR is allowed only to the same Template Name";
-          this.showInfo('Copy of a Disconnect TR is allowed only to the same Template Name');
+          this.showWarn('Copy of a Disconnect TR is allowed only to the same Template Name');
           return
         }
         if (this.inputDscInd) {
           this.validMsg = "Action must be Change or New";
-          this.showInfo('Action must be Change or New');
+          this.showWarn('Action must be Change or New');
           return
         }
         break
       case this.gConst.COPYACTION_NEW:
         if (this.inputSrcTmplName === this.inputTgtTmplName) {
           this.validMsg = "Action must be Change or Disconnect";
-          this.showInfo('Action must be Change or Disconnect');
+          this.showWarn('Action must be Change or Disconnect');
           return
         }
         break
     }
 
     if (!this.portionCR && !this.portionCPR && !this.portionLAD) {
-      this.validMsg = "Select at least one checkbox";
-      this.showInfo('Select at least one checkbox');
+      this.validMsg = "Select at least one of Copy Portions";
+      this.showWarn('Select at least one of Copy Portions');
       return
     }
 
@@ -3106,6 +3166,14 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
         this.finishCpyTrnsfrOp()
         return
       }
+
+      if (res.errList) {
+        this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+      } else if (res.copyStatus && res.copyStatus.statusMessages !== null) {
+        this.showError(gFunc.synthesisErrMsg(res.copyStatus.statusMessages), 'Error');
+      } else if (res.disconnectStatus && res.disconnectStatus.statusMessages !== null) {
+        this.showError(gFunc.synthesisErrMsg(res.disconnectStatus.statusMessages), 'Error');
+      }
     }
   }
 
@@ -3162,27 +3230,6 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
 
     this.api.deleteTmplRec({ro: ro, body: JSON.stringify(params)}).subscribe(res=> {
       if (res) {
-        this.showSuccess(TAD_DELETE_SUCCESSFUL);
-        this.inputMessage = ''
-
-        let effDtTmListSize = this.effDtTmStatList.length
-
-        if (this.effDtTmStatList.length == 1) { // only one record, goes to initial state of page
-          this.cancelAction()
-        } else { // if next record exists, shows next record, else shows previous record
-
-          // gets index
-          let index = this.effDtTmStatList.indexOf(this.selectEffDtTmStat)
-          if (index == effDtTmListSize - 1) {
-            index--
-          }
-
-          // gets effective date time based on index and retrieves template record
-          let newEffDtTm = this.effDtTmStatList[index]
-          let utcEffDtTm = gFunc.fromCTStrToUTCStr(newEffDtTm)
-          this.retrieveTemplateRecord(this.tmplName, utcEffDtTm)
-        }
-
         return
       }
     });
@@ -3210,6 +3257,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
     this.bEffDtTmListHidden = true;
     this.selectEffDtTmStat = '';
     this.resultCardTitle = 'Result'
+    this.retrieveCardTitle = 'Retrieve'
   };
 
   checkValidForTransferring = async () => {
@@ -3318,6 +3366,13 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
             this.finishCpyTrnsfrOp()
             return
           }
+
+          if (res.errList) {
+            this.showError(gFunc.synthesisErrMsg(res.errList), 'Error');
+          } else if (res.transferStatus && res.transferStatus.statusMessages !== null) {
+            this.showError(gFunc.synthesisErrMsg(res.transferStatus.statusMessages), 'Error');
+          }
+
         }
         resolve();
       });
@@ -3376,7 +3431,7 @@ export class TemplateAdminDataComponent implements OnInit, OnDestroy {
     // console.log("retrieveTmplForTgtTmpl: " + params.tmplName + ", " + params.effDtTm)
     
     this.api.tmplAdminDataRetrieve(ro, params.tmplName, effDtTm).subscribe(res=> {
-      if (res) {
+      if (res && !Boolean(res.errList)) {
         let data = res;
         this.tgtRetrieveData = data;
 

@@ -4,7 +4,7 @@
 
 
 import {AnyObject, Count, CountSchema, repository} from "@loopback/repository";
-import {NumbersRepository, ScriptResultRepository, ScriptSqlRepository} from "../repositories";
+import {NumbersRepository, ScriptResultRepository, ScriptSqlRepository, UserRepository} from "../repositories";
 import {get, post, getModelSchemaRef, HttpErrors, param} from "@loopback/rest";
 import {inject, service} from "@loopback/core";
 import {SecurityBindings, securityId, UserProfile} from "@loopback/security";
@@ -29,6 +29,8 @@ export class NumberListController {
       public scriptResultRepository: ScriptResultRepository,
       @service(NumberService)
       public numberService: NumberService,
+      @repository(UserRepository)
+      public userRepository : UserRepository,
   ) {}
 
   @get('/number_list/count', {
@@ -47,20 +49,49 @@ export class NumberListController {
       @param.query.string('respOrgFilter') respOrgFilter: string,
       @param.query.string('templateFilter') templateFilter: string,
       @param.query.string('statusFilter') statusFilter: string,
+      @param.query.string('numFilter') numFilter: string,
+      @param.query.string('subDtTm') subDtTm: string,
   ): Promise<Count> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.NUMBER_LIST))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    let custom: any[] = [
-      { entity: entityFilter=='' ? undefined : entityFilter },
-      { resp_org: respOrgFilter=='' ? undefined : respOrgFilter },
-      { template_name: templateFilter=='' ? undefined : templateFilter },
-      { status: statusFilter=='' ? undefined : statusFilter },
-    ];
+    let conditions: any = undefined
 
-    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
-      custom.push({ user_id: profile.user.id })
+    let custom: any[] = [];
+    if (entityFilter!=null && entityFilter!="")
+      custom.push({entity: entityFilter})
+    if (respOrgFilter!=null && respOrgFilter!="")
+      custom.push({resp_org: respOrgFilter})
+    if (templateFilter!=null && templateFilter!="")
+      custom.push({template_name: templateFilter})
+    if (statusFilter!=null && statusFilter!="")
+      custom.push({status: statusFilter})
+    if (subDtTm!=null && subDtTm!="")
+      custom.push({sub_dt_tm: subDtTm})
+
+    // if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+    //   custom.push({ user_id: profile.user.id })
+    if (numFilter!="") {
+      custom.push({num: {like: '%' + numFilter + '%'}})
+    }
+
+    const user = await this.userRepository.findById(profile.user.id)
+    let ro: string[] | undefined = user.ro?.split(",")
+    if (ro!=undefined && ro.length>0) {
+      conditions = { or: [ ]}
+      let entities: string[] = []
+      for (let item of ro) {
+        if (!entities.includes(item.substring(0,2))) {
+          entities.push(item.substring(0,2))
+          conditions.or.push({entity: item.substring(0,2)})
+        }
+        // if (!conditions.or.includes(item.substring(0,2)))
+      }
+
+      custom.push(conditions)
+    } else
+      throw new HttpErrors.BadRequest("User have not resp org")
 
     return this.numbersRepository.count(DataUtils.getWhere(value,
         ["entity",'num', 'resp_org', 'status', 'sub_dt_tm', 'template_name', 'eff_dt_tm'],
@@ -93,20 +124,49 @@ export class NumberListController {
       @param.query.string('respOrgFilter') respOrgFilter: string,
       @param.query.string('templateFilter') templateFilter: string,
       @param.query.string('statusFilter') statusFilter: string,
+      @param.query.string('numFilter') numFilter: string,
+      @param.query.string('subDtTm') subDtTm: string,
   ): Promise<Numbers[]> {
     const profile = JSON.parse(currentUserProfile[securityId]);
     if (!profile.permissions.includes(PERMISSIONS.NUMBER_LIST))
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
-    let custom: any[] = [
-      { entity: entityFilter=='' ? undefined : entityFilter },
-      { resp_org: respOrgFilter=='' ? undefined : respOrgFilter },
-      { template_name: templateFilter=='' ? undefined : templateFilter },
-      { status: statusFilter=='' ? undefined : statusFilter },
-    ];
+    let conditions: any = undefined
 
-    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
-      custom.push({ user_id: profile.user.id })
+    let custom: any[] = [];
+    if (entityFilter!=null && entityFilter!="")
+      custom.push({entity: entityFilter})
+    if (respOrgFilter!=null && respOrgFilter!="")
+      custom.push({resp_org: respOrgFilter})
+    if (templateFilter!=null && templateFilter!="")
+      custom.push({template_name: templateFilter})
+    if (statusFilter!=null && statusFilter!="")
+      custom.push({status: statusFilter})
+    if (subDtTm!=null && subDtTm!="")
+      custom.push({sub_dt_tm: subDtTm})
+
+    // if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+    //   custom.push({ user_id: profile.user.id })
+    if (numFilter!="") {
+      custom.push({num: {like: '%' + numFilter + '%'}})
+    }
+
+    const user = await this.userRepository.findById(profile.user.id)
+    let ro: string[] | undefined = user.ro?.split(",")
+    if (ro!=undefined && ro.length>0) {
+      conditions = { or: [ ]}
+      let entities: string[] = []
+      for (let item of ro) {
+        if (!entities.includes(item.substring(0,2))) {
+          entities.push(item.substring(0,2))
+          conditions.or.push({entity: item.substring(0,2)})
+        }
+        // if (!conditions.or.includes(item.substring(0,2)))
+      }
+
+      custom.push(conditions)
+    } else
+      throw new HttpErrors.BadRequest("User have not resp org")
 
     return this.numbersRepository.find(DataUtils.getFilter(limit, skip, order, value,
         ["entity", 'num', 'resp_org', 'status', 'sub_dt_tm', 'template_name', 'eff_dt_tm'],
@@ -144,8 +204,24 @@ export class NumberListController {
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
     let sql: string = "select resp_org from numbers"
-    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
-      sql += " where user_id=" + profile.user.id + ""
+
+    const user = await this.userRepository.findById(profile.user.id)
+    let ro: string[] | undefined = user.ro?.split(",")
+    if (ro!=undefined && ro.length>0) {
+      let entities: string[] = []
+      for (let item of ro) {
+        if (!entities.includes("'"+item.substring(0,2)+"'")) {
+          entities.push("'"+item.substring(0,2)+"'")
+        }
+        // if (!conditions.or.includes(item.substring(0,2)))
+      }
+
+      sql += " where entity in (" + entities.join(",") + " ) "
+    } else
+      throw new HttpErrors.BadRequest("User have not resp org")
+
+    // if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+    //   sql += " where user_id=" + profile.user.id + ""
     sql += " group by resp_org"
 
     return await this.numbersRepository.execute(sql)
@@ -182,8 +258,24 @@ export class NumberListController {
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
     let sql: string = "select entity from numbers"
-    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
-      sql += " where user_id=" + profile.user.id + ""
+
+    const user = await this.userRepository.findById(profile.user.id)
+    let ro: string[] | undefined = user.ro?.split(",")
+    if (ro!=undefined && ro.length>0) {
+      let entities: string[] = []
+      for (let item of ro) {
+        if (!entities.includes("'"+item.substring(0,2)+"'")) {
+          entities.push("'"+item.substring(0,2)+"'")
+        }
+        // if (!conditions.or.includes(item.substring(0,2)))
+      }
+
+      sql += " where entity in (" + entities.join(",") + " ) "
+    } else
+      throw new HttpErrors.BadRequest("User have not resp org")
+
+    // if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+    //   sql += " where user_id=" + profile.user.id + ""
     sql += " group by entity"
 
     return await this.numbersRepository.execute(sql)
@@ -220,8 +312,23 @@ export class NumberListController {
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
     let sql: string = "select template_name from numbers"
-    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
-      sql += " where user_id=" + profile.user.id + ""
+    // if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+    //   sql += " where user_id=" + profile.user.id + ""
+    const user = await this.userRepository.findById(profile.user.id)
+    let ro: string[] | undefined = user.ro?.split(",")
+    if (ro!=undefined && ro.length>0) {
+      let entities: string[] = []
+      for (let item of ro) {
+        if (!entities.includes("'"+item.substring(0,2)+"'")) {
+          entities.push("'"+item.substring(0,2)+"'")
+        }
+        // if (!conditions.or.includes(item.substring(0,2)))
+      }
+
+      sql += " where entity in (" + entities.join(",") + " ) "
+    } else
+      throw new HttpErrors.BadRequest("User have not resp org")
+
     sql += " group by template_name"
 
     return await this.numbersRepository.execute(sql)
@@ -258,9 +365,79 @@ export class NumberListController {
       throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
 
     let sql: string = "select status from numbers"
-    if (profile.user.role_id!=SUPER_ADMIN_ROLE)
-      sql += " where user_id=" + profile.user.id + ""
+    // if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+    //   sql += " where user_id=" + profile.user.id + ""
+
+    const user = await this.userRepository.findById(profile.user.id)
+    let ro: string[] | undefined = user.ro?.split(",")
+    if (ro!=undefined && ro.length>0) {
+      let entities: string[] = []
+      for (let item of ro) {
+        if (!entities.includes("'"+item.substring(0,2)+"'")) {
+          entities.push("'"+item.substring(0,2)+"'")
+        }
+        // if (!conditions.or.includes(item.substring(0,2)))
+      }
+
+      sql += " where entity in (" + entities.join(",") + " ) "
+    } else
+      throw new HttpErrors.BadRequest("User have not resp org")
+
     sql += " group by status"
+
+    return await this.numbersRepository.execute(sql)
+  }
+
+  @get('/number_list/sub_dt_tm', {
+    description: 'Get Status',
+    responses: {
+      '200': {
+        description: 'Array of Status',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: {
+                type: "object",
+                properties: {
+                  status: {
+                    type: "string"
+                  }
+                }
+              },
+            },
+          },
+        },
+      }
+    }
+  })
+  async sub_dt_tm(
+      @inject(SecurityBindings.USER) currentUserProfile: UserProfile,
+  ): Promise<AnyObject> {
+    const profile = JSON.parse(currentUserProfile[securityId]);
+    if (!profile.permissions.includes(PERMISSIONS.NUMBER_LIST))
+      throw new HttpErrors.Unauthorized(MESSAGES.NO_PERMISSION)
+
+    let sql: string = "select sub_dt_tm from numbers"
+    // if (profile.user.role_id!=SUPER_ADMIN_ROLE)
+    //   sql += " where user_id=" + profile.user.id + ""
+
+    const user = await this.userRepository.findById(profile.user.id)
+    let ro: string[] | undefined = user.ro?.split(",")
+    if (ro!=undefined && ro.length>0) {
+      let entities: string[] = []
+      for (let item of ro) {
+        if (!entities.includes("'"+item.substring(0,2)+"'")) {
+          entities.push("'"+item.substring(0,2)+"'")
+        }
+        // if (!conditions.or.includes(item.substring(0,2)))
+      }
+
+      sql += " where entity in (" + entities.join(",") + " ) "
+    } else
+      throw new HttpErrors.BadRequest("User have not resp org")
+
+    sql += " group by sub_dt_tm"
 
     return await this.numbersRepository.execute(sql)
   }

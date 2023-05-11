@@ -230,7 +230,7 @@ export function retrieveNumList(numString: string) {
   // parse the year, month, date, hour, minute
   let [month, date, year] = strDateTime.split(" ")[0].split("/")
   let hour: any = Number(strDateTime.split(" ")[1].split(":")[0])
-  let minute = Number(strDateTime.split(" ")[1].split(":")[1])
+  let minute: any = strDateTime.split(" ")[1].split(":")[1]
   let am = strDateTime.split(" ")[2]
 
   hour = parseInt(hour, 10)

@@ -213,6 +213,12 @@ export class TemplateService {
     if (response==null) {
       throw new HttpErrors.BadRequest(MESSAGES.EMPTY_RESPONSE)
 
+    } else if (response.code!=null && response.message!=null) {
+      throw new HttpErrors.BadRequest(response.message + (response.code!="" ? " Code: " + response.code : ""))
+
+    } else if (response.tmplList!=null) {
+      return response.tmplList;
+
     } else if (response.errList!=null) {
       let message = "";
 
@@ -224,8 +230,6 @@ export class TemplateService {
 
       throw new HttpErrors.BadRequest(message)
 
-    } else if (response.code!=null && response.message!=null) {
-      throw new HttpErrors.BadRequest(response.message + (response.code!="" ? " Code: " + response.code : ""))
 
     } else if (response.reqId!=null) {
       let reqId = response.reqId
@@ -235,8 +239,7 @@ export class TemplateService {
       }
 
       return response.tmplList
-    } else if (response.tmplList!=null)
-      return response.tmplList;
+    }
 
     throw new HttpErrors.InternalServerError
   }
@@ -249,13 +252,6 @@ export class TemplateService {
     let response = await this.tfnRegistryApiService.queryTemplateRecord(ro, tmplName, profile, effDtTm)
     if (response==null) {
       message = MESSAGES.EMPTY_RESPONSE
-
-    } else if (response.errList!=null) {
-      if (response.errList.length>0) {
-        const error: any = response.errList[0];
-        message = error.errMsg + " Code: " + error.errCode
-      } else
-        message = MESSAGES.INTERNAL_SERVER_ERROR
 
     } else if (response.code!=null && response.message!=null) {
       message = response.message + (response.code!="" ? " Code: " + response.code : "")
@@ -270,6 +266,13 @@ export class TemplateService {
       result = response.lstEffDtTms
     } else if (response.lstEffDtTms!=null) {
       result = response.lstEffDtTms;
+
+    } else if (response.errList!=null) {
+      if (response.errList.length>0) {
+        const error: any = response.errList[0];
+        message = error.errMsg + " Code: " + error.errCode
+      } else
+        message = MESSAGES.INTERNAL_SERVER_ERROR
 
     } else {
       message = MESSAGES.INTERNAL_SERVER_ERROR
@@ -293,6 +296,7 @@ export class TemplateService {
     const current_utc_time = new Date().toISOString()
     let eff_dt_tm = effDtTm
     let response: any = await this.getInformation(ro, tmplName, effDtTm, profile, false)
+    console.log("TQL", tmplName, effDtTm, response)
     if (!response.lstEffDtTms || !response.recVersionId)
       return response
 
@@ -524,7 +528,9 @@ export class TemplateService {
     notify.completed = false
     notify.title = "Template: <b>" + body.srcTmplName + "</b> COPY --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // get srcRecVersionId from source template
     const srcTmpl = await this.templateRepository.findOne({where: {name: body.srcTmplName}})
@@ -569,6 +575,7 @@ export class TemplateService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushTAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -580,11 +587,13 @@ export class TemplateService {
 
     notify.message = "Saving Template ..."
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // TODO - process error message
     const template = await this.retrieve(ro, body.tgtTmplName, result, profile, false)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -611,7 +620,9 @@ export class TemplateService {
     notify.completed = false
     notify.title = "Template: <b>" + body.srcTmplName + "</b> TRANSFER --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // get srcRecVersionId from source template
     const srcTmpl = await this.templateRepository.findOne({where: {name: body.srcTmplName}})
@@ -656,6 +667,7 @@ export class TemplateService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushTAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -674,11 +686,13 @@ export class TemplateService {
 
     notify.message = "Saving Template ..."
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // TODO - process error message
     const template = await this.retrieve(ro, body.tgtTmplName, result, profile, false)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -705,7 +719,9 @@ export class TemplateService {
     notify.completed = false
     notify.title = "Template: <b>" + body.srcTmplName + "</b> DISCONNECT --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // get srcRecVersionId from source template
     const srcTmpl = await this.templateRepository.findOne({where: {name: body.srcTmplName}})
@@ -750,6 +766,7 @@ export class TemplateService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushTAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -761,11 +778,13 @@ export class TemplateService {
 
     notify.message = "Saving Template ..."
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // TODO - process error message
     const template = await this.retrieve(ro, body.tgtTmplName, result, profile, false)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -790,12 +809,14 @@ export class TemplateService {
     notify.page = PAGES.TemplateAdminData
     notify.operation = PAGE_OPERATION.CREATE
     notify.completed = false
-    notify.title = "Template: <b>" + body.srcTmplName + "</b> CREATE --> "
+    notify.title = "Template: <b>" + body.tmplName + "</b> CREATE --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // get srcRecVersionId from source template
-    const srcTmpl = await this.templateRepository.findOne({where: {name: body.srcTmplName}})
+    const srcTmpl = await this.templateRepository.findOne({where: {name: body.tmplName}})
     if (srcTmpl)
       body.srcRecVersionId = srcTmpl.rec_version_id
 
@@ -831,28 +852,29 @@ export class TemplateService {
 
     if (result==null) {
       await this.saveActivityResult(profile, activity.id, TASK_TYPE.TAD, TASK_ACTION.CREATE, "", sub_dt_tm, activity.status,
-          body.ctrlRespOrgId, message, body.tgtEffDtTm, body.tgtTmplName, undefined,
-          body.srcNum, body.srcEffDtTm, body.srcTmplName)
+          body.ctrlRespOrgId, message, body.effDtTm, body.tmplName, undefined)
 
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushTAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
     }
 
     await this.saveActivityResult(profile, activity.id, TASK_TYPE.TAD, TASK_ACTION.CREATE, "", sub_dt_tm, body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? TASK_STATUS.PENDING : TASK_STATUS.SAVED,
-        body.ctrlRespOrgId, message, body.tgtEffDtTm, body.tgtTmplName, undefined,
-        body.srcNum, body.srcEffDtTm, body.srcTmplName)
+        body.ctrlRespOrgId, message, body.effDtTm, body.tmplName, undefined)
 
     notify.message = "Saving Template ..."
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // TODO - process error message
-    const template = await this.retrieve(ro, body.tgtTmplName, result, profile, false)
+    const template = await this.retrieve(ro, body.tmplName, result, profile, false)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -879,7 +901,9 @@ export class TemplateService {
     notify.completed = false
     notify.title = "Template: <b>" + body.srcTmplName + "</b> UPDATE --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // get srcRecVersionId from source template
     const srcTmpl = await this.templateRepository.findOne({where: {name: body.srcTmplName}})
@@ -924,6 +948,7 @@ export class TemplateService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushTAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -935,11 +960,13 @@ export class TemplateService {
 
     notify.message = "Saving Template ..."
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // TODO - process error message
     const template = await this.retrieve(ro, body.tgtTmplName, result, profile, false)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -968,6 +995,7 @@ export class TemplateService {
     notify.title = "Template: <b>" + tmplName + "</b> DELETE --> "
     notify.message =  "IN PROGRESS ....."
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     // get srcRecVersionId from source template
     const srcTmpl = await this.templateRepository.findOne({where: {name: tmplName}})
@@ -1011,6 +1039,7 @@ export class TemplateService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushTAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -1021,10 +1050,12 @@ export class TemplateService {
 
     notify.message = "Deleting Template ..."
     this.messageQueueService.pushTAD(notify)
+    await DataUtils.sleep(50)
 
     await this.templateRepository.deleteById(srcTmpl?.id!)
 
     notify.completed = true
+    notify.success = true
     notify.message = "Deleted successfully."
     notify.result = response
     this.messageQueueService.pushTAD(notify)

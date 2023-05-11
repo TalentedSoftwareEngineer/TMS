@@ -172,7 +172,15 @@ export class ReferralNumberQueryComponent implements OnInit, OnDestroy {
 
     await this.api.getTrqData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
+        res.map(u => {
+          if(Boolean(this.store.getUser()?.timezone)) {
+            // Timezone Time
+            u.sub_dt_tm = u.sub_dt_tm ? moment(u.sub_dt_tm).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+          } else {
+            // Local time
+            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+          }
+        });
         this.results = res;
       })).toPromise();
 

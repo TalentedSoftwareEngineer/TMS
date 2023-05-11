@@ -99,9 +99,9 @@ export class ActivityResultController {
     let num_fields = 'src_num, tgt_num';
     let custom = [];
     if (profile.user.role_id!=SUPER_ADMIN_ROLE)
-      custom.push({ user_id: profile.user.id })
+      custom.push({ user_id: profile.user.id });
     else
-      custom.push({ user_id: tmpUserIdFilter })
+      custom.push({ user_id: tmpUserIdFilter });
 
     let include = [
       {

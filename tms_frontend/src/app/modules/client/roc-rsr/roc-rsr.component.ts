@@ -263,10 +263,18 @@ export class RocRsrComponent implements OnInit {
 
     this.api.searchRocByTransaction(data).subscribe(res=>{
       res.transactionList.map((u: any) => {
-        u.submittedDateTime = u.submittedDateTime ? moment(new Date(u.submittedDateTime)).format('MM/DD/YYYY h:mm:ss A') : '';
-        u.futureDateTime = u.futureDateTime ? moment(new Date(u.futureDateTime)).format('MM/DD/YYYY h:mm:ss A') : '';
+        if(Boolean(this.store.getUser()?.timezone)) {
+          // Timezone Time
+          u.submittedDateTime = u.submittedDateTime ? moment(u.submittedDateTime).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.futureDateTime = u.futureDateTime ? moment(u.futureDateTime).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.closedOn = u.closedOn ? moment(u.closedOn).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+        } else {
+          // Local time
+          u.submittedDateTime = u.submittedDateTime ? moment(new Date(u.submittedDateTime)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.futureDateTime = u.futureDateTime ? moment(new Date(u.futureDateTime)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.closedOn = u.closedOn ? moment(new Date(u.closedOn)).format('MM/DD/YYYY h:mm:ss A') : '';
+        }
         u.dueDate = u.dueDate ? moment(new Date(u.dueDate)).format('MM/DD/YYYY') : '';
-        u.closedOn = u.closedOn ? moment(new Date(u.closedOn)).format('MM/DD/YYYY h:mm:ss A') : '';
       });
 
       this.searchRocByTransactionResult = res.transactionList;

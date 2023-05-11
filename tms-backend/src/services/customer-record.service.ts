@@ -170,6 +170,8 @@ export class CustomerRecordService {
 
     let message = ""
     let response = await this.tfnRegistryApiService.retrieveCustomerRecord(ro, num, profile, eff_dt_tm)
+    console.log("CAD", response)
+
     if (response==null) {
       message = MESSAGES.EMPTY_RESPONSE
 
@@ -185,9 +187,10 @@ export class CustomerRecordService {
 
     } else if (response.reqId!=null) {
       let reqId = response.reqId
-      while (response==null || response.tmplId==null) {
+      while (response==null || response.lstEffDtTms==null) {
         await DataUtils.sleep(100)
-        response = await this.tfnRegistryApiService.retrieveTemplateRecordByReqId(ro, reqId, profile)
+        response = await this.tfnRegistryApiService.retrieveCustomerRecordByReqId(ro, reqId, profile)
+        console.log("CAD req", response)
       }
 
     } else {
@@ -309,7 +312,9 @@ export class CustomerRecordService {
     notify.completed = false
     notify.title = "Customer Record: <b>" + body.srcNum + "</b> COPY --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushCAD(notify)
+    await DataUtils.sleep(50)
 
     let response = await this.tfnRegistryApiService.copyCustomerRecord(ro, body, profile)
     if (response==null) {
@@ -350,6 +355,7 @@ export class CustomerRecordService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushCAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -360,6 +366,7 @@ export class CustomerRecordService {
         body.srcNum, body.srcEffDtTm)
 
     notify.completed = true
+    notify.success = true
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
     notify.result = response
     this.messageQueueService.pushCAD(notify)
@@ -379,7 +386,9 @@ export class CustomerRecordService {
     notify.completed = false
     notify.title = "Customer Record : <b>" + body.srcNum + "</b> TRANSFER --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushCAD(notify)
+    await DataUtils.sleep(50)
 
     let response = await this.tfnRegistryApiService.transferCustomerRecord(ro, body, profile)
     if (response==null) {
@@ -425,6 +434,7 @@ export class CustomerRecordService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushCAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -435,6 +445,7 @@ export class CustomerRecordService {
         body.srcNum, body.srcEffDtTm)
 
     notify.completed = true
+    notify.success = true
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
     notify.result = response
 
@@ -455,7 +466,9 @@ export class CustomerRecordService {
     notify.completed = false
     notify.title = "Customer Record: <b>" + body.srcNum + "</b> DISCONNECT --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushCAD(notify)
+    await DataUtils.sleep(50)
 
     let response = await this.tfnRegistryApiService.disconnectCustomerRecord(ro, body, profile)
     if (response==null) {
@@ -494,6 +507,7 @@ export class CustomerRecordService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushCAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -504,6 +518,7 @@ export class CustomerRecordService {
         body.srcNum, body.srcEffDtTm)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
     this.messageQueueService.pushCAD(notify)
@@ -523,7 +538,9 @@ export class CustomerRecordService {
     notify.completed = false
     notify.title = "Customer Record: <b>" + body.num + "</b> CREATE --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushCAD(notify)
+    await DataUtils.sleep(50)
 
     let response = await this.tfnRegistryApiService.createCustomerRecord(ro, body, profile)
     if (response==null) {
@@ -562,6 +579,7 @@ export class CustomerRecordService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushCAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -574,6 +592,7 @@ export class CustomerRecordService {
     this.saveNumber(profile, body.num, NUMBER_STATUS.ASSIGNED, sub_dt_tm, body.newRespOrgId, undefined, response.effDtTm)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -594,7 +613,9 @@ export class CustomerRecordService {
     notify.completed = false
     notify.title = "Customer Record: <b>" + body.num + "</b> UPDATE --> "
     notify.message =  "IN PROGRESS ....."
+    notify.body = body
     this.messageQueueService.pushCAD(notify)
+    await DataUtils.sleep(50)
 
     let response = await this.tfnRegistryApiService.updateCustomerRecord(ro, body, profile)
     if (response==null) {
@@ -633,6 +654,7 @@ export class CustomerRecordService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushCAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -642,6 +664,7 @@ export class CustomerRecordService {
         undefined, message, body.effDtTm, undefined, undefined)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 
@@ -663,6 +686,7 @@ export class CustomerRecordService {
     notify.title = "Customer Record: <b>" + num + "</b> DELETE --> "
     notify.message =  "IN PROGRESS ....."
     this.messageQueueService.pushCAD(notify)
+    await DataUtils.sleep(50)
 
     let response = await this.tfnRegistryApiService.deleteCustomerRecord(ro, num, effDtTm, recVersionId, profile)
     if (response==null) {
@@ -701,6 +725,7 @@ export class CustomerRecordService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushCAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -710,6 +735,7 @@ export class CustomerRecordService {
         "", message, response.effDtTm, undefined, undefined)
 
     notify.completed = true
+    notify.success = true
     notify.message = "Deleted successfully."
     notify.result = response
     this.messageQueueService.pushCAD(notify)
@@ -730,6 +756,7 @@ export class CustomerRecordService {
     notify.title = "Customer Record: <b>" + body.num + "</b> CONVERT --> "
     notify.message =  "IN PROGRESS ....."
     this.messageQueueService.pushCAD(notify)
+    await DataUtils.sleep(50)
 
     let response = await this.tfnRegistryApiService.convertCustomerRecordToPointerRecord(ro, body, profile)
     if (response==null) {
@@ -776,6 +803,7 @@ export class CustomerRecordService {
       notify.completed = true
       notify.message = message
       this.messageQueueService.pushCAD(notify)
+      await DataUtils.sleep(50)
 
       // throw new HttpErrors.BadRequest(message)
       return null
@@ -785,6 +813,7 @@ export class CustomerRecordService {
         body.ctrlRespOrgId, message, response.effDtTm, body.tmplName, undefined)
 
     notify.completed = true
+    notify.success = true
     notify.result = response
     notify.message = body.cmd==ADMIN_DATA_OPERATION.SUBMIT ? "Successfully submitted and Now it is pending..." : "Successfully saved!"
 

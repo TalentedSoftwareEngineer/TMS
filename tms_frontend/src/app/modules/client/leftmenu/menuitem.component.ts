@@ -66,7 +66,8 @@ export class AppMenuitemComponent implements OnInit, OnDestroy {
 
   @Input() parentKey!: string;
 
-  active = false;
+  // active = false;
+  active = true;
 
   menuSourceSubscription: Subscription;
 
@@ -78,18 +79,18 @@ export class AppMenuitemComponent implements OnInit, OnDestroy {
     this.menuSourceSubscription = this.menuService.menuSource$.subscribe(value => {
       Promise.resolve(null).then(() => {
         if (value.routeEvent) {
-          this.active = (value.key === this.key || value.key.startsWith(this.key + '-')) ? true : false;
+          // this.active = (value.key === this.key || value.key.startsWith(this.key + '-')) ? true : false;
         }
         else {
           if (value.key !== this.key && !value.key.startsWith(this.key + '-')) {
-            this.active = false;
+            // this.active = false;
           }
         }
       });
     });
 
     this.menuResetSubscription = this.menuService.resetSource$.subscribe(() => {
-      this.active = false;
+      // this.active = false;
     });
 
     this.router.events.pipe(filter(event => event instanceof NavigationEnd))
@@ -131,7 +132,7 @@ export class AppMenuitemComponent implements OnInit, OnDestroy {
 
     // toggle active state
     if (this.item.items) {
-      this.active = !this.active;
+      // this.active = !this.active;
 
       if (this.root && this.active) {
         this.layoutService.onOverlaySubmenuOpen();

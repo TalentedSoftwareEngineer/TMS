@@ -38,6 +38,8 @@ export class TfnRegistryApiService {
     OpenSession: '/sec/session/open',
     CloseSession: '/sec/session/close',
 
+    Dashboard: '/sec/usr/dashboard',
+
     // Organization Administration
     ListRespOrgEntity: '/org/resporg/respOrgEntity',
     ListRespOrgUnit: '/org/resporg/respOrgUnit',
@@ -150,7 +152,8 @@ export class TfnRegistryApiService {
 
   constructor(
       @repository(TfnRegistryTokenRepository) public tokenRepository: TfnRegistryTokenRepository,
-  ) {}
+  ) {
+  }
 
   getBasePath() {
     return (this.isProduction ? this.BASEPATH_PRODUCTION : this.BASEPATH_SANDBOX) + this.VERSION
@@ -158,16 +161,16 @@ export class TfnRegistryApiService {
 
   parseErrorList(response: any): any {
     let errList: [] | null = null;
-    if (response!=null && response.data!=null && response.data.errList!=null)
+    if (response != null && response.data != null && response.data.errList != null)
       errList = response.data.errList
-    else if (response!=null && response.errList!=null)
+    else if (response != null && response.errList != null)
       errList = response.errList
 
-    if (errList==null || errList.length==0) {
-      if (response!=null && response!="")
-        return { code: "", message: response }
+    if (errList == null || errList.length == 0) {
+      if (response != null && response != "")
+        return {code: "", message: response}
 
-      return { code: "", message: MESSAGES.INTERNAL_SERVER_ERROR }
+      return {code: "", message: MESSAGES.INTERNAL_SERVER_ERROR}
     }
 
     console.log("------------- Error List -----------------")
@@ -175,7 +178,7 @@ export class TfnRegistryApiService {
 
     // @ts-ignore
     const error: any = errList[0]
-    return { code: error.errCode+"", message: error.errMsg }
+    return {code: error.errCode + "", message: error.errMsg}
   }
 
   async openSession(id: number, username: string, password: string): Promise<any> {
@@ -244,15 +247,15 @@ export class TfnRegistryApiService {
 
   async refreshToken(token: TfnRegistryToken, somos: SomosUser): Promise<any> {
     let auth: any = {}
-    if (token!=null) {
+    if (token != null) {
       auth.username = token.client_key
       auth.password = token.client_secret
     }
 
-    if (somos.client_key!=undefined && somos.client_key!="")
+    if (somos.client_key != undefined && somos.client_key != "")
       auth.username = somos.client_key
 
-    if (somos.client_secret!=undefined && somos.client_secret!="")
+    if (somos.client_secret != undefined && somos.client_secret != "")
       auth.password = somos.client_secret
 
     let params: any = {
@@ -260,7 +263,7 @@ export class TfnRegistryApiService {
       grant_type: "refresh_token"
     }
 
-    if (token!=null)
+    if (token != null)
       token.refresh_token = token.refresh_token
 
     try {
@@ -293,10 +296,10 @@ export class TfnRegistryApiService {
   async openToken(somos: SomosUser): Promise<any> {
     let auth: any = {}
 
-    if (somos.client_key!=undefined && somos.client_key!="")
+    if (somos.client_key != undefined && somos.client_key != "")
       auth.username = somos.client_key
 
-    if (somos.client_secret!=undefined && somos.client_secret!="")
+    if (somos.client_secret != undefined && somos.client_secret != "")
       auth.password = somos.client_secret
 
     let params: any = {
@@ -337,8 +340,8 @@ export class TfnRegistryApiService {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CloseSession, {
         method: 'put',
         data: {
-          clientKey: client_key && client_key!="" ? client_key : token.client_key,
-          clientSecret: client_secret && client_secret!="" ? client_secret : token.client_secret,
+          clientKey: client_key && client_key != "" ? client_key : token.client_key,
+          clientSecret: client_secret && client_secret != "" ? client_secret : token.client_secret,
         },
         headers: {
           Accept: 'application/json',
@@ -367,7 +370,7 @@ export class TfnRegistryApiService {
    * @param profile
    */
   async getToken(profile: AuthorizedUserProfile): Promise<any> {
-    let token: any = await this.tokenRepository.findOne({ where: {id: profile.somos.id}})
+    let token: any = await this.tokenRepository.findOne({where: {id: profile.somos.id}})
     let isOpen = false
     if (token) {
       const now = DateTimeUtils.getCurrentTimestamp();
@@ -383,12 +386,13 @@ export class TfnRegistryApiService {
       // if (token)
       //   await this.closeSession(token, profile.somos.client_key, profile.somos.client_secret)
 
-      if (profile.somos.client_key!=null && profile.somos.client_key!="" && profile.somos.client_secret!=null && profile.somos.client_secret!="") {
+      if (profile.somos.client_key != null && profile.somos.client_key != "" && profile.somos.client_secret != null && profile.somos.client_secret != "") {
         return this.openToken(profile.somos)
 
       } else {
+        return {code: "100001", message: "Somos User have not client key and secret."}
 
-        return this.openSession(profile.somos.id!, profile.somos.username, profile.somos.password)
+        // return this.openSession(profile.somos.id!, profile.somos.username, profile.somos.password)
       }
     }
 
@@ -408,8 +412,7 @@ export class TfnRegistryApiService {
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.ListRespOrgEntity, {
         method: 'get',
-        data: {
-        },
+        data: {},
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -437,8 +440,7 @@ export class TfnRegistryApiService {
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.ListRespOrgUnit, {
         method: 'get',
-        data: {
-        },
+        data: {},
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -475,7 +477,7 @@ export class TfnRegistryApiService {
           // Accept: 'application/json',
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -495,8 +497,7 @@ export class TfnRegistryApiService {
     try {
       const response: any = await axios(url, {
         method: 'get',
-        data: {
-        },
+        data: {},
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -518,7 +519,7 @@ export class TfnRegistryApiService {
    * @param profile
    */
   async retrieveRespOrgByUnit(unit: string, profile: AuthorizedUserProfile): Promise<any> {
-    return await this.retrieveRespOrg(this.getBasePath() + this.EndPoints.RetrieveRespOrgByUnit+unit, profile)
+    return await this.retrieveRespOrg(this.getBasePath() + this.EndPoints.RetrieveRespOrgByUnit + unit, profile)
   }
 
   /**
@@ -527,7 +528,7 @@ export class TfnRegistryApiService {
    * @param profile
    */
   async retrieveRespOrgByEntity(entity: string, profile: AuthorizedUserProfile): Promise<any> {
-    return await this.retrieveRespOrg(this.getBasePath() + this.EndPoints.RetrieveRespOrgByEntity+entity, profile)
+    return await this.retrieveRespOrg(this.getBasePath() + this.EndPoints.RetrieveRespOrgByEntity + entity, profile)
   }
 
   /**
@@ -536,7 +537,7 @@ export class TfnRegistryApiService {
    * @param profile
    */
   async retrieveRespOrgByNumber(number: string, profile: AuthorizedUserProfile): Promise<any> {
-    return await this.retrieveRespOrg(this.getBasePath() + this.EndPoints.RetrieveRespOrgByNumber+number, profile)
+    return await this.retrieveRespOrg(this.getBasePath() + this.EndPoints.RetrieveRespOrgByNumber + number, profile)
   }
 
   private async searchNumbers(url: string, ro: string, payload: any, profile: AuthorizedUserProfile): Promise<any> {
@@ -553,7 +554,7 @@ export class TfnRegistryApiService {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -614,7 +615,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -672,7 +673,7 @@ export class TfnRegistryApiService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + token.oouth_token,
           // 'ROID': ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -734,7 +735,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -788,14 +789,14 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveBulkSearchAndReserve+blkId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveBulkSearchAndReserve + blkId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -819,7 +820,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ...payload }
+    let data = {...payload}
     if (data.qty)
       delete data.qty
 
@@ -832,7 +833,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -856,14 +857,14 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryNumberDataByBulkId+blkId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryNumberDataByBulkId + blkId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -897,7 +898,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -934,7 +935,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -968,7 +969,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -986,14 +987,14 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveNumberSpareByBlkID+blkId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveNumberSpareByBlkID + blkId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1027,7 +1028,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1049,7 +1050,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
     if (data.qty)
       delete data.qty;
 
@@ -1062,7 +1063,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1086,14 +1087,14 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.CreateMultiNumberDisconnectForNumberByBlkID+blkId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.CreateMultiNumberDisconnectForNumberByBlkID + blkId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1116,7 +1117,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
     if (data.qty)
       delete data.qty;
 
@@ -1129,7 +1130,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1153,14 +1154,14 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.ChangeRespOrgOfTollFreeNumberByBlkID+blkId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ChangeRespOrgOfTollFreeNumberByBlkID + blkId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1184,7 +1185,7 @@ export class TfnRegistryApiService {
         headers: {
           'Authorization': 'Bearer ' + token.oouth_token,
           // 'ROID': ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1238,14 +1239,14 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.OneClickActivationByBlkID+blkId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.OneClickActivationByBlkID + blkId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1273,7 +1274,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1324,7 +1325,7 @@ export class TfnRegistryApiService {
   async retrieveReservedNumberList(ro: string, profile: AuthorizedUserProfile): Promise<any> {
     const token = await this.getToken(profile)
     if (token.code && token.message)
-      throw new HttpErrors.BadRequest(token.message + (token.code!="" ? " Code: " + token.code : ""))
+      throw new HttpErrors.BadRequest(token.message + (token.code != "" ? " Code: " + token.code : ""))
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.ReservedNumberList, {
@@ -1334,7 +1335,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1345,7 +1346,6 @@ export class TfnRegistryApiService {
       return err?.response?.data;
     }
   }
-
 
 
   /**
@@ -1360,14 +1360,14 @@ export class TfnRegistryApiService {
       return token
 
     let payload: any = null
-    if (effDtTm && effDtTm!="") {
+    if (effDtTm && effDtTm != "") {
       payload = {
         effDtTm,
       }
     }
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryTemplateRecord+tmplName, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryTemplateRecord + tmplName, {
         method: 'get',
         data: payload,
         headers: {
@@ -1375,7 +1375,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1403,7 +1403,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1426,11 +1426,11 @@ export class TfnRegistryApiService {
       return token
 
     let params: any = {}
-    if (startTmplName!=null && startTmplName!=null)
+    if (startTmplName != null && startTmplName != "")
       params.startTmplName = startTmplName
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.ListTemplateRecords+entity, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ListTemplateRecords + entity, {
         method: 'get',
         params: params,
         headers: {
@@ -1438,7 +1438,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1470,7 +1470,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1495,14 +1495,14 @@ export class TfnRegistryApiService {
       return token
 
     let payload: any = null
-    if (effDtTm && effDtTm!="") {
+    if (effDtTm && effDtTm != "") {
       payload = {
         effDtTm,
       }
     }
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveTemplateRecord+tmplName, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveTemplateRecord + tmplName, {
         method: 'get',
         data: payload,
         headers: {
@@ -1510,7 +1510,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1544,7 +1544,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1568,7 +1568,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.LockTemplateRecord, {
@@ -1577,7 +1577,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1609,7 +1609,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1632,7 +1632,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.UnlockTemplateRecord, {
@@ -1641,7 +1641,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1673,7 +1673,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1696,7 +1696,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CopyTemplateRecord, {
@@ -1705,7 +1705,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1737,7 +1737,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1760,7 +1760,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.TransferTemplateRecord, {
@@ -1769,7 +1769,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1801,7 +1801,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1824,7 +1824,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.DisconnectTemplateRecord, {
@@ -1833,7 +1833,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1865,7 +1865,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1888,7 +1888,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CreateTemplateRecord, {
@@ -1897,7 +1897,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1920,7 +1920,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.UpdateTemplateRecord, {
@@ -1929,7 +1929,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1955,7 +1955,7 @@ export class TfnRegistryApiService {
       return token
 
     let endpoint = this.EndPoints.DeleteTemplateRecord
-        .replace("{tmplName}",tmplName)
+        .replace("{tmplName}", tmplName)
         .replace("{effDtTm}", effDtTm)
         .replace("{recVersionId}", recVersionId)
 
@@ -1965,7 +1965,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -1976,8 +1976,6 @@ export class TfnRegistryApiService {
       return err?.response?.data;
     }
   }
-
-
 
 
   /**
@@ -1992,14 +1990,14 @@ export class TfnRegistryApiService {
       return token
 
     let payload: any = null
-    if (effDtTm && effDtTm!="") {
+    if (effDtTm && effDtTm != "") {
       payload = {
         effDtTm,
       }
     }
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryCustomerRecord+num, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryCustomerRecord + num, {
         method: 'get',
         params: payload,
         headers: {
@@ -2007,7 +2005,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2041,7 +2039,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2066,20 +2064,20 @@ export class TfnRegistryApiService {
       return token
 
     let payload: any = null
-    if (effDtTm && effDtTm!="") {
+    if (effDtTm && effDtTm != "") {
       payload = {
         effDtTm,
       }
     }
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveCustomerRecord+num, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveCustomerRecord + num, {
         method: 'get',
         data: payload,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2111,7 +2109,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2134,7 +2132,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CreateCustomerRecord, {
@@ -2143,7 +2141,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2166,7 +2164,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.UpdateCustomerRecord, {
@@ -2175,7 +2173,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2201,7 +2199,7 @@ export class TfnRegistryApiService {
       return token
 
     let endpoint = this.EndPoints.DeleteCustomerRecord
-        .replace("{num}",num)
+        .replace("{num}", num)
         .replace("{effDtTm}", effDtTm)
         .replace("{recVersionId}", recVersionId)
 
@@ -2211,7 +2209,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2234,7 +2232,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.LockCustomerRecord, {
@@ -2243,7 +2241,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2275,7 +2273,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2298,7 +2296,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.UnlockCustomerRecord, {
@@ -2307,7 +2305,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2339,7 +2337,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2362,7 +2360,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CopyCustomerRecord, {
@@ -2371,7 +2369,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2403,7 +2401,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2426,7 +2424,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.TransferCustomerRecord, {
@@ -2435,7 +2433,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2467,7 +2465,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2490,7 +2488,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.DisconnectCustomerRecord, {
@@ -2499,7 +2497,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2531,7 +2529,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2554,7 +2552,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
     if (data.qty)
       delete data.qty
 
@@ -2567,7 +2565,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2601,7 +2599,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2625,14 +2623,14 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.ConvertCustomerRecordToPointerRecordByBlkID+blkId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.ConvertCustomerRecordToPointerRecordByBlkID + blkId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2643,7 +2641,6 @@ export class TfnRegistryApiService {
       return err?.response?.data;
     }
   }
-
 
 
   /**
@@ -2659,7 +2656,7 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryPointerRecord+num, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.QueryPointerRecord + num, {
         method: 'get',
         params: {
           effDtTm: effDtTm,
@@ -2669,7 +2666,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2694,20 +2691,20 @@ export class TfnRegistryApiService {
       return token
 
     let payload: any = null
-    if (effDtTm && effDtTm!="") {
+    if (effDtTm && effDtTm != "") {
       payload = {
         effDtTm,
       }
     }
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrievePointerRecord+num, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrievePointerRecord + num, {
         method: 'get',
         data: payload,
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2733,7 +2730,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2756,7 +2753,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.LockPointerRecord, {
@@ -2765,7 +2762,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2791,7 +2788,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2814,7 +2811,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.UnlockPointerRecord, {
@@ -2823,7 +2820,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2849,7 +2846,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2872,7 +2869,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
     if (data.qty)
       delete data.qty
 
@@ -2885,7 +2882,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2908,7 +2905,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.UpdatePointerRecord, {
@@ -2917,7 +2914,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2943,7 +2940,7 @@ export class TfnRegistryApiService {
       return token
 
     let endpoint = this.EndPoints.DeletePointerRecord
-        .replace("{num}",num)
+        .replace("{num}", num)
         .replace("{effDtTm}", effDtTm)
         .replace("{recVersionId}", recVersionId)
 
@@ -2953,7 +2950,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -2976,7 +2973,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CopyPointerRecord, {
@@ -2985,7 +2982,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3017,7 +3014,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3040,7 +3037,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.TransferPointerRecord, {
@@ -3049,7 +3046,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3081,7 +3078,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3104,7 +3101,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.DisconnectPointerRecord, {
@@ -3113,7 +3110,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3145,7 +3142,7 @@ export class TfnRegistryApiService {
         headers: {
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3168,7 +3165,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
     if (data.qty)
       delete data.qty
 
@@ -3181,7 +3178,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3215,7 +3212,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3246,7 +3243,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3276,7 +3273,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.SubmitROCRequest, {
@@ -3345,7 +3342,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.ResubmitHDIRequest, {
@@ -3408,7 +3405,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.GenerateLOAFileRequest, {
@@ -3609,7 +3606,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.UploadAdditionalDocumentRequest, {
@@ -3620,7 +3617,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3648,7 +3645,7 @@ export class TfnRegistryApiService {
           // 'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: 'Bearer ' + token.oouth_token,
           // ROID: ro,
-          // 'Accept-Version': this.ACCEPT_VERSION,
+          'Accept-Version': this.ACCEPT_VERSION,
         }
       })
 
@@ -3665,7 +3662,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.SearchROCRequest, {
@@ -3721,7 +3718,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.SearchROCByTransactionIDRequest, {
@@ -3778,7 +3775,7 @@ export class TfnRegistryApiService {
       return token
 
     try {
-      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveROCRequest+txnId, {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.RetrieveROCRequest + txnId, {
         method: 'get',
         headers: {
           // Accept: 'application/json',
@@ -3975,7 +3972,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.ProcessROCRequest, {
@@ -4031,7 +4028,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CheckinROCRequest, {
@@ -4087,7 +4084,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.CheckoutROCRequest, {
@@ -4143,7 +4140,7 @@ export class TfnRegistryApiService {
     if (token.code && token.message)
       return token
 
-    let data = { ... payload }
+    let data = {...payload}
 
     try {
       const response: any = await axios(this.getBasePath() + this.EndPoints.EscalateROCRequest, {
@@ -4402,6 +4399,28 @@ export class TfnRegistryApiService {
       return response.data
     } catch (err) {
       console.log("---------- Exception in resendFailedNotificationRequestByReqId ----------")
+      console.log(err?.response?.data)
+      return err?.response?.data;
+    }
+  }
+
+  async dashboard(profile: AuthorizedUserProfile) {
+    const token = await this.getToken(profile)
+    if (token.code && token.message)
+      return token
+
+    try {
+      const response: any = await axios(this.getBasePath() + this.EndPoints.Dashboard, {
+        method: 'get',
+        headers: {
+          Authorization: 'Bearer ' + token.oouth_token,
+          'Accept-Version': this.ROC_ACCEPT_VERSION,
+        }
+      })
+
+      return response.data
+    } catch (err) {
+      console.log("---------- Exception in dashboard ----------")
       console.log(err?.response?.data)
       return err?.response?.data;
     }

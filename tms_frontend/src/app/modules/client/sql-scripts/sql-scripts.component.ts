@@ -118,8 +118,33 @@ export class SqlScriptsComponent implements OnInit {
         .pipe(tap(async (sql_scriptsRes: ISqlScript[]) => {
           this.sql_scripts = [];
           sql_scriptsRes.map(u => {
-            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            // switch(this.store.getUser()?.timezone) {
+            //   case -5:
+            //     // EST/EDT time
+            //     u.created_at = u.created_at ? moment(new Date(u.created_at)).utc().tz('America/New_York').format('MM/DD/YYYY h:mm:ss A') : '';
+            //     u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).utc().tz('America/New_York').format('MM/DD/YYYY h:mm:ss A') : '';
+            //     break;
+            //   case -6:
+            //     // CST/CDT time
+            //     u.created_at = u.created_at ? moment(new Date(u.created_at)).utc().tz('America/Chicago').format('MM/DD/YYYY h:mm:ss A') : '';
+            //     u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).utc().tz('America/Chicago').format('MM/DD/YYYY h:mm:ss A') : '';
+            //     break;
+            //   default:
+            //     // Local time
+            //     u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            //     u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            //     break;
+            // }
+            
+            if(Boolean(this.store.getUser()?.timezone)) {
+              // Timezone Time
+              u.created_at = u.created_at ? moment(u.created_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+              u.updated_at = u.updated_at ? moment(u.updated_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            } else {
+              // Local time
+              u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+              u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            }
           });
 
           let allNotEditable = true

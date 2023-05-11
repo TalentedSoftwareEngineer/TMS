@@ -110,7 +110,15 @@ export class ScriptExeRecordsComponent implements OnInit {
         .pipe(tap(async (res: IScriptResults[]) => {
           console.log(res);
           this.script_exe_records = [];
-          res.map(u => u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '');
+          res.map(u => {
+            if(Boolean(this.store.getUser()?.timezone)) {
+              // Timezone Time
+              u.updated_at = u.updated_at ? moment(u.updated_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            } else {
+              // Local time
+              u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            }
+          });
 
           let allNotEditable = true
           for (let record of res) {

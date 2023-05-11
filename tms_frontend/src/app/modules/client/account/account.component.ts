@@ -7,7 +7,7 @@ import {IUser, ICompany, IRole, ISomosUser} from "../../../models/user";
 import {defaultDarkTheme, defaultLightTheme, defaultAvatar, defaultLogo} from "../default-ui-setting-values";
 import { LayoutService } from 'src/app/services/layout/layout.service';
 import { MenuService } from 'src/app/services/menu/menu.service';
-import { EMAIL_REG_EXP, SUPER_ADMIN_ID, TMSUserType } from '../../constants';
+import { EMAIL_REG_EXP, SUPER_ADMIN_ID, TIMEZONE, TMSUserType } from '../../constants';
 import {Location} from '@angular/common';
 
 @Component({
@@ -24,14 +24,14 @@ export class AccountComponent implements OnInit {
   user: any = {};
   accountTabIndex: number = 0;
   //user items
-  input_username: string|number|undefined|null = ''
+  input_username: any = ''
   input_company_id: any = ''
   input_role_id: any = ''
-  input_timezone: any = 0
-  input_email: string|number|undefined|null = ''
+  input_timezone: any = ''
+  input_email: any = ''
   validEmail: boolean = true;
-  input_first_name: string|number|undefined|null = ''
-  input_last_name: string|number|undefined|null = ''
+  input_first_name: any = ''
+  input_last_name: any = ''
   input_old_password: string|number|undefined|null = ''
   input_password: string|number|undefined|null = ''
   input_confirm_password: string|number|undefined|null = ''
@@ -50,11 +50,7 @@ export class AccountComponent implements OnInit {
 
   companies: any[] = []
   roles: any[] = []
-  timezones: any[] = [
-    {name: 'Auto Detect', value: 0},
-    {name: 'CST', value: -6},
-    {name: 'EST', value: -5}
-  ]
+  timezones: any[] = TIMEZONE
   sms_users: any[] = []
   required = true;
   logged_user: any;
@@ -299,6 +295,16 @@ export class AccountComponent implements OnInit {
       role_id: role_id,
       timezone: timezone
     }).pipe(tap(res=>{
+      this.store.storeUser({
+        ...this.store.getUser(),
+        username: username,
+        email: email,
+        first_name: first_name,
+        last_name: last_name,
+        company_id: company_id,
+        role_id: role_id,
+        timezone: timezone
+      });
       this.showSuccess('Successfully Updated!');
     })).toPromise();
   }
@@ -308,7 +314,7 @@ export class AccountComponent implements OnInit {
       this.input_username = res.username;
       this.input_company_id = {name: res.company?.name, value: res.company?.id};
       this.input_role_id = {name: res.role?.name, value: res.role?.id};
-      this.input_timezone = 0
+      this.input_timezone = res.timezone
       this.input_email = res.email;
       this.input_first_name = res.first_name;
       this.input_last_name = res.last_name;

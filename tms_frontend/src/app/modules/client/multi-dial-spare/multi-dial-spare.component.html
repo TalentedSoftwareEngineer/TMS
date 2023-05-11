@@ -177,12 +177,12 @@
         <div class="flex justify-content-end align-items-center">
           <button pButton type="button" (click)="onViewNumbersDownload()" icon="pi pi-download" label="Download" class="p-button-text p-button-help"></button>
         </div>
-        <div class="flex align-items-center" [ngClass]="resultTotal>0 ? 'justify-content-between' : 'justify-content-end'">
+        <div class="flex align-items-center" [ngClass]="'justify-content-between'">
           <h5><span *ngIf="resultTotal!=-1">Total {{resultTotal}} Record</span><span *ngIf="resultTotal>1">s</span><i *ngIf="resultTotal!=-1&&filterNumberList.length!=-1&&filterNumberList.length<resultTotal" style="font-size: medium;">, {{filterNumberList.length}} Record<span *ngIf="filterNumberList.length>1">s</span> Filtered</i></h5>
           <div class="table-header">
             <span class="p-input-icon-left">
-                <i class="pi pi-search"></i>
-                <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
+              <i class="pi pi-search"></i>
+              <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
             </span>
           </div>
         </div>

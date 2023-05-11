@@ -48,8 +48,8 @@
                 <th class="text-left" [ngClass]="scriptSortActive === 'content' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
                     <a (click)="onScriptSortChange('content')">Sql Script</a>
                 </th>
-                <th class="text-align-center" [ngClass]="sortActive === 'type' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
-                    <a (click)="onSortChange('type')">Type</a>
+                <th class="text-align-center" [ngClass]="scriptSortActive === 'type' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
+                    <a (click)="onScriptSortChange('type')">Type</a>
                 </th>
                 <th class="text-align-center" [ngClass]="scriptSortActive === 'autorun' ? 'sorting_' + scriptSortDirection.toLowerCase() :'sorting'">
                     <a (click)="onScriptSortChange('autorun')">Autorun</a>
@@ -141,10 +141,12 @@
                 dataKey="id"
                 [rows]="10"
                 [loading]="numberListLoading"
-                responsiveLayout="stack"
+                responsiveLayout="scroll"
+                [scrollable]="true"
+                scrollDirection="both"
                 [responsive]="true"
                 [filterDelay]="0"
-                styleClass="p-datatable-lg"
+                styleClass="p-datatable-lg c-table"
             >
                 <ng-template pTemplate="caption">
                     <div class="grid">
@@ -170,136 +172,143 @@
 
                 <ng-template pTemplate="header">
                     <tr>
-                        <th style="width: 3rem">
+                        <th style="flex: 2;">
                             <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
                         </th>
-                        <th class="text-align-center" [ngClass]="sortActive === 'entity' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <th style="flex: 5" class="justify-content-center" [ngClass]="sortActive === 'entity' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('entity')">Entity</a>
                         </th>
-                        <th class="text-align-center" [ngClass]="sortActive === 'resp_org' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <th style="flex: 5" class="justify-content-center" [ngClass]="sortActive === 'resp_org' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('resp_org')">Resp Org Id</a>
                         </th>
-                        <th class="text-align-center">Company</th>
-                        <th class="text-align-center" [ngClass]="sortActive === 'template_name' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <th style="flex: 5" class="justify-content-center">Company</th>
+                        <th style="flex: 5" class="justify-content-center" [ngClass]="sortActive === 'template_name' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('template_name')">Template Name</a>
                         </th>
-                        <th class="text-align-center" [ngClass]="sortActive === 'num' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <th style="flex: 5" class="justify-content-center" [ngClass]="sortActive === 'num' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('num')">Toll-Free Number</a>
                         </th>
-                        <th class="text-align-center" [ngClass]="sortActive === 'status' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <th style="flex: 5" class="justify-content-center" [ngClass]="sortActive === 'status' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('status')">Status</a>
                         </th>
-                        <th class="text-align-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
+                        <th style="flex: 7" class="justify-content-center" [ngClass]="sortActive === 'sub_dt_tm' ? 'sorting_' + sortDirection.toLowerCase() :'sorting'">
                             <a (click)="onSortChange('sub_dt_tm')">Submit Date</a>
                         </th>
-                        <th class="text-align-center w-100px">
+                        <th class="justify-content-center" style="flex: 2;">
                             Action
                         </th>
                     </tr>
                     <tr>
-                        <th class="pl-0 pr-0"></th>
-                        <th class="pl-0 pr-0">
-                            <div class="p-fluid">
+                        <th style="flex: 2;" class=""></th>
+                        <th style="flex: 5" class="">
+                            <div class="p-fluid w-full">
                                 <span class="p-float-label">
                                     <p-dropdown [options]="entityOptions" id="filterByEntity" (onChange)="onChangeEntity($event)" [(ngModel)]="selectEntity" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
-                                    <label>Entity</label>
+                                    <!-- <label>Entity</label> -->
                                 </span>
                             </div>
                         </th>
-                        <th class="pl-0 pr-0">
-                            <div class="p-fluid">
+                        <th style="flex: 5" class="">
+                            <div class="p-fluid w-full">
                                 <span class="p-float-label">
                                     <p-dropdown [options]="respOrgIdOptions" id="filterByRespOrgId" (onChange)="onChangeRespOrgId($event)" [(ngModel)]="selectRespOrgId" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
-                                    <label>Resp Org Id</label>
+                                    <!-- <label>Resp Org Id</label> -->
                                 </span>
                             </div>
                         </th>
-                        <th class="pl-0 pr-0">
-                            <div class="p-fluid">
+                        <th style="flex: 5" class="">
+                            <div class="p-fluid w-full">
                                 <span class="p-float-label">
                                     <p-dropdown [options]="companyOptions" (onChange)="onChangeCompany($event)" [(ngModel)]="selectCompany" [filter]="true" filterBy="name" optionLabel="name" optionValue="value" scrollHeight="180px" [virtualScroll]="true" [itemSize]="40"></p-dropdown>
-                                    <label>Company</label>
+                                    <!-- <label>Company</label> -->
                                 </span>
                             </div>
                         </th>
-                        <th class="pl-0 pr-0">
-                            <div class="p-fluid">
+                        <th style="flex: 5" class="">
+                            <div class="p-fluid w-full">
                                 <span class="p-float-label">
                                     <p-dropdown [options]="tmplNameOptions" id="filterByTmplName" (onChange)="onClickFilter()" [(ngModel)]="selectTmplName" [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
-                                    <label>Template Name</label>
+                                    <!-- <label>Template Name</label> -->
                                 </span>
                             </div>
                         </th>
-                        <th class="pl-0 pr-0">
-                            <div class="p-fluid">
+                        <th style="flex: 5" class="">
+                            <div class="p-fluid w-full">
                                 <span class="p-float-label">
-                                    <input type="text" pInputText [(ngModel)]="filterValue" [disabled]="isLoading" (blur)="onClickFilter()" (keyup.enter)="onClickFilter()">
-                                    <label>Toll-Free Number</label>
+                                    <input type="text" pInputText [(ngModel)]="inputNumber" [disabled]="isLoading" (blur)="onClickFilter()" (keyup.enter)="onClickFilter()">
+                                    <!-- <label>Toll-Free Number</label> -->
                                 </span>
                             </div>                            
                         </th>
-                        <th class="pl-0 pr-0">
-                            <div class="p-fluid">
+                        <th style="flex: 5" class="">
+                            <div class="p-fluid w-full">
                                 <span class="p-float-label">
-                                    <p-dropdown [options]="statusOptions" id="filterByStatus" (onChange)="onClickFilter()" [(ngModel)]="selectStatus" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
-                                    <label>Status</label>
+                                    <p-dropdown [options]="statusOptions" id="filterByStatus" (onChange)="onClickFilter()" [(ngModel)]="selectStatus" [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
+                                    <!-- <label>Status</label> -->
                                 </span>
                             </div>
                         </th>
-                        <th class="pl-0 pr-0"></th>
-                        <th class="pl-0 pr-0"></th>
+                        <th style="flex: 7" class="">
+                            <div class="p-fluid w-full">
+                                <span class="p-float-label">
+                                    <p-dropdown [options]="subDtTmOptions" (onChange)="onClickFilter()" [(ngModel)]="selectSubDtTm" [filter]="true" filterBy="name" optionLabel="name"  optionValue="value" scrollHeight="180px"></p-dropdown>
+                                    <!-- <label>Status</label> -->
+                                </span>
+                            </div>
+                        </th>
+                        <th class="" style="flex: 2;"></th>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="body" let-number>
-                    <tr class="p-selectable-row text-align-center">
-                        <td>
+                    <tr class="p-selectable-row">
+                        <td style="flex: 2;">
                             <p-tableCheckbox [value]="number"></p-tableCheckbox>
                         </td>
-                        <td class="text-align-center">
+                        <td style="flex: 5" class="justify-content-center">
                             <span class="p-column-title">Entity</span>
                             {{number.entity}}
                         </td>
-                        <td class="text-align-center">
+                        <td style="flex: 5" class="justify-content-center">
                             <span class="p-column-title">Resp Org Id</span>
                             {{number.resp_org}}
                         </td>
-                        <td class="text-align-center">
+                        <td style="flex: 5" class="justify-content-center">
                             <span class="p-column-title">Company</span>
                             {{number?.company}}
                         </td>
-                        <td class="text-align-center">
+                        <td style="flex: 5" class="justify-content-center">
                             <span class="p-column-title">Template Name</span>
-                            <span pButton pRipple class="p-button-link" (click)="onClickTmplName(number.template_name)">{{number.template_name}}</span>
+                            <span class="cursor-pointer text-primary" (click)="onClickTmplName(number.template_name)">{{number.template_name}}</span>
                         </td>
-                        <td class="text-align-center">
+                        <td style="flex: 5" class="justify-content-center">
                             <span class="p-column-title">Toll-Free Number</span>
                             <ng-container *ngIf="number.template_name == '';else pad">
-                                <span pButton pRipple class="p-button-link" (click)="onClickCAD(number.num, number.status)">{{number.num | phoneFormat}}</span>
+                                <span class="cursor-pointer text-primary" (click)="onClickCAD(number.num, number.status)">{{number.num | phoneFormat}}</span>
                             </ng-container>
                             <ng-template #pad>
-                                <span pButton pRipple class="p-button-link" (click)="onClickPAD(number.num, number.status)">{{number.num | phoneFormat}}</span>
+                                <span class="cursor-pointer text-primary" (click)="onClickPAD(number.num, number.status)">{{number.num | phoneFormat}}</span>
                             </ng-template>
                         </td>
-                        <td class="text-align-center">
+                        <td style="flex: 5" class="justify-content-center">
                             <span class="p-column-title">Status</span>
                             {{number.status}}
                         </td>
-                        <td class="text-align-center">
+                        <td style="flex: 7" class="justify-content-center">
                             <span class="p-column-title">Submit Date</span>
                             {{number.sub_dt_tm}}
                         </td>
-                        <td class="text-align-center">
+                        <td class="justify-content-center" style="flex: 2">
                             <span class="p-column-title">Action</span>
                         </td>
                     </tr>
                 </ng-template>
 
-                <ng-template pTemplate="emptymessage">
+                <!-- <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="8">No Number List found.</td>
+                        <td style="width: 200px" colspan="8">No Number List found.</td>
                     </tr>
-                </ng-template>
+                </ng-template> -->
             </p-table>
 
             <div class="flex justify-content-center align-items-center gap-3">

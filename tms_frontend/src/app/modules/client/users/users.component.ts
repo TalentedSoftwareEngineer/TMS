@@ -3,7 +3,7 @@ import {Location} from '@angular/common';
 import {ConfirmationService, ConfirmEventType, MessageService} from "primeng/api";
 import {ApiService} from "../../../services/api/api.service";
 import {StoreService} from "../../../services/store/store.service";
-import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, EMAIL_REG_EXP, rowsPerPageOptions } from '../../constants';
+import { PERMISSION_TYPE_ALL, PERMISSION_TYPE_READONLY, ALL_FILTER_VALUE, ROWS_PER_PAGE_OPTIONS, PAGE_NO_PERMISSION_MSG, EMAIL_REG_EXP, rowsPerPageOptions, TIMEZONE } from '../../constants';
 import { tap } from "rxjs/operators";
 import moment from 'moment';
 import {IUser, ICompany, IRole, ISomosUser} from "../../../models/user";
@@ -41,11 +41,7 @@ export class UsersComponent implements OnInit {
   users: any[] = []
   companies: any[] = []
   roles: any[] = []
-  timezones: any[] = [
-    {name: 'Auto Detect', value: 0},
-    {name: 'CST', value: -6},
-    {name: 'EST', value: -5}
-  ]
+  timezones: any[] = TIMEZONE
   filter_roles: any[] = []
   filter_status: any[] = [
     {name: 'All', value: ''},
@@ -63,7 +59,7 @@ export class UsersComponent implements OnInit {
   validUsername: boolean = true;
   input_company_id: any = ''
   input_role_id: any = ''
-  input_timezone: any = 0
+  input_timezone: any = ''
   input_email: string|number|undefined|null = ''
   validEmail: boolean = true;
   input_first_name: string|number|undefined|null = ''
@@ -95,6 +91,8 @@ export class UsersComponent implements OnInit {
 
   write_permission: boolean = false;
   authUserId = -1;
+
+  allUsers: any[] = []
 
   constructor(
     public api: ApiService,
@@ -135,6 +133,7 @@ export class UsersComponent implements OnInit {
       this.authUserId = state.user.id;
     })
 
+    await this.getAllUsers();
     this.getUsersList();
     this.getTotalUsersCount();
     this.getCompaniesList();
@@ -149,6 +148,13 @@ export class UsersComponent implements OnInit {
     };
   }
 
+  getAllUsers = async () => {
+    await this.api.getUsersListForFilter()
+    .pipe(tap(async (res: IUser[]) => {
+      this.allUsers = res;
+    })).toPromise();
+  }
+
   getUsersList = async () => {
     this.isLoading = true;
     try {
@@ -159,10 +165,19 @@ export class UsersComponent implements OnInit {
         .pipe(tap(async (usersRes: IUser[]) => {
           this.users = [];
           usersRes.map(u => {
-            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.created_by = u.created_by ? this.getAuditionedUsername(u.created_by, username=>{u.created_by=username}) : '';
-            u.updated_by = u.updated_by ? this.getAuditionedUsername(u.updated_by, username=>u.updated_by=username) : '';
+            if(Boolean(this.store.getUser()?.timezone)) {
+              // Timezone Time
+              u.created_at = u.created_at ? moment(u.created_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+              u.updated_at = u.updated_at ? moment(u.updated_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            } else {
+              // Local time
+              u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+              u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+            }
+            // u.created_by = u.created_by ? this.getAuditionedUsername(u.created_by, username=>{u.created_by=username}) : '';
+            // u.updated_by = u.updated_by ? this.getAuditionedUsername(u.updated_by, username=>u.updated_by=username) : '';
+            u.created_by = u.created_by ? this.allUsers.find((item: any) => item.id==u.created_by)?.username : '';
+            u.updated_by = u.updated_by ? this.allUsers.find((item: any) => item.id==u.updated_by)?.username  : '';
           });
 
           let allNotEditable = true
@@ -417,7 +432,7 @@ export class UsersComponent implements OnInit {
     this.input_username = ''
     this.input_company_id = undefined
     this.input_role_id = undefined
-    this.input_timezone = 0
+    this.input_timezone = ''
     this.input_email = ''
     this.input_first_name = ''
     this.input_last_name = ''

@@ -99,9 +99,15 @@ export class TaskTrackingComponent implements OnInit {
         .pipe(tap(async (res: ITaskTracking[]) => {
           this.tasks = [];
           res.map(u => {
-            u.created_at = u.created_at ? moment(new Date(u.created_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+            if(Boolean(this.store.getUser()?.timezone)) {
+              // Timezone Time
+              u.sub_dt_tm = u.sub_dt_tm ? moment(u.sub_dt_tm).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+            } else {
+              // Local time
+              u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+            }
+            u.tgt_eff_dt_tm = u.tgt_eff_dt_tm ? moment(new Date(u.tgt_eff_dt_tm)).format('MM/DD/YYYY') : '';
+            u.src_eff_dt_tm = u.src_eff_dt_tm ? moment(new Date(u.src_eff_dt_tm)).format('MM/DD/YYYY') : '';
           });
 
           let allNotEditable = true

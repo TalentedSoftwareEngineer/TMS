@@ -35,7 +35,7 @@
           <p-table
             #numbersTable
             [value]="retrieveResults"
-            dataKey="id"
+            [(selection)]="selectedRetrieveTemplate" 
             [rows]="10"
             [rowsPerPageOptions]="rowsPerPageOptions"
             [loading]="retrieveResultsLoading"
@@ -50,9 +50,13 @@
               <div class="flex align-items-center" [ngClass]="retrieveResults.length>0 ? 'justify-content-between' : 'justify-content-end'">
                 <p class="mb-0" *ngIf="retrieveResults.length>0">Total <span class="dialog_total_count">{{retrieveResults.length}}</span> Record<span *ngIf="retrieveResults.length>1">s</span></p>
                 <div class="table-header">
-                  <span class="p-input-icon-left">
-                      <i class="pi pi-search"></i>
-                      <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
+                  <span class="p-input-icon-left mr-4">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text" [(ngModel)]="inputNumListFilterKey" (input)="onInputNumListFilterKey()" placeholder="Search..." />
+                  </span>
+                  <span class="p-buttonset">
+                    <button pButton type="button" label="Download" icon="pi pi-download" class="p-button-text" (click)="onResultDownload()"></button>
+                    <button pButton type="button" label="Disconnect" icon="pi pi-sort-alt-slash" class="p-button-text" (click)="onResultTemplateDisconnect()" [disabled]="!(selectedRetrieveTemplate?.numbers==0 && selectedRetrieveTemplate?.custRecStat=='ACTIVE')"></button>
                   </span>
                 </div>
               </div>
@@ -60,6 +64,7 @@
 
             <ng-template pTemplate="header">
               <tr>
+                <th style="min-width: 3rem;" class="justify-content-center align-items-center"></th>
                 <th pSortableColumn="tmplName" style="min-width: 200px;" class="justify-content-center align-items-center">
                   <div>
                     Template Name
@@ -87,7 +92,7 @@
                 <th pSortableColumn="numbers" style="width: 300px;" class="justify-content-center align-items-center">
                   <div>
                     Total Amount of Numbers
-                    <p-sortIcon field="numbers"></p-sortIcon>
+                    <!-- <p-sortIcon field="numbers"></p-sortIcon> -->
                   </div>
                 </th>
                 <th style="width: 100px;" class="justify-content-center align-items-center">
@@ -100,8 +105,11 @@
 
             <ng-template pTemplate="body" let-number>
               <tr>
+                <td style="width: 3rem;" class="justify-content-center align-items-center">
+                  <p-tableRadioButton [value]="number"></p-tableRadioButton>
+                </td>
                 <td style="width: 200px;" class="justify-content-center align-items-center">
-                  {{number.tmplName}}
+                  <span class="cursor-pointer text-primary" (click)="onClickTmplName(number.tmplName, number.effDtTm)">{{number.tmplName}}</span>
                 </td>
                 <td style="width: 300px;" class="justify-content-center align-items-center">
                   {{number.description}}
@@ -139,44 +147,49 @@
     <h5>Template Name: {{selTmplName}}</h5>
 
     <div class="card">
-        <p-table [value]="selTmplList" [(selection)]="selectedTmpRecord" responsiveLayout="stack" [responsive]="true">
-            <ng-template pTemplate="header">
-                <tr>
-                    <th class="text-align-center"></th>
-                    <th class="text-align-center">Effective Date/Time</th>
-                    <th class="text-align-center">CR Status</th>
-                    <th class="text-align-center">Approval</th>
-                    <th class="text-align-center">Components</th>
-                    <th class="text-align-center">Action</th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-template>
-              <tr>
-                <td class="text-align-center">
-                    <p-tableRadioButton [value]="template"></p-tableRadioButton>
-                </td>
-                <td class="text-align-center">
-                    <span class="p-column-title">Effective Date/Time</span>
-                    {{template.effDtTm}}
-                </td>
-                <td class="text-align-center">
-                    <span class="p-column-title">CR Status</span>
-                    {{template.custRecStat}}
-                </td>
-                <td class="text-align-center">
-                    <span class="p-column-title">Approval</span>
-                    {{template.apprStat}}
-                </td>
-                <td class="text-align-center">
-                    <span class="p-column-title">Components</span>
-                    {{template.custRecCompPart}}
-                </td>
-                <td class="text-align-center">
-                    <button pButton type="button" *ngIf="!template.saved" icon="pi pi-save" label="Save" class="p-button-rounded p-button-outlined p-button-help" (click)="saveToDatabase($event, selTmplName, template)"></button>
-                </td>
-              </tr>
-            </ng-template>
-        </p-table>
+      <p-table 
+        [value]="selTmplList" 
+        [(selection)]="selectedTmpRecord" 
+        responsiveLayout="stack" 
+        [responsive]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="text-align-center"></th>
+            <th class="text-align-center">Effective Date/Time</th>
+            <th class="text-align-center">CR Status</th>
+            <th class="text-align-center">Approval</th>
+            <th class="text-align-center">Components</th>
+            <th class="text-align-center">Action</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-template>
+          <tr>
+            <td class="text-align-center">
+                <p-tableRadioButton [value]="template"></p-tableRadioButton>
+            </td>
+            <td class="text-align-center">
+                <span class="p-column-title">Effective Date/Time</span>
+                {{template.effDtTm}}
+            </td>
+            <td class="text-align-center">
+                <span class="p-column-title">CR Status</span>
+                {{template.custRecStat}}
+            </td>
+            <td class="text-align-center">
+                <span class="p-column-title">Approval</span>
+                {{template.apprStat}}
+            </td>
+            <td class="text-align-center">
+                <span class="p-column-title">Components</span>
+                {{template.custRecCompPart}}
+            </td>
+            <td class="text-align-center">
+                <button pButton type="button" *ngIf="!template.saved" icon="pi pi-save" label="Save" class="p-button-rounded p-button-outlined p-button-help" (click)="saveToDatabase($event, selTmplName, template)"></button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
 
     <div class="flex justify-content-end">

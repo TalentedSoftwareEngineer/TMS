@@ -167,7 +167,15 @@ export class MultiConversionPointerRecordComponent implements OnInit, OnDestroy 
 
     await this.api.getMcpData(this.sortActive, this.sortDirection, this.pageSize, this.pageIndex, this.filterValue, this.selectUser)
       .pipe(tap(async (res: any[])=>{
-        res.map(u => u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '');
+        res.map(u => {
+          if(Boolean(this.store.getUser()?.timezone)) {
+            // Timezone Time
+            u.sub_dt_tm = u.sub_dt_tm ? moment(u.sub_dt_tm).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+          } else {
+            // Local time
+            u.sub_dt_tm = u.sub_dt_tm ? moment(new Date(u.sub_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+          }
+        });
         this.activityLogs = res;
       })).toPromise();
 
@@ -249,10 +257,17 @@ export class MultiConversionPointerRecordComponent implements OnInit, OnDestroy 
 
     await this.api.getMcpById(result.id)
       .pipe(tap((response: any[])=>{
-        // response.map(u => u.eff_dt = u.eff_dt ? moment(new Date(u.eff_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        // response.map(u => u.last_act_dt = u.last_act_dt ? moment(new Date(u.last_act_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        // response.map(u => u.res_until_dt = u.res_until_dt ? moment(new Date(u.res_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
-        // response.map(u => u.disc_until_dt = u.disc_until_dt ? moment(new Date(u.disc_until_dt)).format('YYYY/MM/DD h:mm:ss A') : '');
+        response.map(u => {
+          // u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : '';
+          u.eff_dt_tm = u.eff_dt_tm ? gFunc.fromUTCStrToCTStr(u.eff_dt_tm) : '';
+          if(Boolean(this.store.getUser()?.timezone)) {
+            // Timezone Time
+            u.updated_at = u.updated_at ? moment(u.updated_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+          } else {
+            // Local time
+            u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+          }
+        });
 
         this.numberList = response;
 
@@ -269,8 +284,14 @@ export class MultiConversionPointerRecordComponent implements OnInit, OnDestroy 
 
     await this.api.getMcpById(result.id).pipe(tap((response: any[])=>{
       response.map(u => {
-        u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
-        u.eff_dt_tm = u.eff_dt_tm ? moment(new Date(u.eff_dt_tm)).format('MM/DD/YYYY h:mm:ss A') : ''
+        if(Boolean(this.store.getUser()?.timezone)) {
+          // Timezone Time
+          u.updated_at = u.updated_at ? moment(u.updated_at).utc().utcOffset(Number(this.store.getUser()?.timezone)).format('MM/DD/YYYY h:mm:ss A') : '';
+        } else {
+          // Local time
+          u.updated_at = u.updated_at ? moment(new Date(u.updated_at)).format('MM/DD/YYYY h:mm:ss A') : '';
+        }
+        u.eff_dt_tm = u.eff_dt_tm ? gFunc.fromUTCStrToCTStr(u.eff_dt_tm) : '';
       });
 
       response.forEach((item, index) => {

@@ -29,3 +29,9 @@
         overflow-y: visible;
     }
 }
+
+:host ::ng-deep .c-table.p-datatable {
+    .p-datatable-wrapper {
+        overflow: visible;
+    }
+}

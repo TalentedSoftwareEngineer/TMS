@@ -61,6 +61,10 @@ export class ApiService {
     return this.http.patch<any>(`${this.coreApi}/configurations/news_event`, data);
   }
 
+  dashboard(): Observable<any> {
+    return this.http.get<any>(`${this.coreApi}/dashboard/statistics`);
+  }
+
   //Company APIs
   getCompaniesList(active: string, direction: string, page: number, size: number, filterValue: string, statusFilterValue: any): Observable<ICompany[]> {
     const parametersQuery = new URLSearchParams({
@@ -806,7 +810,7 @@ export class ApiService {
     const parametersQuery = new URLSearchParams({
       ro: `${ro}`,
       entity: `${entity}`,
-      startingTemplateName: `${startTemplateName}`
+      startTemplateName: `${startTemplateName}`
     }).toString();
     return this.http.get<any>(`${this.coreApi}/templates/list?${parametersQuery}`);
   }
@@ -898,7 +902,7 @@ export class ApiService {
   }
 
   //ScriptResult APIs
-  getNumberList(active: string, direction: string, page: number, size: number, filterValue: string, entity: string, respOrgId: string, tmplName: string, status: string): Observable<any[]> {
+  getNumberList(active: string, direction: string, page: number, size: number, filterValue: string, entity: string, respOrgId: string, tmplName: string, status: string, numFilter: string, subDtTm: string): Observable<any[]> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
@@ -908,20 +912,29 @@ export class ApiService {
       respOrgFilter: `${respOrgId}`,
       templateFilter: `${tmplName}`,
       statusFilter: `${status}`,
+      numFilter: `${numFilter}`,
+      subDtTm: `${subDtTm}`
     }).toString();
     const url = `${this.coreApi}/number_list?${parametersQuery}`;
     return this.http.get<any[]>(url);
   }
 
-  getNumberListCount(filterValue: string, entity: string, respOrgId: string, tmplName: string, status: string): Observable<any> {
+  getNumberListCount(filterValue: string, entity: string, respOrgId: string, tmplName: string, status: string, numFilter: string, subDtTm: string): Observable<any> {
     const parametersQuery = new URLSearchParams({
       value: `${filterValue}`,
       entityFilter: `${entity}`,
       respOrgFilter: `${respOrgId}`,
       templateFilter: `${tmplName}`,
       statusFilter: `${status}`,
+      numFilter: `${numFilter}`,
+      subDtTm: `${subDtTm}`
     }).toString();
     return this.http.get<any>(`${this.coreApi}/number_list/count?${parametersQuery}`);
+  }
+
+  getNumberListSubDtTmForFilter(): Observable<any[]> {
+    const url = `${this.coreApi}/number_list/sub_dt_tm`;
+    return this.http.get<any[]>(url);
   }
 
   getUsernamesOfNumberList(): Observable<any[]> {
@@ -949,22 +962,24 @@ export class ApiService {
     return this.http.get<any[]>(url);
   }
 
-  getScriptSQLsOfNumberList(active: string, direction: string, page: number, size: number, filterValue: string, userIdFilter?: string): Observable<ISqlScript[]> {
+  getScriptSQLsOfNumberList(active: string, direction: string, page: number, size: number, filterValue: string, userIdFilter?: string, sqlType?: string): Observable<ISqlScript[]> {
     const parametersQuery = new URLSearchParams({
       limit: `${size}`,
       skip: `${(page - 1) * size}`,
       order: `${active} ${direction}`,
       value: `${filterValue}`,
-      userIdFilter: `${userIdFilter}`
+      userIdFilter: `${userIdFilter}`,
+      sqlType: `${sqlType}`,
     }).toString();
     const url = `${this.coreApi}/number_list/script_sqls?${parametersQuery}`;
     return this.http.get<ISqlScript[]>(url);
   }
 
-  getScriptCountOfNumberList(filterValue: string, userIdFilter?: string): Observable<any> {
+  getScriptCountOfNumberList(filterValue: string, userIdFilter?: string, sqlType?: string): Observable<any> {
     const parametersQuery = new URLSearchParams({
       value: `${filterValue}`,
-      userIdFilter: `${userIdFilter}`
+      userIdFilter: `${userIdFilter}`,
+      sqlType: `${sqlType}`,
     }).toString();
     return this.http.get<any>(`${this.coreApi}/number_list/script_count?${parametersQuery}`);
   }
@@ -1004,11 +1019,11 @@ export class ApiService {
     return this.http.put<any>(`${this.coreApi}/templates/lock`, data);
   }
 
-  unlockCadRec(data: any): Observable<any> {
+  tmplUnLock(data: any): Observable<any> {
     return this.http.put<any>(`${this.coreApi}/templates/unlock`, data);
   }
 
-  deleteCadRec(data: any): Observable<any> {
+  deleteTmplRec(data: any): Observable<any> {
     return this.http.put<any>(`${this.coreApi}/templates/delete`, data);
   }
 
@@ -1046,16 +1061,16 @@ export class ApiService {
     return this.http.put<any>(`${this.coreApi}/customer-record/lock`, data);
   }
 
-  tmplUnLock(data: any): Observable<any> {
+  updateCadRec(data: any): Observable<any> {
+    return this.http.put<any>(`${this.coreApi}/customer-record/update`, data);
+  }
+
+  unlockCadRec(data: any): Observable<any> {
     return this.http.put<any>(`${this.coreApi}/customer-record/unlock`, data);
   }
 
-  deleteTmplRec(data: any): Observable<any> {
+  deleteCadRec(data: any): Observable<any> {
     return this.http.put<any>(`${this.coreApi}/customer-record/delete`, data);
-  }
-
-  updateCadRec(data: any): Observable<any> {
-    return this.http.put<any>(`${this.coreApi}/customer-record/update`, data);
   }
 
   createCadRec(data: any): Observable<any> {
@@ -1074,7 +1089,7 @@ export class ApiService {
     return this.http.put<any>(`${this.coreApi}/customer-record/transfer`, data);
   }
 
-  queryTmplRec(data: any): Observable<any> {
+  queryCadlRec(data: any): Observable<any> {
     return this.http.put<any>(`${this.coreApi}/customer-record/query`, data);
   }
 

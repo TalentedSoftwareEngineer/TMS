@@ -58,18 +58,17 @@ input[type="text"].cell-input {
     padding: 1rem;
 }
 
-:host ::ng-deep .p-dialog.c-modal {
-    .p-dialog-content{
-        overflow-y: visible;
-    }
-}
-
 :host ::ng-deep .p-dialog {
     &.c-modal {
+        max-height: none;
         .p-dialog-header {
             .p-dialog-title {
                 font-size: 1.5rem;
             }
+        }
+
+        .p-dialog-content{
+            overflow-y: visible;
         }
     }
 }
